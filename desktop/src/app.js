@@ -1,4 +1,4 @@
-const API_BASE = 'http://127.0.0.1:7878';
+const API_BASE = '';
 
 let currentThreadId = null;
 let isProcessing = false;
@@ -13,22 +13,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function connectBackend() {
     let attempts = 0;
-    const maxAttempts = 30;
+    const maxAttempts = 60; // 60 seconds max
 
     while (attempts < maxAttempts) {
         try {
-            const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(2000) });
+            const res = await fetch(`${API_BASE}/health`, {
+                mode: 'cors',
+                signal: AbortSignal.timeout(3000)
+            });
             if (res.ok) {
-                updateStatus('online', '已连接');
+                const data = await res.json();
+                console.log('Backend connected:', data);
+                updateStatus('online', `已连接`);
                 return;
             }
         } catch (e) {
-            // Backend not ready yet
+            if (attempts === 0 || attempts === 10 || attempts === 30) {
+                console.log(`Waiting for backend... (${attempts + 1}/${maxAttempts})`);
+                updateStatus('connecting', `正在连接后端... (${attempts + 1}s)`);
+            }
         }
         attempts++;
         await new Promise(r => setTimeout(r, 1000));
     }
-    updateStatus('offline', '连接失败，请确保后端已启动');
+    updateStatus('offline', '连接失败 - 请确认 ds-tui 已启动');
 }
 
 function updateStatus(state, text) {

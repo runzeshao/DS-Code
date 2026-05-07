@@ -1688,6 +1688,7 @@ const DEFAULT_CORS_ORIGINS: &[&str] = &[
     "http://localhost:1420",
     "http://127.0.0.1:1420",
     "tauri://localhost",
+    "https://tauri.localhost",
 ];
 
 fn cors_layer(extra_origins: &[String]) -> CorsLayer {
