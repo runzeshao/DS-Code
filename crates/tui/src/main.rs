@@ -95,7 +95,7 @@ fn configure_windows_console_utf8() {}
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "deepseek",
+    name = "ds",
     author,
     version = env!("DS_BUILD_VERSION"),
     about = "DS Code/CLI for DeepSeek models",
