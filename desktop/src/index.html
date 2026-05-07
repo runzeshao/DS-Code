@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DS Code - AI 编程助手</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">DS Code</h1>
+                <span class="version">v0.1.0</span>
+            </div>
+            <div class="sidebar-status">
+                <div id="status-indicator" class="status-dot offline"></div>
+                <span id="status-text">后端未连接</span>
+            </div>
+            <nav class="sidebar-nav">
+                <button id="btn-new-chat" class="nav-btn active" onclick="newChat()">
+                    <span class="nav-icon">+</span> 新建对话
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="model-info">
+                    <span class="label">模型：</span>
+                    <span id="model-name">deepseek-v4-pro</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Area -->
+        <main id="main">
+            <!-- Chat Header -->
+            <header id="chat-header">
+                <h2 id="chat-title">DS Code 对话</h2>
+            </header>
+
+            <!-- Messages Area -->
+            <div id="messages" class="messages-container">
+                <div class="welcome" id="welcome-screen">
+                    <h2>DS Code AI 编程助手</h2>
+                    <p>基于 DeepSeek V4 模型，帮你写代码、解问题。</p>
+                    <div class="suggestions">
+                        <button class="suggestion-btn" onclick="sendPrompt('用 Python 写一个快速排序')">
+                            用 Python 写一个快速排序
+                        </button>
+                        <button class="suggestion-btn" onclick="sendPrompt('解释什么是 RESTful API')">
+                            解释什么是 RESTful API
+                        </button>
+                        <button class="suggestion-btn" onclick="sendPrompt('帮我优化这段代码：')">
+                            帮我优化这段代码：
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thinking Panel -->
+            <div id="thinking-panel" class="thinking-panel hidden">
+                <div class="thinking-header">
+                    <span class="thinking-icon">⟳</span>
+                    <span>思考中...</span>
+                    <button class="thinking-toggle" onclick="toggleThinking()">展开</button>
+                </div>
+                <div id="thinking-content" class="thinking-content"></div>
+            </div>
+
+            <!-- Input Area -->
+            <footer id="input-area">
+                <div class="input-wrapper">
+                    <textarea id="prompt-input" rows="3" placeholder="输入你的问题..."
+                        onkeydown="handleKeyDown(event)"></textarea>
+                    <button id="send-btn" onclick="sendMessage()" disabled>
+                        <span class="send-icon">➤</span>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <span class="hint">Enter 发送 | Shift+Enter 换行</span>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+G:\DScodex\desktop\src-tauri\target\debug\deps\semver-f019892dd9dded47.d: G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\lib.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\display.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\error.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\eval.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\identifier.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\impls.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\parse.rs
+
+G:\DScodex\desktop\src-tauri\target\debug\deps\libsemver-f019892dd9dded47.rlib: G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\lib.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\display.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\error.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\eval.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\identifier.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\impls.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\parse.rs
+
+G:\DScodex\desktop\src-tauri\target\debug\deps\libsemver-f019892dd9dded47.rmeta: G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\lib.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\display.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\error.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\eval.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\identifier.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\impls.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\parse.rs
+
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\lib.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\display.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\error.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\eval.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\identifier.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\impls.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\semver-1.0.28\src\parse.rs:

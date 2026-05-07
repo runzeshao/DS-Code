@@ -1,0 +1,12 @@
+G:\DScodex\desktop\src-tauri\target\debug\deps\tauri_build-409e016ee4980643.d: G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\lib.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\acl.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\manifest.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\mobile.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\static_vcruntime.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\windows-app-manifest.xml
+
+G:\DScodex\desktop\src-tauri\target\debug\deps\libtauri_build-409e016ee4980643.rlib: G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\lib.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\acl.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\manifest.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\mobile.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\static_vcruntime.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\windows-app-manifest.xml
+
+G:\DScodex\desktop\src-tauri\target\debug\deps\libtauri_build-409e016ee4980643.rmeta: G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\lib.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\acl.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\manifest.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\mobile.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\static_vcruntime.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\windows-app-manifest.xml
+
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\lib.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\acl.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\manifest.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\mobile.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\static_vcruntime.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-build-2.6.1\src\windows-app-manifest.xml:

@@ -1,0 +1,1 @@
+G:\DScodex\desktop\src-tauri\target\debug\ds-code-desktop.exe: G:\DScodex\desktop\src-tauri\build.rs G:\DScodex\desktop\src-tauri\capabilities G:\DScodex\desktop\src-tauri\src\main.rs G:\DScodex\desktop\src-tauri\target\debug\build\ds-code-desktop-d01f6a923370356f\out\fb77a02b5d05eff376c3e3c49fc538e136a039dcc9160d3a810b940ac6d466b1 G:\DScodex\desktop\src-tauri\tauri.conf.json

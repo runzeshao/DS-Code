@@ -1,0 +1,12 @@
+G:\DScodex\desktop\src-tauri\target\debug\deps\getrandom-5c4a7d341357b3c7.d: G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\lib.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\error.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\util.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\../README.md G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends\windows.rs
+
+G:\DScodex\desktop\src-tauri\target\debug\deps\libgetrandom-5c4a7d341357b3c7.rlib: G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\lib.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\error.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\util.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\../README.md G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends\windows.rs
+
+G:\DScodex\desktop\src-tauri\target\debug\deps\libgetrandom-5c4a7d341357b3c7.rmeta: G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\lib.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\error.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\util.rs G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\../README.md G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends\windows.rs
+
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\lib.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\error.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\util.rs:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\../README.md:
+G:/rust/cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends\windows.rs:
