@@ -1,6 +1,6 @@
 # Competitive Analysis: DeepSeek TUI vs OpenCode vs Codex CLI
 
-Analysis of capabilities across three AI coding agents: OpenCode (`/Volumes/VIXinSSD/opencode`), Codex CLI (`/Volumes/VIXinSSD/codex-main`), and DeepSeek TUI (`/Volumes/VIXinSSD/deepseek-tui`).
+Analysis of capabilities across three AI coding agents: OpenCode (`/Volumes/VIXinSSD/opencode`), Codex CLI (`/Volumes/VIXinSSD/codex-main`), and DeepSeek TUI (`/Volumes/VIXinSSD/DS-Code`).
 
 ## Tool Matrix
 
@@ -18,7 +18,7 @@ Analysis of capabilities across three AI coding agents: OpenCode (`/Volumes/VIXi
 | LSP | ✅ Lsp (experimental) | ❌ | ❌ |
 | Task/todo tracking | ✅ TodoWrite | ✅ | ✅ todo_write |
 | Subagent spawn | ✅ Task | ✅ Collab/SpawnCsv | ✅ agent_spawn |
-| Skill system | ✅ Skill (multi-location discovery) | ✅ core-skills | ⚠️ Partial (.deepseek/skills/) |
+| Skill system | ✅ Skill (multi-location discovery) | ✅ core-skills | ⚠️ Partial (.ds/skills/) |
 | Plan mode | ✅ plan-enter/exit | ✅ Plan mode | ✅ Plan mode |
 | User question | ✅ Question | ✅ request_user_input | ✅ user_input |
 | Patch apply | ✅ apply_patch (custom format) | ✅ apply_patch (diff format) | ✅ apply_patch |
@@ -156,7 +156,7 @@ Each hook handler supports:
 
 Skills are parsed for YAML frontmatter (`name`, `description`) and Markdown content. Duplicate names warn but don't error. Skills respect agent permissions — an agent can only load skills its permission ruleset allows.
 
-**What DeepSeek TUI would need:** Extend the existing `~/.deepseek/skills/` discovery to parent-directory walking, Claude Code compatibility paths, and URL-based skill sources. Add YAML frontmatter parsing.
+**What DeepSeek TUI would need:** Extend the existing `~/.ds/skills/` discovery to parent-directory walking, Claude Code compatibility paths, and URL-based skill sources. Add YAML frontmatter parsing.
 
 ---
 

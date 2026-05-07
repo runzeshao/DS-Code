@@ -3,7 +3,7 @@
 //! `SnapshotRepo` shells out to the system `git` binary (we deliberately
 //! avoid `git2` to dodge its LGPL surface). The two paths that matter:
 //!
-//! - `git_dir`  → `~/.deepseek/snapshots/<project_hash>/<worktree_hash>/.git`
+//! - `git_dir`  → `~/.ds/snapshots/<project_hash>/<worktree_hash>/.git`
 //! - `work_tree` → the user's actual workspace
 //!
 //! Every git invocation passes both `--git-dir` AND `--work-tree`. That is
@@ -121,7 +121,7 @@ impl SnapshotRepo {
     /// Open or initialize the snapshot repo for `workspace`.
     ///
     /// On first use this:
-    /// 1. Creates the `~/.deepseek/snapshots/<…>/.git` dir.
+    /// 1. Creates the `~/.ds/snapshots/<…>/.git` dir.
     /// 2. Runs `git init --bare=false --quiet`.
     /// 3. Sets a fixed `user.name` / `user.email` so commits don't pick up
     ///    the user's global git identity (we don't want our snapshots to
@@ -178,7 +178,7 @@ impl SnapshotRepo {
             let _ = run_git(
                 &git_dir,
                 &work_tree,
-                &["config", "user.email", "snapshots@deepseek-tui.local"],
+                &["config", "user.email", "snapshots@DS-Code.local"],
             );
             // Don't auto-gc on every commit; we manage pruning ourselves.
             let _ = run_git(&git_dir, &work_tree, &["config", "gc.auto", "0"]);

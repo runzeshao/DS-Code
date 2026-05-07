@@ -15,7 +15,7 @@ pub fn set_verbose(enabled: bool) {
 /// Return true when supported env logging knobs request verbose output.
 #[must_use]
 pub fn env_requests_verbose_logging() -> bool {
-    std::env::var("DEEPSEEK_LOG_LEVEL")
+    std::env::var("DS_LOG_LEVEL")
         .ok()
         .is_some_and(|value| log_value_enables_verbose(&value))
         || std::env::var("RUST_LOG")
@@ -44,7 +44,7 @@ pub fn is_verbose() -> bool {
 /// Emit a verbose info message (no-op when verbosity is disabled).
 pub fn info(message: impl AsRef<str>) {
     if is_verbose() {
-        let (r, g, b) = palette::DEEPSEEK_SKY_RGB;
+        let (r, g, b) = palette::DS_SKY_RGB;
         eprintln!("{} {}", "info".truecolor(r, g, b).bold(), message.as_ref());
     }
 }
@@ -52,7 +52,7 @@ pub fn info(message: impl AsRef<str>) {
 /// Emit a verbose warning message (no-op when verbosity is disabled).
 pub fn warn(message: impl AsRef<str>) {
     if is_verbose() {
-        let (r, g, b) = palette::DEEPSEEK_SKY_RGB;
+        let (r, g, b) = palette::DS_SKY_RGB;
         eprintln!("{} {}", "warn".truecolor(r, g, b).bold(), message.as_ref());
     }
 }
@@ -64,9 +64,9 @@ mod tests {
     #[test]
     fn log_value_parser_accepts_common_rust_log_directives() {
         assert!(log_value_enables_verbose("debug"));
-        assert!(log_value_enables_verbose("deepseek_cli=debug"));
-        assert!(log_value_enables_verbose("warn,deepseek_tui::client=trace"));
+        assert!(log_value_enables_verbose("DS_cli=debug"));
+        assert!(log_value_enables_verbose("warn,DS_tui::client=trace"));
         assert!(!log_value_enables_verbose("warn"));
-        assert!(!log_value_enables_verbose("deepseek_tui=off"));
+        assert!(!log_value_enables_verbose("DS_tui=off"));
     }
 }

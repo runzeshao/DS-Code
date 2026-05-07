@@ -279,27 +279,27 @@ mod tests {
     struct EnvGuard {
         home: Option<OsString>,
         userprofile: Option<OsString>,
-        deepseek_config_path: Option<OsString>,
+        ds_config_path: Option<OsString>,
     }
 
     impl EnvGuard {
         fn new(home: &Path) -> Self {
-            let config_path = home.join(".deepseek").join("config.toml");
+            let config_path = home.join(".ds").join("config.toml");
             let home_prev = env::var_os("HOME");
             let userprofile_prev = env::var_os("USERPROFILE");
-            let deepseek_config_prev = env::var_os("DEEPSEEK_CONFIG_PATH");
+            let ds_config_prev = env::var_os("DS_CONFIG_PATH");
 
             // Safety: test-only environment mutation guarded by a global mutex.
             unsafe {
                 env::set_var("HOME", home.as_os_str());
                 env::set_var("USERPROFILE", home.as_os_str());
-                env::set_var("DEEPSEEK_CONFIG_PATH", config_path.as_os_str());
+                env::set_var("DS_CONFIG_PATH", config_path.as_os_str());
             }
 
             Self {
                 home: home_prev,
                 userprofile: userprofile_prev,
-                deepseek_config_path: deepseek_config_prev,
+                ds_config_path: ds_config_prev,
             }
         }
     }
@@ -308,7 +308,7 @@ mod tests {
         fn drop(&mut self) {
             restore_env("HOME", self.home.take());
             restore_env("USERPROFILE", self.userprofile.take());
-            restore_env("DEEPSEEK_CONFIG_PATH", self.deepseek_config_path.take());
+            restore_env("DS_CONFIG_PATH", self.ds_config_path.take());
         }
     }
 
@@ -329,7 +329,7 @@ mod tests {
             .unwrap()
             .as_nanos();
         let path = env::temp_dir().join(format!(
-            "deepseek-network-{label}-{}-{nanos}",
+            "ds-network-{label}-{}-{nanos}",
             std::process::id()
         ));
         fs::create_dir_all(&path).unwrap();
@@ -366,7 +366,7 @@ mod tests {
         let _lock = lock_test_env();
         let home = temp_home("allow");
         let _guard = EnvGuard::new(&home);
-        let config_path = home.join(".deepseek").join("config.toml");
+        let config_path = home.join(".ds").join("config.toml");
         fs::create_dir_all(config_path.parent().unwrap()).unwrap();
         fs::write(
             &config_path,
@@ -393,7 +393,7 @@ mod tests {
         let result = network(&mut app, Some("allow https://github.com/obra/superpowers"));
 
         assert!(!result.is_error, "{:?}", result.message);
-        let body = fs::read_to_string(home.join(".deepseek").join("config.toml")).unwrap();
+        let body = fs::read_to_string(home.join(".ds").join("config.toml")).unwrap();
         assert!(body.contains("allow = [\"github.com\"]"), "{body}");
     }
 

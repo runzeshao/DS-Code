@@ -9,7 +9,7 @@
 //! DeepSeek's [Thinking Mode docs](https://api-docs.deepseek.com/guides/reasoning_model),
 //! `low`/`medium` are silently mapped to `high` server-side and `xhigh` is
 //! mapped to `max`, so surfacing them as separate choices would be misleading.
-//! The legacy variants remain valid in `~/.deepseek/settings.toml` for
+//! The legacy variants remain valid in `~/.ds/settings.toml` for
 //! back-compat — the picker just doesn't offer them.
 //!
 //! On apply we emit a [`ViewEvent::ModelPickerApplied`] with the resolved
@@ -186,7 +186,7 @@ impl ModelPickerView {
         focused: bool,
     ) {
         let border_style = if focused {
-            Style::default().fg(palette::DEEPSEEK_SKY)
+            Style::default().fg(palette::DS_SKY)
         } else {
             Style::default().fg(palette::BORDER_COLOR)
         };
@@ -282,7 +282,7 @@ impl ModalView for ModelPickerView {
             .title(Line::from(Span::styled(
                 " Model & thinking ",
                 Style::default()
-                    .fg(palette::DEEPSEEK_SKY)
+                    .fg(palette::DS_SKY)
                     .add_modifier(Modifier::BOLD),
             )))
             .title_bottom(Line::from(vec![

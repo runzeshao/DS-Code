@@ -29,7 +29,7 @@ pub(super) struct ToolUseState {
 const DEFAULT_STREAM_CHUNK_TIMEOUT_SECS: u64 = 300;
 const MIN_STREAM_CHUNK_TIMEOUT_SECS: u64 = 1;
 const MAX_STREAM_CHUNK_TIMEOUT_SECS: u64 = 3600;
-const STREAM_IDLE_TIMEOUT_ENV: &str = "DEEPSEEK_STREAM_IDLE_TIMEOUT_SECS";
+const STREAM_IDLE_TIMEOUT_ENV: &str = "DS_STREAM_IDLE_TIMEOUT_SECS";
 
 /// Reads the shared stream idle-timeout override used by the SSE client.
 pub(super) fn stream_chunk_timeout_secs() -> u64 {

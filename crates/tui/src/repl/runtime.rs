@@ -776,7 +776,7 @@ mod tests {
     }
 
     fn write_temp_context(body: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join("deepseek_repl_runtime_tests");
+        let dir = std::env::temp_dir().join("DS_repl_runtime_tests");
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join(format!("ctx_{}_{}.txt", std::process::id(), Uuid::new_v4()));
         std::fs::write(&path, body).unwrap();

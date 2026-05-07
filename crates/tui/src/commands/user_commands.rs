@@ -1,6 +1,6 @@
-//! User-defined slash commands from `~/.deepseek/commands/<name>.md`.
+//! User-defined slash commands from `~/.ds/commands/<name>.md`.
 //!
-//! Users drop `.md` files into `~/.deepseek/commands/` and the filename
+//! Users drop `.md` files into `~/.ds/commands/` and the filename
 //! (without `.md` extension) becomes a slash command. When invoked via
 //! `/name`, the file contents are sent as a user message.
 
@@ -10,13 +10,13 @@ use crate::tui::app::{App, AppAction};
 
 use super::CommandResult;
 
-/// Path to the user commands directory: `~/.deepseek/commands/`.
+/// Path to the user commands directory: `~/.ds/commands/`.
 fn commands_dir() -> PathBuf {
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("~"));
-    home.join(".deepseek").join("commands")
+    home.join(".ds").join("commands")
 }
 
-/// Scan `~/.deepseek/commands/` for `.md` files and return `(name, content)` pairs.
+/// Scan `~/.ds/commands/` for `.md` files and return `(name, content)` pairs.
 ///
 /// The name is the filename without the `.md` extension, normalized to
 /// lowercase. Files that fail to read are silently skipped. The directory
@@ -108,7 +108,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_commands_dir_contains_deepseek_commands() {
+    fn test_commands_dir_contains_DS_commands() {
         let dir = commands_dir();
         let parts: Vec<_> = dir
             .components()
@@ -117,8 +117,8 @@ mod tests {
         assert!(
             parts
                 .windows(2)
-                .any(|pair| pair == [".deepseek", "commands"]),
-            "expected .deepseek/commands components in path, got: {}",
+                .any(|pair| pair == [".ds", "commands"]),
+            "expected .ds/commands components in path, got: {}",
             dir.display()
         );
     }
@@ -126,7 +126,7 @@ mod tests {
     #[test]
     fn test_load_user_commands_when_dir_absent() {
         // Use a temp dir that definitely doesn't have a commands dir.
-        let _tmp = std::env::temp_dir().join("deepseek-test-nonexistent");
+        let _tmp = std::env::temp_dir().join("ds-test-nonexistent");
         // Temporarily override the home for this test by checking the
         // function with a non-existent directory path.
         let cmds = load_user_commands();

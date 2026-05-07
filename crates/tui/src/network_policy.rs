@@ -13,7 +13,7 @@
 //!    with **deny-wins precedence**: a host that matches an entry in `deny`
 //!    is denied even if it also matches `allow`.
 //! 3. [`NetworkAuditor`] — appends one plaintext line per outbound call to
-//!    `~/.deepseek/audit.log` in the format described below.
+//!    `~/.ds/audit.log` in the format described below.
 //!
 //! In addition, [`NetworkSessionCache`] holds in-process "approve once for
 //! this session" state for the `Prompt` flow, and [`NetworkDenied`] is the
@@ -37,7 +37,7 @@
 //! ```
 //!
 //! Plaintext, one line per call, appended to `<audit_path>` (defaults to
-//! `~/.deepseek/audit.log`). Best-effort: write failures are logged but do
+//! `~/.ds/audit.log`). Best-effort: write failures are logged but do
 //! not block the call.
 
 use std::fs::{self, OpenOptions};
@@ -250,12 +250,12 @@ impl NetworkAuditor {
         Self { path, enabled }
     }
 
-    /// Auditor pointing at `~/.deepseek/audit.log`. Returns `None` if the
+    /// Auditor pointing at `~/.ds/audit.log`. Returns `None` if the
     /// home directory can't be resolved.
     #[must_use]
     pub fn default_path(enabled: bool) -> Option<Self> {
         let home = dirs::home_dir()?;
-        Some(Self::new(home.join(".deepseek").join("audit.log"), enabled))
+        Some(Self::new(home.join(".ds").join("audit.log"), enabled))
     }
 
     /// Append one line. Best-effort: errors are logged via `eprintln!` but
@@ -396,7 +396,7 @@ impl NetworkPolicyDecider {
     }
 
     /// Convenience: build a decider with default audit logging at
-    /// `~/.deepseek/audit.log`, if `policy.audit` is true.
+    /// `~/.ds/audit.log`, if `policy.audit` is true.
     #[must_use]
     pub fn with_default_audit(policy: NetworkPolicy) -> Self {
         let audit_enabled = policy.audit_enabled();
@@ -547,7 +547,7 @@ mod tests {
 
     #[test]
     fn host_match_is_case_insensitive() {
-        let p = mk(Decision::Deny, &["API.DeepSeek.com"], &[]);
+        let p = mk(Decision::Deny, &["api.deepseek.com"], &[]);
         assert_eq!(p.decide("api.deepseek.com"), Decision::Allow);
     }
 

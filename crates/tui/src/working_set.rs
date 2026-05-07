@@ -95,9 +95,9 @@ impl Workspace {
         let mut index: HashMap<String, Vec<PathBuf>> = HashMap::new();
         let mut builder = WalkBuilder::new(&self.root);
         builder.hidden(true).follow_links(false).max_depth(Some(6));
-        // Honor `.deepseekignore` in addition to the defaults the `ignore` crate
+        // Honor `.dsignore` in addition to the defaults the `ignore` crate
         // already respects (`.gitignore`, `.git/info/exclude`, `.ignore`).
-        let _ = builder.add_custom_ignore_filename(".deepseekignore");
+        let _ = builder.add_custom_ignore_filename(".dsignore");
 
         for entry in builder.build().flatten() {
             if entry
@@ -119,7 +119,7 @@ impl Workspace {
     ///
     /// Ranking: a candidate matches when its case-insensitive display string
     /// starts with `partial` (prefix hit) or contains it as a substring; prefix
-    /// hits sort first so `docs/de` lands `docs/deepseek_v4.pdf` ahead of any
+    /// hits sort first so `docs/de` lands `docs/DS_v4.pdf` ahead of any
     /// path that merely shares those bytes.
     ///
     /// Display strings are workspace-relative for files under `root`, and
@@ -127,7 +127,7 @@ impl Workspace {
     /// Tab-completes matches what their shell would have shown them.
     ///
     /// Honors `.gitignore`, `.git/info/exclude`, `.ignore`, and
-    /// `.deepseekignore`. Capped at `limit` results.
+    /// `.dsignore`. Capped at `limit` results.
     #[must_use]
     pub fn completions(&self, partial: &str, limit: usize) -> Vec<String> {
         if limit == 0 {
@@ -195,7 +195,7 @@ fn walk_for_completions(
         .hidden(true)
         .follow_links(false)
         .max_depth(Some(COMPLETIONS_WALK_DEPTH));
-    let _ = builder.add_custom_ignore_filename(".deepseekignore");
+    let _ = builder.add_custom_ignore_filename(".dsignore");
 
     for entry in builder.build().flatten() {
         if prefix_hits.len() + substring_hits.len() >= limit {

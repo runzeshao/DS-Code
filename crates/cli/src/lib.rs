@@ -9,17 +9,17 @@ use std::process::Command;
 use anyhow::{Context, Result, anyhow, bail};
 use clap::{Args, CommandFactory, Parser, Subcommand, ValueEnum};
 use clap_complete::{Shell, generate};
-use deepseek_agent::ModelRegistry;
-use deepseek_app_server::{
+use ds_agent::ModelRegistry;
+use ds_app_server::{
     AppServerOptions, run as run_app_server, run_stdio as run_app_server_stdio,
 };
-use deepseek_config::{
+use ds_config::{
     CliRuntimeOverrides, ConfigStore, ProviderKind, ResolvedRuntimeOptions, RuntimeApiKeySource,
 };
-use deepseek_execpolicy::{AskForApproval, ExecPolicyContext, ExecPolicyEngine};
-use deepseek_mcp::{McpServerDefinition, run_stdio_server};
-use deepseek_secrets::Secrets;
-use deepseek_state::{StateStore, ThreadListFilters};
+use ds_execpolicy::{AskForApproval, ExecPolicyContext, ExecPolicyEngine};
+use ds_mcp::{McpServerDefinition, run_stdio_server};
+use ds_secrets::Secrets;
+use ds_state::{StateStore, ThreadListFilters};
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 enum ProviderArg {
@@ -52,10 +52,10 @@ impl From<ProviderArg> for ProviderKind {
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "deepseek",
-    version = env!("DEEPSEEK_BUILD_VERSION"),
-    bin_name = "deepseek",
-    override_usage = "deepseek [OPTIONS] [PROMPT]\n       deepseek [OPTIONS] <COMMAND> [ARGS]"
+    name = "ds",
+    version = env!("DS_BUILD_VERSION"),
+    bin_name = "ds",
+    override_usage = "ds [OPTIONS] [PROMPT]\n       ds [OPTIONS] <COMMAND> [ARGS]"
 )]
 struct Cli {
     #[arg(long)]
@@ -109,7 +109,7 @@ struct Cli {
 enum Commands {
     /// Run interactive/non-interactive flows via the TUI binary.
     Run(RunArgs),
-    /// Run DeepSeek TUI diagnostics.
+    /// Run DS Code diagnostics.
     Doctor(TuiPassthroughArgs),
     /// List live DeepSeek API models via the TUI binary.
     Models(TuiPassthroughArgs),
@@ -123,9 +123,9 @@ enum Commands {
     Init(TuiPassthroughArgs),
     /// Bootstrap MCP config and/or skills directories.
     Setup(TuiPassthroughArgs),
-    /// Run the DeepSeek TUI non-interactive agent command.
+    /// Run the DS Code non-interactive agent command.
     Exec(TuiPassthroughArgs),
-    /// Run a DeepSeek-powered code review over a git diff.
+    /// Run a DS Code-powered code review over a git diff.
     Review(TuiPassthroughArgs),
     /// Apply a patch file or stdin to the working tree.
     Apply(TuiPassthroughArgs),
@@ -160,26 +160,26 @@ enum Commands {
     /// Generate shell completions.
     #[command(after_help = r#"Examples:
   Bash (current shell only):
-    source <(deepseek completion bash)
+    source <(ds completion bash)
 
   Bash (persistent, Linux/bash-completion):
     mkdir -p ~/.local/share/bash-completion/completions
-    deepseek completion bash > ~/.local/share/bash-completion/completions/deepseek
+    ds completion bash > ~/.local/share/bash-completion/completions/ds
     # Requires bash-completion to be installed and loaded by your shell.
 
   Zsh:
     mkdir -p ~/.zfunc
-    deepseek completion zsh > ~/.zfunc/_deepseek
+    ds completion zsh > ~/.zfunc/_ds
     # Add to ~/.zshrc if needed:
     #   fpath=(~/.zfunc $fpath)
     #   autoload -Uz compinit && compinit
 
   Fish:
     mkdir -p ~/.config/fish/completions
-    deepseek completion fish > ~/.config/fish/completions/deepseek.fish
+    ds completion fish > ~/.config/fish/completions/ds.fish
 
   PowerShell (current shell only):
-    deepseek completion powershell | Out-String | Invoke-Expression
+    ds completion powershell | Out-String | Invoke-Expression
 
 The command prints the completion script to stdout; redirect it to a path your shell loads automatically."#)]
     Completion {
@@ -188,7 +188,7 @@ The command prints the completion script to stdout; redirect it to a path your s
     },
     /// Print a usage rollup from the audit log and session store.
     Metrics(MetricsArgs),
-    /// Check for and apply updates to the `deepseek` binary.
+    /// Check for and apply updates to the `ds` binary.
     Update,
 }
 
@@ -505,7 +505,7 @@ fn run() -> Result<()> {
         Some(Commands::AppServer(args)) => run_app_server_command(args),
         Some(Commands::Completion { shell }) => {
             let mut cmd = Cli::command();
-            generate(shell, &mut cmd, "deepseek", &mut io::stdout());
+            generate(shell, &mut cmd, "ds", &mut io::stdout());
             Ok(())
         }
         Some(Commands::Metrics(args)) => run_metrics_command(args),
@@ -685,7 +685,7 @@ const PROVIDER_LIST: [ProviderKind; 9] = [
 #[cfg(test)]
 fn no_keyring_secrets() -> Secrets {
     Secrets::new(std::sync::Arc::new(
-        deepseek_secrets::InMemoryKeyringStore::new(),
+        ds_secrets::InMemoryKeyringStore::new(),
     ))
 }
 
@@ -726,10 +726,10 @@ fn provider_env_set(provider: ProviderKind) -> bool {
 
 fn provider_env_vars(provider: ProviderKind) -> &'static [&'static str] {
     match provider {
-        ProviderKind::Deepseek => &["DEEPSEEK_API_KEY"],
+        ProviderKind::Deepseek => &["DS_API_KEY"],
         ProviderKind::Openrouter => &["OPENROUTER_API_KEY"],
         ProviderKind::Novita => &["NOVITA_API_KEY"],
-        ProviderKind::NvidiaNim => &["NVIDIA_API_KEY", "NVIDIA_NIM_API_KEY", "DEEPSEEK_API_KEY"],
+        ProviderKind::NvidiaNim => &["NVIDIA_API_KEY", "NVIDIA_NIM_API_KEY", "DS_API_KEY"],
         ProviderKind::Fireworks => &["FIREWORKS_API_KEY"],
         ProviderKind::Sglang => &["SGLANG_API_KEY"],
         ProviderKind::Vllm => &["VLLM_API_KEY"],
@@ -1318,7 +1318,7 @@ fn run_dispatcher_resume_picker(
 
     println!();
     println!("Windows note: enter a session id or prefix from the list above.");
-    println!("You can also run `deepseek resume --last` to skip this prompt.");
+    println!("You can also run `ds resume --last` to skip this prompt.");
     print!("Session id/prefix (Enter to cancel): ");
     io::stdout().flush()?;
 
@@ -1383,14 +1383,14 @@ fn build_tui_command(
             | ProviderKind::Ollama
     ) {
         bail!(
-            "The interactive TUI supports DeepSeek, NVIDIA NIM, OpenAI-compatible, OpenRouter, Novita, Fireworks, SGLang, vLLM, and Ollama providers. Remove --provider {} or use `deepseek model ...` for provider registry inspection.",
+            "The interactive TUI supports DeepSeek, NVIDIA NIM, OpenAI-compatible, OpenRouter, Novita, Fireworks, SGLang, vLLM, and Ollama providers. Remove --provider {} or use `ds model ...` for provider registry inspection.",
             resolved_runtime.provider.as_str()
         );
     }
 
-    cmd.env("DEEPSEEK_MODEL", &resolved_runtime.model);
-    cmd.env("DEEPSEEK_BASE_URL", &resolved_runtime.base_url);
-    cmd.env("DEEPSEEK_PROVIDER", resolved_runtime.provider.as_str());
+    cmd.env("DS_MODEL", &resolved_runtime.model);
+    cmd.env("DS_BASE_URL", &resolved_runtime.base_url);
+    cmd.env("DS_PROVIDER", resolved_runtime.provider.as_str());
     if !resolved_runtime.http_headers.is_empty() {
         let encoded = resolved_runtime
             .http_headers
@@ -1398,10 +1398,10 @@ fn build_tui_command(
             .map(|(name, value)| format!("{}={}", name.trim(), value.trim()))
             .collect::<Vec<_>>()
             .join(",");
-        cmd.env("DEEPSEEK_HTTP_HEADERS", encoded);
+        cmd.env("DS_HTTP_HEADERS", encoded);
     }
     if let Some(api_key) = resolved_runtime.api_key.as_ref() {
-        cmd.env("DEEPSEEK_API_KEY", api_key);
+        cmd.env("DS_API_KEY", api_key);
         if resolved_runtime.provider == ProviderKind::Openai {
             cmd.env("OPENAI_API_KEY", api_key);
         }
@@ -1409,36 +1409,36 @@ fn build_tui_command(
             .api_key_source
             .unwrap_or(RuntimeApiKeySource::Env)
             .as_env_value();
-        cmd.env("DEEPSEEK_API_KEY_SOURCE", source);
+        cmd.env("DS_API_KEY_SOURCE", source);
     }
 
     if let Some(model) = cli.model.as_ref() {
-        cmd.env("DEEPSEEK_MODEL", model);
+        cmd.env("DS_MODEL", model);
     }
     if let Some(output_mode) = cli.output_mode.as_ref() {
-        cmd.env("DEEPSEEK_OUTPUT_MODE", output_mode);
+        cmd.env("DS_OUTPUT_MODE", output_mode);
     }
     if let Some(log_level) = cli.log_level.as_ref() {
-        cmd.env("DEEPSEEK_LOG_LEVEL", log_level);
+        cmd.env("DS_LOG_LEVEL", log_level);
     }
     if let Some(telemetry) = cli.telemetry {
-        cmd.env("DEEPSEEK_TELEMETRY", telemetry.to_string());
+        cmd.env("DS_TELEMETRY", telemetry.to_string());
     }
     if let Some(policy) = cli.approval_policy.as_ref() {
-        cmd.env("DEEPSEEK_APPROVAL_POLICY", policy);
+        cmd.env("DS_APPROVAL_POLICY", policy);
     }
     if let Some(mode) = cli.sandbox_mode.as_ref() {
-        cmd.env("DEEPSEEK_SANDBOX_MODE", mode);
+        cmd.env("DS_SANDBOX_MODE", mode);
     }
     if let Some(api_key) = cli.api_key.as_ref() {
-        cmd.env("DEEPSEEK_API_KEY", api_key);
+        cmd.env("DS_API_KEY", api_key);
         if resolved_runtime.provider == ProviderKind::Openai {
             cmd.env("OPENAI_API_KEY", api_key);
         }
-        cmd.env("DEEPSEEK_API_KEY_SOURCE", "cli");
+        cmd.env("DS_API_KEY_SOURCE", "cli");
     }
     if let Some(base_url) = cli.base_url.as_ref() {
-        cmd.env("DEEPSEEK_BASE_URL", base_url);
+        cmd.env("DS_BASE_URL", base_url);
     }
 
     Ok(cmd)
@@ -1447,7 +1447,7 @@ fn build_tui_command(
 fn exit_with_tui_status(status: std::process::ExitStatus) -> Result<()> {
     match status.code() {
         Some(code) => std::process::exit(code),
-        None => bail!("deepseek-tui terminated by signal"),
+        None => bail!("DS-Code terminated by signal"),
     }
 }
 
@@ -1459,7 +1459,7 @@ fn delegate_simple_tui(args: Vec<String>) -> Result<()> {
         .map_err(|err| anyhow!("{}", tui_spawn_error(&tui, &err)))?;
     match status.code() {
         Some(code) => std::process::exit(code),
-        None => bail!("deepseek-tui terminated by signal"),
+        None => bail!("DS-Code terminated by signal"),
     }
 }
 
@@ -1467,36 +1467,36 @@ fn tui_spawn_error(tui: &Path, err: &io::Error) -> String {
     format!(
         "failed to spawn companion TUI binary at {}: {err}\n\
 \n\
-The `deepseek` dispatcher found a `deepseek-tui` file, but the OS refused \
+The `ds` dispatcher found a `DS-Code` file, but the OS refused \
 to execute it. Common fixes:\n\
-  - Reinstall with `npm install -g deepseek-tui`, or run `deepseek update`.\n\
-  - On Windows, run `where deepseek` and `where deepseek-tui`; both should \
+  - Reinstall with `npm install -g ds-code`, or run `ds update`.\n\
+  - On Windows, run `where ds` and `where DS-Code`; both should \
 come from the same install directory.\n\
-  - If you downloaded release assets manually, keep both `deepseek` and \
-`deepseek-tui` binaries together and make sure the TUI binary is executable.\n\
-  - Set DEEPSEEK_TUI_BIN to the absolute path of a working `deepseek-tui` \
+  - If you downloaded release assets manually, keep both `ds` and \
+`DS-Code` binaries together and make sure the TUI binary is executable.\n\
+  - Set DS_TUI_BIN to the absolute path of a working `DS-Code` \
 binary.",
         tui.display()
     )
 }
 
-/// Resolve the sibling `deepseek-tui` executable next to the running
+/// Resolve the sibling `DS-Code` executable next to the running
 /// dispatcher. Honours platform executable suffix (`.exe` on Windows) so
 /// the npm-distributed Windows package — which ships
-/// `bin/downloads/deepseek-tui.exe` — is found by `Path::exists` (#247).
+/// `bin/downloads/DS-Code.exe` — is found by `Path::exists` (#247).
 ///
-/// `DEEPSEEK_TUI_BIN` is consulted first as an explicit override for
+/// `DS_TUI_BIN` is consulted first as an explicit override for
 /// custom installs and CI test layouts. On Windows we additionally try
 /// the suffix-less name as a fallback for users who already manually
 /// renamed the file before this fix landed.
 fn locate_sibling_tui_binary() -> Result<PathBuf> {
-    if let Ok(override_path) = std::env::var("DEEPSEEK_TUI_BIN") {
+    if let Ok(override_path) = std::env::var("DS_TUI_BIN") {
         let candidate = PathBuf::from(override_path);
         if candidate.is_file() {
             return Ok(candidate);
         }
         bail!(
-            "DEEPSEEK_TUI_BIN points at {}, which is not a regular file.",
+            "DS_TUI_BIN points at {}, which is not a regular file.",
             candidate.display()
         );
     }
@@ -1507,39 +1507,39 @@ fn locate_sibling_tui_binary() -> Result<PathBuf> {
     }
 
     // Build a stable error path so the user sees the platform-correct
-    // expected name, not "deepseek-tui" on Windows.
-    let expected = current.with_file_name(format!("deepseek-tui{}", std::env::consts::EXE_SUFFIX));
+    // expected name, not "DS-Code" on Windows.
+    let expected = current.with_file_name(format!("DS-Code{}", std::env::consts::EXE_SUFFIX));
     bail!(
-        "Companion `deepseek-tui` binary not found at {}.\n\
+        "Companion `DS-Code` binary not found at {}.\n\
 \n\
-The `deepseek` dispatcher delegates interactive sessions to a sibling \
-`deepseek-tui` binary. To fix this, install one of:\n\
-  • npm:    npm install -g deepseek-tui            (downloads both binaries)\n\
-  • cargo:  cargo install deepseek-tui-cli deepseek-tui --locked\n\
-  • GitHub Releases: download BOTH `deepseek-<platform>` AND \
-`deepseek-tui-<platform>` from https://github.com/Hmbown/DeepSeek-TUI/releases/latest \
+The `ds` dispatcher delegates interactive sessions to a sibling \
+`DS-Code` binary. To fix this, install one of:\n\
+  • npm:    npm install -g DS-Code            (downloads both binaries)\n\
+  • cargo:  cargo install DS-Code-cli DS-Code --locked\n\
+  • GitHub Releases: download BOTH `ds-<platform>` AND \
+`DS-Code-<platform>` from https://github.com/Hmbown/DS-Code/releases/latest \
 and place them in the same directory.\n\
 \n\
-Or set DEEPSEEK_TUI_BIN to the absolute path of an existing `deepseek-tui` binary.",
+Or set DS_TUI_BIN to the absolute path of an existing `DS-Code` binary.",
         expected.display()
     );
 }
 
 /// Return the first existing sibling-binary path under any of the names
-/// `deepseek-tui` might use on this platform. Pure function to keep
+/// `DS-Code` might use on this platform. Pure function to keep
 /// `locate_sibling_tui_binary` testable.
 fn sibling_tui_candidate(dispatcher: &Path) -> Option<PathBuf> {
     // Primary: platform-correct name. EXE_SUFFIX is "" on Unix and ".exe"
     // on Windows.
     let primary =
-        dispatcher.with_file_name(format!("deepseek-tui{}", std::env::consts::EXE_SUFFIX));
+        dispatcher.with_file_name(format!("DS-Code{}", std::env::consts::EXE_SUFFIX));
     if primary.is_file() {
         return Some(primary);
     }
     // Windows fallback: a user who manually renamed `.exe` away (per the
     // workaround in #247) still launches successfully under the new code.
     if cfg!(windows) {
-        let suffixless = dispatcher.with_file_name("deepseek-tui");
+        let suffixless = dispatcher.with_file_name("DS-Code");
         if suffixless.is_file() {
             return Some(suffixless);
         }
@@ -1651,13 +1651,13 @@ mod tests {
         use anyhow::Context;
         let inner = anyhow::anyhow!("TOML parse error at line 1, column 20");
         let err = Err::<(), _>(inner)
-            .context("failed to parse config at C:\\Users\\test\\.deepseek\\config.toml")
+            .context("failed to parse config at C:\\Users\\test\\.ds\\config.toml")
             .unwrap_err();
 
         // What `eprintln!("error: {err}")` prints (top context only).
         assert_eq!(
             err.to_string(),
-            "failed to parse config at C:\\Users\\test\\.deepseek\\config.toml",
+            "failed to parse config at C:\\Users\\test\\.ds\\config.toml",
         );
 
         // What the `for cause in err.chain().skip(1)` loop iterates over.
@@ -1667,7 +1667,7 @@ mod tests {
 
     #[test]
     fn parses_config_command_matrix() {
-        let cli = parse_ok(&["deepseek", "config", "get", "provider"]);
+        let cli = parse_ok(&["ds", "config", "get", "provider"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Config(ConfigArgs {
@@ -1675,7 +1675,7 @@ mod tests {
             })) if key == "provider"
         ));
 
-        let cli = parse_ok(&["deepseek", "config", "set", "model", "deepseek-v4-flash"]);
+        let cli = parse_ok(&["ds", "config", "set", "model", "deepseek-v4-flash"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Config(ConfigArgs {
@@ -1683,7 +1683,7 @@ mod tests {
             })) if key == "model" && value == "deepseek-v4-flash"
         ));
 
-        let cli = parse_ok(&["deepseek", "config", "unset", "model"]);
+        let cli = parse_ok(&["ds", "config", "unset", "model"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Config(ConfigArgs {
@@ -1692,13 +1692,13 @@ mod tests {
         ));
 
         assert!(matches!(
-            parse_ok(&["deepseek", "config", "list"]).command,
+            parse_ok(&["ds", "config", "list"]).command,
             Some(Commands::Config(ConfigArgs {
                 command: ConfigCommand::List
             }))
         ));
         assert!(matches!(
-            parse_ok(&["deepseek", "config", "path"]).command,
+            parse_ok(&["ds", "config", "path"]).command,
             Some(Commands::Config(ConfigArgs {
                 command: ConfigCommand::Path
             }))
@@ -1707,7 +1707,7 @@ mod tests {
 
     #[test]
     fn parses_model_command_matrix() {
-        let cli = parse_ok(&["deepseek", "model", "list"]);
+        let cli = parse_ok(&["ds", "model", "list"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Model(ModelArgs {
@@ -1715,7 +1715,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "model", "list", "--provider", "openai"]);
+        let cli = parse_ok(&["ds", "model", "list", "--provider", "openai"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Model(ModelArgs {
@@ -1725,7 +1725,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "model", "resolve", "deepseek-v4-flash"]);
+        let cli = parse_ok(&["ds", "model", "resolve", "deepseek-v4-flash"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Model(ModelArgs {
@@ -1757,7 +1757,7 @@ mod tests {
 
     #[test]
     fn parses_thread_command_matrix() {
-        let cli = parse_ok(&["deepseek", "thread", "list", "--all", "--limit", "50"]);
+        let cli = parse_ok(&["ds", "thread", "list", "--all", "--limit", "50"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Thread(ThreadArgs {
@@ -1768,7 +1768,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "thread", "read", "thread-1"]);
+        let cli = parse_ok(&["ds", "thread", "read", "thread-1"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Thread(ThreadArgs {
@@ -1776,7 +1776,7 @@ mod tests {
             })) if thread_id == "thread-1"
         ));
 
-        let cli = parse_ok(&["deepseek", "thread", "resume", "thread-2"]);
+        let cli = parse_ok(&["ds", "thread", "resume", "thread-2"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Thread(ThreadArgs {
@@ -1784,7 +1784,7 @@ mod tests {
             })) if thread_id == "thread-2"
         ));
 
-        let cli = parse_ok(&["deepseek", "thread", "fork", "thread-3"]);
+        let cli = parse_ok(&["ds", "thread", "fork", "thread-3"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Thread(ThreadArgs {
@@ -1792,7 +1792,7 @@ mod tests {
             })) if thread_id == "thread-3"
         ));
 
-        let cli = parse_ok(&["deepseek", "thread", "archive", "thread-4"]);
+        let cli = parse_ok(&["ds", "thread", "archive", "thread-4"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Thread(ThreadArgs {
@@ -1800,7 +1800,7 @@ mod tests {
             })) if thread_id == "thread-4"
         ));
 
-        let cli = parse_ok(&["deepseek", "thread", "unarchive", "thread-5"]);
+        let cli = parse_ok(&["ds", "thread", "unarchive", "thread-5"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Thread(ThreadArgs {
@@ -1808,7 +1808,7 @@ mod tests {
             })) if thread_id == "thread-5"
         ));
 
-        let cli = parse_ok(&["deepseek", "thread", "set-name", "thread-6", "My Thread"]);
+        let cli = parse_ok(&["ds", "thread", "set-name", "thread-6", "My Thread"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Thread(ThreadArgs {
@@ -1858,13 +1858,13 @@ mod tests {
             })) if host == "0.0.0.0"
         ));
 
-        let cli = parse_ok(&["deepseek", "app-server", "--stdio"]);
+        let cli = parse_ok(&["ds", "app-server", "--stdio"]);
         assert!(matches!(
             cli.command,
             Some(Commands::AppServer(AppServerArgs { stdio: true, .. }))
         ));
 
-        let cli = parse_ok(&["deepseek", "completion", "bash"]);
+        let cli = parse_ok(&["ds", "completion", "bash"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Completion { shell: Shell::Bash })
@@ -1873,25 +1873,25 @@ mod tests {
 
     #[test]
     fn parses_direct_tui_command_aliases() {
-        let cli = parse_ok(&["deepseek", "doctor"]);
+        let cli = parse_ok(&["ds", "doctor"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Doctor(TuiPassthroughArgs { ref args })) if args.is_empty()
         ));
 
-        let cli = parse_ok(&["deepseek", "models", "--json"]);
+        let cli = parse_ok(&["ds", "models", "--json"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Models(TuiPassthroughArgs { ref args })) if args == &["--json"]
         ));
 
-        let cli = parse_ok(&["deepseek", "resume", "abc123"]);
+        let cli = parse_ok(&["ds", "resume", "abc123"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Resume(TuiPassthroughArgs { ref args })) if args == &["abc123"]
         ));
 
-        let cli = parse_ok(&["deepseek", "setup", "--skills", "--local"]);
+        let cli = parse_ok(&["ds", "setup", "--skills", "--local"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Setup(TuiPassthroughArgs { ref args }))
@@ -1920,10 +1920,10 @@ mod tests {
     }
 
     #[test]
-    fn deepseek_login_writes_shared_config_and_preserves_tui_defaults() {
+    fn DS_login_writes_shared_config_and_preserves_tui_defaults() {
         let nanos = chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default();
         let path = std::env::temp_dir().join(format!(
-            "deepseek-cli-login-test-{}-{nanos}.toml",
+            "ds-cli-login-test-{}-{nanos}.toml",
             std::process::id()
         ));
         let mut store = ConfigStore::load(Some(path.clone())).expect("store should load");
@@ -1960,7 +1960,7 @@ mod tests {
 
     #[test]
     fn parses_auth_subcommand_matrix() {
-        let cli = parse_ok(&["deepseek", "auth", "set", "--provider", "deepseek"]);
+        let cli = parse_ok(&["ds", "auth", "set", "--provider", "deepseek"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
@@ -1991,7 +1991,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "auth", "get", "--provider", "novita"]);
+        let cli = parse_ok(&["ds", "auth", "get", "--provider", "novita"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
@@ -2001,7 +2001,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "auth", "clear", "--provider", "nvidia-nim"]);
+        let cli = parse_ok(&["ds", "auth", "clear", "--provider", "nvidia-nim"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
@@ -2011,7 +2011,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "auth", "set", "--provider", "fireworks"]);
+        let cli = parse_ok(&["ds", "auth", "set", "--provider", "fireworks"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
@@ -2023,7 +2023,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "auth", "get", "--provider", "sglang"]);
+        let cli = parse_ok(&["ds", "auth", "get", "--provider", "sglang"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
@@ -2033,7 +2033,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "auth", "get", "--provider", "vllm"]);
+        let cli = parse_ok(&["ds", "auth", "get", "--provider", "vllm"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
@@ -2043,7 +2043,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "auth", "set", "--provider", "ollama"]);
+        let cli = parse_ok(&["ds", "auth", "set", "--provider", "ollama"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
@@ -2055,7 +2055,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "auth", "list"]);
+        let cli = parse_ok(&["ds", "auth", "list"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
@@ -2063,7 +2063,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "auth", "migrate"]);
+        let cli = parse_ok(&["ds", "auth", "migrate"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
@@ -2071,7 +2071,7 @@ mod tests {
             }))
         ));
 
-        let cli = parse_ok(&["deepseek", "auth", "migrate", "--dry-run"]);
+        let cli = parse_ok(&["ds", "auth", "migrate", "--dry-run"]);
         assert!(matches!(
             cli.command,
             Some(Commands::Auth(AuthArgs {
@@ -2082,12 +2082,12 @@ mod tests {
 
     #[test]
     fn auth_set_writes_to_shared_config_file() {
-        use deepseek_secrets::{InMemoryKeyringStore, KeyringStore};
+        use ds_secrets::{InMemoryKeyringStore, KeyringStore};
         use std::sync::Arc;
 
         let nanos = chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default();
         let path = std::env::temp_dir().join(format!(
-            "deepseek-cli-auth-set-test-{}-{nanos}.toml",
+            "ds-cli-auth-set-test-{}-{nanos}.toml",
             std::process::id()
         ));
         let mut store = ConfigStore::load(Some(path.clone())).expect("store should load");
@@ -2124,7 +2124,7 @@ mod tests {
     fn auth_set_ollama_accepts_empty_key_and_records_base_url() {
         let nanos = chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default();
         let path = std::env::temp_dir().join(format!(
-            "deepseek-cli-auth-ollama-test-{}-{nanos}.toml",
+            "ds-cli-auth-ollama-test-{}-{nanos}.toml",
             std::process::id()
         ));
         let mut store = ConfigStore::load(Some(path.clone())).expect("store should load");
@@ -2153,12 +2153,12 @@ mod tests {
 
     #[test]
     fn auth_clear_removes_from_config() {
-        use deepseek_secrets::{InMemoryKeyringStore, KeyringStore};
+        use ds_secrets::{InMemoryKeyringStore, KeyringStore};
         use std::sync::Arc;
 
         let nanos = chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default();
         let path = std::env::temp_dir().join(format!(
-            "deepseek-cli-auth-clear-test-{}-{nanos}.toml",
+            "ds-cli-auth-clear-test-{}-{nanos}.toml",
             std::process::id()
         ));
         let mut store = ConfigStore::load(Some(path.clone())).expect("store should load");
@@ -2188,7 +2188,7 @@ mod tests {
 
     #[test]
     fn auth_status_and_list_only_probe_active_provider_keyring() {
-        use deepseek_secrets::{KeyringStore, SecretsError};
+        use ds_secrets::{KeyringStore, SecretsError};
         use std::sync::{Arc, Mutex};
 
         #[derive(Default)]
@@ -2217,7 +2217,7 @@ mod tests {
 
         let nanos = chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default();
         let path = std::env::temp_dir().join(format!(
-            "deepseek-cli-auth-active-keyring-test-{}-{nanos}.toml",
+            "ds-cli-auth-active-keyring-test-{}-{nanos}.toml",
             std::process::id()
         ));
         let mut store = ConfigStore::load(Some(path.clone())).expect("store should load");
@@ -2240,15 +2240,15 @@ mod tests {
 
     #[test]
     fn auth_status_reports_all_active_provider_sources_with_last4() {
-        use deepseek_secrets::{InMemoryKeyringStore, KeyringStore};
+        use ds_secrets::{InMemoryKeyringStore, KeyringStore};
         use std::sync::Arc;
 
         let _lock = env_lock();
-        let _env = ScopedEnvVar::set("DEEPSEEK_API_KEY", "sk-env-1111");
+        let _env = ScopedEnvVar::set("DS_API_KEY", "sk-env-1111");
 
         let nanos = chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default();
         let path = std::env::temp_dir().join(format!(
-            "deepseek-cli-auth-status-table-test-{}-{nanos}.toml",
+            "ds-cli-auth-status-table-test-{}-{nanos}.toml",
             std::process::id()
         ));
         let mut store = ConfigStore::load(Some(path.clone())).expect("store should load");
@@ -2268,7 +2268,7 @@ mod tests {
         assert!(output.contains("config file: "));
         assert!(output.contains("set, last4: ...3333"));
         assert!(output.contains("keyring: in-memory (test) (set, last4: ...2222)"));
-        assert!(output.contains("env var: DEEPSEEK_API_KEY (set, last4: ...1111)"));
+        assert!(output.contains("env var: DS_API_KEY (set, last4: ...1111)"));
         assert!(!output.contains("sk-config-3333"));
         assert!(!output.contains("sk-keyring-2222"));
         assert!(!output.contains("sk-env-1111"));
@@ -2278,12 +2278,12 @@ mod tests {
 
     #[test]
     fn dispatch_keyring_recovery_self_heals_into_config_file() {
-        use deepseek_secrets::{InMemoryKeyringStore, KeyringStore};
+        use ds_secrets::{InMemoryKeyringStore, KeyringStore};
         use std::sync::Arc;
 
         let nanos = chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default();
         let path = std::env::temp_dir().join(format!(
-            "deepseek-cli-dispatch-keyring-heal-test-{}-{nanos}.toml",
+            "ds-cli-dispatch-keyring-heal-test-{}-{nanos}.toml",
             std::process::id()
         ));
         let mut store = ConfigStore::load(Some(path.clone())).expect("store should load");
@@ -2329,7 +2329,7 @@ mod tests {
     fn logout_removes_plaintext_provider_keys() {
         let nanos = chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default();
         let path = std::env::temp_dir().join(format!(
-            "deepseek-cli-logout-test-{}-{nanos}.toml",
+            "ds-cli-logout-test-{}-{nanos}.toml",
             std::process::id()
         ));
         let mut store = ConfigStore::load(Some(path.clone())).expect("store should load");
@@ -2351,12 +2351,12 @@ mod tests {
 
     #[test]
     fn auth_migrate_moves_plaintext_keys_into_keyring_and_strips_file() {
-        use deepseek_secrets::{InMemoryKeyringStore, KeyringStore};
+        use ds_secrets::{InMemoryKeyringStore, KeyringStore};
         use std::sync::Arc;
 
         let nanos = chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default();
         let path = std::env::temp_dir().join(format!(
-            "deepseek-cli-auth-migrate-test-{}-{nanos}.toml",
+            "ds-cli-auth-migrate-test-{}-{nanos}.toml",
             std::process::id()
         ));
         let mut store = ConfigStore::load(Some(path.clone())).expect("store should load");
@@ -2396,12 +2396,12 @@ mod tests {
 
     #[test]
     fn auth_migrate_dry_run_does_not_modify_anything() {
-        use deepseek_secrets::{InMemoryKeyringStore, KeyringStore};
+        use ds_secrets::{InMemoryKeyringStore, KeyringStore};
         use std::sync::Arc;
 
         let nanos = chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default();
         let path = std::env::temp_dir().join(format!(
-            "deepseek-cli-auth-migrate-dry-{}-{nanos}.toml",
+            "ds-cli-auth-migrate-dry-{}-{nanos}.toml",
             std::process::id()
         ));
         let mut store = ConfigStore::load(Some(path.clone())).expect("store should load");
@@ -2430,7 +2430,7 @@ mod tests {
             "--provider",
             "openai",
             "--config",
-            "/tmp/deepseek.toml",
+            "/tmp/ds.toml",
             "--profile",
             "work",
             "--model",
@@ -2458,7 +2458,7 @@ mod tests {
         ]);
 
         assert!(matches!(cli.provider, Some(ProviderArg::Openai)));
-        assert_eq!(cli.config, Some(PathBuf::from("/tmp/deepseek.toml")));
+        assert_eq!(cli.config, Some(PathBuf::from("/tmp/ds.toml")));
         assert_eq!(cli.profile.as_deref(), Some("work"));
         assert_eq!(cli.model.as_deref(), Some("gpt-4.1"));
         assert_eq!(cli.output_mode.as_deref(), Some("json"));
@@ -2483,9 +2483,9 @@ mod tests {
             .join(format!("custom-tui{}", std::env::consts::EXE_SUFFIX));
         std::fs::write(&custom, b"").unwrap();
         let custom_str = custom.to_string_lossy().into_owned();
-        let _bin = ScopedEnvVar::set("DEEPSEEK_TUI_BIN", &custom_str);
+        let _bin = ScopedEnvVar::set("DS_TUI_BIN", &custom_str);
 
-        let cli = parse_ok(&["deepseek", "--provider", "openai"]);
+        let cli = parse_ok(&["ds", "--provider", "openai"]);
         let resolved = ResolvedRuntimeOptions {
             provider: ProviderKind::Openai,
             model: "glm-5".to_string(),
@@ -2503,19 +2503,19 @@ mod tests {
 
         let cmd = build_tui_command(&cli, &resolved, Vec::new()).expect("command");
         assert_eq!(
-            command_env(&cmd, "DEEPSEEK_PROVIDER").as_deref(),
+            command_env(&cmd, "DS_PROVIDER").as_deref(),
             Some("openai")
         );
         assert_eq!(
-            command_env(&cmd, "DEEPSEEK_MODEL").as_deref(),
+            command_env(&cmd, "DS_MODEL").as_deref(),
             Some("glm-5")
         );
         assert_eq!(
-            command_env(&cmd, "DEEPSEEK_BASE_URL").as_deref(),
+            command_env(&cmd, "DS_BASE_URL").as_deref(),
             Some("https://openai-compatible.example/v4")
         );
         assert_eq!(
-            command_env(&cmd, "DEEPSEEK_API_KEY").as_deref(),
+            command_env(&cmd, "DS_API_KEY").as_deref(),
             Some("resolved-openai-key")
         );
         assert_eq!(
@@ -2523,14 +2523,14 @@ mod tests {
             Some("resolved-openai-key")
         );
         assert_eq!(
-            command_env(&cmd, "DEEPSEEK_API_KEY_SOURCE").as_deref(),
+            command_env(&cmd, "DS_API_KEY_SOURCE").as_deref(),
             Some("keyring")
         );
     }
 
     #[test]
     fn parses_top_level_prompt_flag_for_canonical_one_shot() {
-        let cli = parse_ok(&["deepseek", "-p", "Reply with exactly OK."]);
+        let cli = parse_ok(&["ds", "-p", "Reply with exactly OK."]);
 
         assert_eq!(cli.prompt_flag.as_deref(), Some("Reply with exactly OK."));
         assert_eq!(cli.prompt, None);
@@ -2538,7 +2538,7 @@ mod tests {
 
     #[test]
     fn root_help_surface_contains_expected_subcommands_and_globals() {
-        let rendered = help_for(&["deepseek", "--help"]);
+        let rendered = help_for(&["ds", "--help"]);
 
         for token in [
             "run",
@@ -2609,18 +2609,18 @@ mod tests {
                 vec![
                     "<SHELL>",
                     "bash",
-                    "source <(deepseek completion bash)",
-                    "~/.local/share/bash-completion/completions/deepseek",
+                    "source <(ds completion bash)",
+                    "~/.local/share/bash-completion/completions/ds",
                     "fpath=(~/.zfunc $fpath)",
-                    "deepseek completion fish > ~/.config/fish/completions/deepseek.fish",
-                    "deepseek completion powershell | Out-String | Invoke-Expression",
+                    "ds completion fish > ~/.config/fish/completions/ds.fish",
+                    "ds completion powershell | Out-String | Invoke-Expression",
                 ],
             ),
             ("metrics", vec!["--json", "--since"]),
         ];
 
         for (subcommand, expected_tokens) in cases {
-            let argv = ["deepseek", subcommand, "--help"];
+            let argv = ["ds", subcommand, "--help"];
             let rendered = help_for(&argv);
             for token in expected_tokens {
                 assert!(
@@ -2632,8 +2632,8 @@ mod tests {
     }
 
     /// Regression for issue #247: on Windows the dispatcher must find the
-    /// sibling `deepseek-tui.exe`, not bail out looking for an
-    /// extension-less `deepseek-tui`. The candidate resolver also accepts
+    /// sibling `DS-Code.exe`, not bail out looking for an
+    /// extension-less `DS-Code`. The candidate resolver also accepts
     /// the suffix-less name on Windows so users who manually renamed the
     /// file as a workaround keep working after the upgrade.
     #[test]
@@ -2641,7 +2641,7 @@ mod tests {
         let dir = tempfile::TempDir::new().expect("tempdir");
         let dispatcher = dir
             .path()
-            .join("deepseek")
+            .join("ds")
             .with_extension(std::env::consts::EXE_EXTENSION);
         // Touch the dispatcher so its parent dir is the lookup root.
         std::fs::write(&dispatcher, b"").unwrap();
@@ -2650,7 +2650,7 @@ mod tests {
         assert!(sibling_tui_candidate(&dispatcher).is_none());
 
         let target =
-            dispatcher.with_file_name(format!("deepseek-tui{}", std::env::consts::EXE_SUFFIX));
+            dispatcher.with_file_name(format!("DS-Code{}", std::env::consts::EXE_SUFFIX));
         std::fs::write(&target, b"").unwrap();
 
         let found = sibling_tui_candidate(&dispatcher).expect("must locate sibling");
@@ -2660,12 +2660,12 @@ mod tests {
     #[test]
     fn dispatcher_spawn_error_names_path_and_recovery_checks() {
         let err = io::Error::new(io::ErrorKind::PermissionDenied, "access is denied");
-        let message = tui_spawn_error(Path::new("C:/tools/deepseek-tui.exe"), &err);
+        let message = tui_spawn_error(Path::new("C:/tools/DS-Code.exe"), &err);
 
-        assert!(message.contains("C:/tools/deepseek-tui.exe"));
+        assert!(message.contains("C:/tools/DS-Code.exe"));
         assert!(message.contains("access is denied"));
-        assert!(message.contains("where deepseek"));
-        assert!(message.contains("DEEPSEEK_TUI_BIN"));
+        assert!(message.contains("where ds"));
+        assert!(message.contains("DS_TUI_BIN"));
     }
 
     /// Windows-only fallback: the user from #247 manually renamed the
@@ -2676,19 +2676,19 @@ mod tests {
     #[test]
     fn sibling_tui_candidate_windows_falls_back_to_suffixless() {
         let dir = tempfile::TempDir::new().expect("tempdir");
-        let dispatcher = dir.path().join("deepseek.exe");
+        let dispatcher = dir.path().join("ds.exe");
         std::fs::write(&dispatcher, b"").unwrap();
 
         // Only the suffixless name exists — emulates the manual rename.
-        let suffixless = dispatcher.with_file_name("deepseek-tui");
+        let suffixless = dispatcher.with_file_name("DS-Code");
         std::fs::write(&suffixless, b"").unwrap();
 
         let found = sibling_tui_candidate(&dispatcher)
-            .expect("Windows fallback must locate suffixless deepseek-tui");
+            .expect("Windows fallback must locate suffixless DS-Code");
         assert_eq!(found, suffixless);
     }
 
-    /// `DEEPSEEK_TUI_BIN` overrides the discovery path. Useful for
+    /// `DS_TUI_BIN` overrides the discovery path. Useful for
     /// custom Windows install layouts and CI test rigs.
     #[test]
     fn locate_sibling_tui_binary_honours_env_override() {
@@ -2699,7 +2699,7 @@ mod tests {
             .join(format!("custom-tui{}", std::env::consts::EXE_SUFFIX));
         std::fs::write(&custom, b"").unwrap();
         let custom_str = custom.to_string_lossy().into_owned();
-        let _bin = ScopedEnvVar::set("DEEPSEEK_TUI_BIN", &custom_str);
+        let _bin = ScopedEnvVar::set("DS_TUI_BIN", &custom_str);
 
         let resolved = locate_sibling_tui_binary().expect("override must resolve");
         assert_eq!(resolved, custom);

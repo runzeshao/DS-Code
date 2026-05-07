@@ -1,4 +1,4 @@
-//! Core engine module for `DeepSeek` CLI.
+//! Core engine module for `ds` CLI.
 //!
 //! This module provides the event-driven architecture that separates
 //! the UI from the AI interaction logic:

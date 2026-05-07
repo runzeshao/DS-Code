@@ -19,8 +19,8 @@ pub fn note(app: &mut App, content: Option<&str>) -> CommandResult {
         return CommandResult::error("Note content cannot be empty");
     }
 
-    // Determine notes path: workspace/.deepseek/notes.md
-    let notes_path = app.workspace.join(".deepseek").join("notes.md");
+    // Determine notes path: workspace/.ds/notes.md
+    let notes_path = app.workspace.join(".ds").join("notes.md");
 
     // Ensure parent directory exists
     if let Some(parent) = notes_path.parent()
@@ -108,7 +108,7 @@ mod tests {
         let msg = result.message.unwrap();
         assert!(msg.contains("Note appended to"));
 
-        let notes_path = tmpdir.path().join(".deepseek").join("notes.md");
+        let notes_path = tmpdir.path().join(".ds").join("notes.md");
         assert!(notes_path.exists());
         let content = std::fs::read_to_string(&notes_path).unwrap();
         assert!(content.contains("Test note content"));
@@ -121,7 +121,7 @@ mod tests {
         note(&mut app, Some("First note"));
         note(&mut app, Some("Second note"));
 
-        let notes_path = tmpdir.path().join(".deepseek").join("notes.md");
+        let notes_path = tmpdir.path().join(".ds").join("notes.md");
         let content = std::fs::read_to_string(&notes_path).unwrap();
         assert!(content.contains("First note"));
         assert!(content.contains("Second note"));

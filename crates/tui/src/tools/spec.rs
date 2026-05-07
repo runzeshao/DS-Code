@@ -19,7 +19,7 @@ use crate::network_policy::NetworkPolicyDecider;
 use crate::sandbox::backend::SandboxBackend;
 use crate::tools::shell::{SharedShellManager, new_shared_shell_manager};
 #[allow(unused_imports)]
-pub use deepseek_tools::{
+pub use ds_tools::{
     ApprovalRequirement, ToolCapability, ToolError, ToolResult, optional_bool, optional_str,
     optional_u64, required_str, required_u64,
 };
@@ -97,7 +97,7 @@ pub struct ToolContext {
     /// Namespace for tool state that should be scoped to the current session/thread.
     pub state_namespace: String,
     /// User-trusted external paths the agent may read/write even when they
-    /// fall outside `workspace`. Loaded from `~/.deepseek/workspace-trust.json`
+    /// fall outside `workspace`. Loaded from `~/.ds/workspace-trust.json`
     /// and refreshed when the user runs `/trust add <path>`. Distinct from
     /// `trust_mode`, which is the all-or-nothing legacy switch (#29).
     pub trusted_external_paths: Vec<PathBuf>,
@@ -146,8 +146,8 @@ impl ToolContext {
     pub fn new(workspace: impl Into<PathBuf>) -> Self {
         let workspace = workspace.into();
         let shell_manager = new_shared_shell_manager(workspace.clone());
-        let notes_path = workspace.join(".deepseek").join("notes.md");
-        let mcp_config_path = workspace.join(".deepseek").join("mcp.json");
+        let notes_path = workspace.join(".ds").join("notes.md");
+        let mcp_config_path = workspace.join(".ds").join("mcp.json");
         Self {
             workspace,
             shell_manager,
@@ -270,7 +270,7 @@ impl ToolContext {
     }
 
     /// Set the user's trusted external paths (loaded from
-    /// `~/.deepseek/workspace-trust.json`). See [`Self::resolve_path`] for
+    /// `~/.ds/workspace-trust.json`). See [`Self::resolve_path`] for
     /// how the list is consulted.
     #[must_use]
     pub fn with_trusted_external_paths(mut self, paths: Vec<PathBuf>) -> Self {
@@ -400,7 +400,7 @@ impl ToolContext {
 
         // Validate it's under workspace, OR is under a user-trusted external
         // path (`/trust add <path>` from the slash command, persisted in
-        // `~/.deepseek/workspace-trust.json`).
+        // `~/.ds/workspace-trust.json`).
         if !canonical.starts_with(&workspace_canonical)
             && !canonical.starts_with(&workspace_normalized)
             && !self.is_trusted_external_path(&canonical)

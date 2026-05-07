@@ -8,7 +8,7 @@ const {
   allAssetNames,
   CHECKSUM_MANIFEST,
   detectBinaryNames,
-} = require("../../npm/deepseek-tui/scripts/artifacts");
+} = require("../../npm/DS-Code/scripts/artifacts");
 
 async function sha256(filePath) {
   const content = await fs.readFile(filePath);
@@ -17,8 +17,8 @@ async function sha256(filePath) {
 
 async function main() {
   const prepareAllAssets =
-    process.env.DEEPSEEK_TUI_PREPARE_ALL_ASSETS === "1" ||
-    process.env.DEEPSEEK_PREPARE_ALL_ASSETS === "1";
+    process.env.DS_TUI_PREPARE_ALL_ASSETS === "1" ||
+    process.env.DS_PREPARE_ALL_ASSETS === "1";
   const outputDir = path.resolve(
     process.argv[2] || path.join("target", "npm-release-assets"),
   );
@@ -30,11 +30,11 @@ async function main() {
 
   const assets = [
     {
-      source: path.join(buildDir, isWindows ? "deepseek.exe" : "deepseek"),
+      source: path.join(buildDir, isWindows ? "deepseek.exe" : "ds"),
       target: deepseek,
     },
     {
-      source: path.join(buildDir, isWindows ? "deepseek-tui.exe" : "deepseek-tui"),
+      source: path.join(buildDir, isWindows ? "DS-Code.exe" : "DS-Code"),
       target: tui,
     },
   ];
@@ -45,9 +45,9 @@ async function main() {
         continue;
       }
       assets.push({
-        source: assetName.startsWith("deepseek-tui")
-          ? path.join(buildDir, isWindows ? "deepseek-tui.exe" : "deepseek-tui")
-          : path.join(buildDir, isWindows ? "deepseek.exe" : "deepseek"),
+        source: assetName.startsWith("DS-Code")
+          ? path.join(buildDir, isWindows ? "DS-Code.exe" : "DS-Code")
+          : path.join(buildDir, isWindows ? "deepseek.exe" : "ds"),
         target: assetName,
       });
     }

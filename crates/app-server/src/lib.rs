@@ -6,17 +6,17 @@ use anyhow::Result;
 use axum::extract::State;
 use axum::routing::{get, post};
 use axum::{Json, Router};
-use deepseek_agent::ModelRegistry;
-use deepseek_config::{CliRuntimeOverrides, ConfigStore};
-use deepseek_core::Runtime;
-use deepseek_execpolicy::ExecPolicyEngine;
-use deepseek_hooks::{HookDispatcher, JsonlHookSink, StdoutHookSink};
-use deepseek_mcp::McpManager;
-use deepseek_protocol::{
+use ds_agent::ModelRegistry;
+use ds_config::{CliRuntimeOverrides, ConfigStore};
+use ds_core::Runtime;
+use ds_execpolicy::ExecPolicyEngine;
+use ds_hooks::{HookDispatcher, JsonlHookSink, StdoutHookSink};
+use ds_mcp::McpManager;
+use ds_protocol::{
     AppRequest, AppResponse, PromptRequest, PromptResponse, ThreadRequest, ThreadResponse,
 };
-use deepseek_state::StateStore;
-use deepseek_tools::{ToolCall, ToolRegistry};
+use ds_state::StateStore;
+use ds_tools::{ToolCall, ToolRegistry};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -33,7 +33,7 @@ pub struct AppServerOptions {
 #[derive(Clone)]
 struct AppState {
     config_path: Option<PathBuf>,
-    config: Arc<RwLock<deepseek_config::ConfigToml>>,
+    config: Arc<RwLock<ds_config::ConfigToml>>,
     runtime: Arc<Mutex<Runtime>>,
     registry: ModelRegistry,
 }
@@ -176,7 +176,7 @@ async fn healthz() -> Json<Value> {
     Json(json!({
         "status": "ok",
         "protocol": "v2",
-        "service": "deepseek-app-server"
+        "service": "ds-app-server"
     }))
 }
 
@@ -230,7 +230,7 @@ async fn tool_handler(
     match runtime
         .invoke_tool(
             req.call,
-            deepseek_execpolicy::AskForApproval::OnRequest,
+            ds_execpolicy::AskForApproval::OnRequest,
             &cwd,
         )
         .await
@@ -276,7 +276,7 @@ fn build_state(config_path: Option<PathBuf>) -> Result<AppState> {
     let hook_log_path = config_path
         .as_ref()
         .and_then(|p| p.parent().map(|parent| parent.join("events.jsonl")))
-        .unwrap_or_else(|| PathBuf::from(".deepseek/events.jsonl"));
+        .unwrap_or_else(|| PathBuf::from(".ds/events.jsonl"));
     hooks.add_sink(Arc::new(JsonlHookSink::new(hook_log_path)));
 
     let runtime = Runtime::new(
@@ -398,7 +398,7 @@ async fn dispatch_stdio_request(
         "healthz" | "app/healthz" => StdioDispatchResult {
             result: json!({
                 "status": "ok",
-                "service": "deepseek-app-server",
+                "service": "ds-app-server",
                 "transport": "stdio"
             }),
             should_exit: false,
@@ -750,8 +750,8 @@ async fn process_app_request(state: &AppState, req: AppRequest) -> AppResponse {
         AppRequest::ThreadLoadedList => {
             let mut runtime = state.runtime.lock().await;
             let response = runtime
-                .handle_thread(deepseek_protocol::ThreadRequest::List(
-                    deepseek_protocol::ThreadListParams {
+                .handle_thread(ds_protocol::ThreadRequest::List(
+                    ds_protocol::ThreadListParams {
                         include_archived: false,
                         limit: Some(50),
                     },
@@ -773,7 +773,7 @@ async fn process_app_request(state: &AppState, req: AppRequest) -> AppResponse {
     }
 }
 
-async fn persist_config(state: &AppState, config: deepseek_config::ConfigToml) -> Result<()> {
+async fn persist_config(state: &AppState, config: ds_config::ConfigToml) -> Result<()> {
     if state.config_path.is_none() {
         return Ok(());
     }

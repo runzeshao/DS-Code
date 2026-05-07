@@ -1,10 +1,10 @@
-//! `deepseek metrics` — reads the audit log and session/task stores and prints
+//! `ds metrics` — reads the audit log and session/task stores and prints
 //! a human-readable usage rollup.
 //!
 //! Data sources:
-//! - `~/.deepseek/audit.log`   — one JSON line per event (approvals, credentials)
-//! - `~/.deepseek/sessions/`   — saved session JSON files (tool call history)
-//! - `~/.deepseek/tasks/runtime/events/` — runtime thread JSONL event streams
+//! - `~/.ds/audit.log`   — one JSON line per event (approvals, credentials)
+//! - `~/.ds/sessions/`   — saved session JSON files (tool call history)
+//! - `~/.ds/tasks/runtime/events/` — runtime thread JSONL event streams
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -17,7 +17,7 @@ use serde_json::Value;
 // Public entry-point
 // ──────────────────────────────────────────────────────────────────────────────
 
-/// Arguments accepted by `deepseek metrics`.
+/// Arguments accepted by `ds metrics`.
 #[derive(Debug, Default)]
 pub struct MetricsArgs {
     /// Emit machine-readable JSON instead of human text.
@@ -27,7 +27,7 @@ pub struct MetricsArgs {
 }
 
 pub fn run(args: MetricsArgs) -> Result<()> {
-    let base = deepseek_home();
+    let base = ds_home();
 
     // Collect data from every source; treat missing files as empty.
     let mut rollup = Rollup::default();
@@ -822,16 +822,16 @@ fn print_human(rollup: &Rollup) {
 // Helpers
 // ──────────────────────────────────────────────────────────────────────────────
 
-fn deepseek_home() -> PathBuf {
-    // Respect DEEPSEEK_HOME env override; fall back to ~/.deepseek.
-    if let Ok(v) = std::env::var("DEEPSEEK_HOME")
+fn ds_home() -> PathBuf {
+    // Respect DS_HOME env override; fall back to ~/.ds.
+    if let Ok(v) = std::env::var("DS_HOME")
         && !v.is_empty()
     {
         return PathBuf::from(v);
     }
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".deepseek")
+        .join(".ds")
 }
 
 /// Parse a timestamp from a JSON value field (tries RFC3339).

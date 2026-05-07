@@ -1,7 +1,7 @@
-//! Self-update for the `deepseek` binary.
+//! Self-update for the `ds` binary.
 //!
 //! The `update` subcommand fetches the latest release from
-//! `github.com/Hmbown/DeepSeek-TUI/releases/latest`, downloads the
+//! `github.com/Hmbown/DS-Code/releases/latest`, downloads the
 //! platform-correct binary, verifies its SHA256 checksum, and atomically
 //! replaces the currently running binary.
 
@@ -96,11 +96,11 @@ pub(crate) fn binary_prefix_for_exe(current_exe: &Path) -> &'static str {
     let exe_name = current_exe
         .file_name()
         .and_then(|name| name.to_str())
-        .unwrap_or("deepseek");
-    if exe_name.contains("deepseek-tui") {
-        "deepseek-tui"
+        .unwrap_or("ds");
+    if exe_name.contains("DS-Code") {
+        "DS-Code"
     } else {
-        "deepseek"
+        "ds"
     }
 }
 
@@ -142,14 +142,14 @@ struct Asset {
 
 /// Fetch the latest release metadata from GitHub.
 fn fetch_latest_release() -> Result<Release> {
-    let url = "https://api.github.com/repos/Hmbown/DeepSeek-TUI/releases/latest";
+    let url = "https://api.github.com/repos/Hmbown/DS-Code/releases/latest";
     let output = Command::new("curl")
         .args([
             "-sSfL",
             "-H",
             "Accept: application/vnd.github+json",
             "-H",
-            "User-Agent: deepseek-tui-updater",
+            "User-Agent: DS-Code-updater",
             url,
         ])
         .output()
@@ -203,7 +203,7 @@ fn replace_binary(target: &Path, new_bytes: &[u8]) -> Result<()> {
         .unwrap_or_else(|| Path::new("."));
 
     let mut tmp = tempfile::Builder::new()
-        .prefix(".deepseek-update-")
+        .prefix(".ds-update-")
         .tempfile_in(parent)
         .with_context(|| format!("failed to create temp file in {}", parent.display()))?;
     tmp.write_all(new_bytes)
@@ -303,46 +303,46 @@ mod tests {
     /// Verify binary prefix detection for dispatcher vs TUI binary.
     #[test]
     fn test_binary_prefix_detection() {
-        // TUI binary should use deepseek-tui prefix
+        // TUI binary should use DS-Code prefix
         assert_eq!(
-            binary_prefix_for_exe(Path::new("deepseek-tui")),
-            "deepseek-tui"
+            binary_prefix_for_exe(Path::new("DS-Code")),
+            "DS-Code"
         );
         assert_eq!(
-            binary_prefix_for_exe(Path::new("deepseek-tui.exe")),
-            "deepseek-tui"
+            binary_prefix_for_exe(Path::new("DS-Code.exe")),
+            "DS-Code"
         );
         assert_eq!(
-            binary_prefix_for_exe(Path::new("/usr/local/bin/deepseek-tui")),
-            "deepseek-tui"
+            binary_prefix_for_exe(Path::new("/usr/local/bin/DS-Code")),
+            "DS-Code"
         );
 
-        // Dispatcher binary should use deepseek prefix
-        assert_eq!(binary_prefix_for_exe(Path::new("deepseek")), "deepseek");
-        assert_eq!(binary_prefix_for_exe(Path::new("deepseek.exe")), "deepseek");
+        // Dispatcher binary should use ds prefix
+        assert_eq!(binary_prefix_for_exe(Path::new("ds")), "ds");
+        assert_eq!(binary_prefix_for_exe(Path::new("ds.exe")), "ds");
         assert_eq!(
-            binary_prefix_for_exe(Path::new("/usr/local/bin/deepseek")),
-            "deepseek"
+            binary_prefix_for_exe(Path::new("/usr/local/bin/ds")),
+            "ds"
         );
 
         // Fallback for unknown names
-        assert_eq!(binary_prefix_for_exe(Path::new("other-binary")), "deepseek");
+        assert_eq!(binary_prefix_for_exe(Path::new("other-binary")), "ds");
     }
 
     #[test]
     fn test_release_asset_stem_for_supported_platforms() {
         let cases = [
-            ("deepseek", "macos", "aarch64", "deepseek-macos-arm64"),
-            ("deepseek", "macos", "x86_64", "deepseek-macos-x64"),
-            ("deepseek", "linux", "x86_64", "deepseek-linux-x64"),
-            ("deepseek", "windows", "x86_64", "deepseek-windows-x64"),
+            ("ds", "macos", "aarch64", "ds-macos-arm64"),
+            ("ds", "macos", "x86_64", "ds-macos-x64"),
+            ("ds", "linux", "x86_64", "ds-linux-x64"),
+            ("ds", "windows", "x86_64", "ds-windows-x64"),
             (
-                "deepseek-tui",
+                "DS-Code",
                 "macos",
                 "aarch64",
-                "deepseek-tui-macos-arm64",
+                "DS-Code-macos-arm64",
             ),
-            ("deepseek-tui", "linux", "x86_64", "deepseek-tui-linux-x64"),
+            ("DS-Code", "linux", "x86_64", "DS-Code-linux-x64"),
         ];
 
         for (exe, os, arch, expected) in cases {
@@ -353,24 +353,24 @@ mod tests {
     #[test]
     fn test_asset_matching_accepts_binary_assets_and_rejects_checksums() {
         assert!(asset_matches_platform(
-            "deepseek-macos-arm64",
-            "deepseek-macos-arm64"
+            "ds-macos-arm64",
+            "ds-macos-arm64"
         ));
         assert!(asset_matches_platform(
-            "deepseek-macos-arm64.tar.gz",
-            "deepseek-macos-arm64"
+            "ds-macos-arm64.tar.gz",
+            "ds-macos-arm64"
         ));
         assert!(asset_matches_platform(
-            "deepseek-tui-windows-x64.exe",
-            "deepseek-tui-windows-x64"
+            "DS-Code-windows-x64.exe",
+            "DS-Code-windows-x64"
         ));
         assert!(!asset_matches_platform(
-            "deepseek-tui-windows-x64.exe.sha256",
-            "deepseek-tui-windows-x64"
+            "DS-Code-windows-x64.exe.sha256",
+            "DS-Code-windows-x64"
         ));
         assert!(!asset_matches_platform(
-            "deepseek-macos-aarch64.tar.gz",
-            "deepseek-macos-arm64"
+            "ds-macos-aarch64.tar.gz",
+            "ds-macos-arm64"
         ));
     }
 
@@ -396,7 +396,7 @@ mod tests {
     #[test]
     fn test_replace_binary_creates_and_replaces() {
         let dir = tempfile::TempDir::new().unwrap();
-        let target = dir.path().join("deepseek-test");
+        let target = dir.path().join("ds-test");
         // Write initial content
         std::fs::write(&target, b"old binary").unwrap();
 
@@ -408,30 +408,30 @@ mod tests {
     #[test]
     fn test_replace_binary_creates_new_file() {
         let dir = tempfile::TempDir::new().unwrap();
-        let target = dir.path().join("deepseek-new-test");
+        let target = dir.path().join("ds-new-test");
 
         replace_binary(&target, b"fresh binary").unwrap();
         let content = std::fs::read_to_string(&target).unwrap();
         assert_eq!(content, "fresh binary");
     }
 
-    /// Mocked GitHub release payload covering both the dispatcher (`deepseek`)
-    /// and the legacy TUI (`deepseek-tui`) binaries across our published
+    /// Mocked GitHub release payload covering both the dispatcher (`ds`)
+    /// and the legacy TUI (`DS-Code`) binaries across our published
     /// platform/arch matrix, plus a checksum sibling that must never be picked
     /// as the primary binary.
     fn mocked_release() -> Release {
         let json = r#"{
           "tag_name": "v0.8.8",
           "assets": [
-            { "name": "deepseek-linux-x64",          "browser_download_url": "https://example.invalid/deepseek-linux-x64" },
-            { "name": "deepseek-macos-x64",          "browser_download_url": "https://example.invalid/deepseek-macos-x64" },
-            { "name": "deepseek-macos-arm64",        "browser_download_url": "https://example.invalid/deepseek-macos-arm64" },
-            { "name": "deepseek-windows-x64.exe",    "browser_download_url": "https://example.invalid/deepseek-windows-x64.exe" },
-            { "name": "deepseek-windows-x64.exe.sha256", "browser_download_url": "https://example.invalid/deepseek-windows-x64.exe.sha256" },
-            { "name": "deepseek-tui-linux-x64",      "browser_download_url": "https://example.invalid/deepseek-tui-linux-x64" },
-            { "name": "deepseek-tui-macos-x64",      "browser_download_url": "https://example.invalid/deepseek-tui-macos-x64" },
-            { "name": "deepseek-tui-macos-arm64",    "browser_download_url": "https://example.invalid/deepseek-tui-macos-arm64" },
-            { "name": "deepseek-tui-windows-x64.exe","browser_download_url": "https://example.invalid/deepseek-tui-windows-x64.exe" }
+            { "name": "ds-linux-x64",          "browser_download_url": "https://example.invalid/ds-linux-x64" },
+            { "name": "ds-macos-x64",          "browser_download_url": "https://example.invalid/ds-macos-x64" },
+            { "name": "ds-macos-arm64",        "browser_download_url": "https://example.invalid/ds-macos-arm64" },
+            { "name": "ds-windows-x64.exe",    "browser_download_url": "https://example.invalid/ds-windows-x64.exe" },
+            { "name": "ds-windows-x64.exe.sha256", "browser_download_url": "https://example.invalid/ds-windows-x64.exe.sha256" },
+            { "name": "DS-Code-linux-x64",      "browser_download_url": "https://example.invalid/DS-Code-linux-x64" },
+            { "name": "DS-Code-macos-x64",      "browser_download_url": "https://example.invalid/DS-Code-macos-x64" },
+            { "name": "DS-Code-macos-arm64",    "browser_download_url": "https://example.invalid/DS-Code-macos-arm64" },
+            { "name": "DS-Code-windows-x64.exe","browser_download_url": "https://example.invalid/DS-Code-windows-x64.exe" }
           ]
         }"#;
         serde_json::from_str(json).expect("mock release JSON")
@@ -441,14 +441,14 @@ mod tests {
     fn mocked_release_selects_dispatcher_asset_for_supported_platforms() {
         let release = mocked_release();
         let cases = [
-            ("macos", "aarch64", "deepseek-macos-arm64"),
-            ("macos", "x86_64", "deepseek-macos-x64"),
-            ("linux", "x86_64", "deepseek-linux-x64"),
-            ("windows", "x86_64", "deepseek-windows-x64.exe"),
+            ("macos", "aarch64", "ds-macos-arm64"),
+            ("macos", "x86_64", "ds-macos-x64"),
+            ("linux", "x86_64", "ds-linux-x64"),
+            ("windows", "x86_64", "ds-windows-x64.exe"),
         ];
 
         for (os, arch, expected) in cases {
-            let stem = release_asset_stem_for(Path::new("/usr/local/bin/deepseek"), os, arch);
+            let stem = release_asset_stem_for(Path::new("/usr/local/bin/ds"), os, arch);
             let asset = select_platform_asset(&release, &stem)
                 .unwrap_or_else(|| panic!("no asset for {os}/{arch} (stem {stem})"));
             assert_eq!(asset.name, expected, "{os}/{arch}");
@@ -459,8 +459,8 @@ mod tests {
     fn mocked_release_selects_tui_asset_when_tui_binary_invokes_update() {
         let release = mocked_release();
         let stem =
-            release_asset_stem_for(Path::new("/usr/local/bin/deepseek-tui"), "macos", "aarch64");
+            release_asset_stem_for(Path::new("/usr/local/bin/DS-Code"), "macos", "aarch64");
         let asset = select_platform_asset(&release, &stem).expect("TUI platform asset");
-        assert_eq!(asset.name, "deepseek-tui-macos-arm64");
+        assert_eq!(asset.name, "DS-Code-macos-arm64");
     }
 }

@@ -3,8 +3,8 @@
 //! v0.8.8 ships an MVP that lets the user keep a persistent personal
 //! note file the model sees on every turn:
 //!
-//! - **Load** `~/.deepseek/memory.md` (path is configurable via
-//!   `memory_path` in `config.toml` and `DEEPSEEK_MEMORY_PATH` env),
+//! - **Load** `~/.ds/memory.md` (path is configurable via
+//!   `memory_path` in `config.toml` and `DS_MEMORY_PATH` env),
 //!   wrap it in a `<user_memory>` block, and prepend it to the system
 //!   prompt alongside the existing `<project_instructions>` block.
 //! - **`# foo`** typed in the composer appends `foo` to the memory
@@ -17,7 +17,7 @@
 //!   sessions.
 //!
 //! Default behavior is **opt-in**: load + use the memory file only when
-//! `[memory] enabled = true` in `config.toml` or `DEEPSEEK_MEMORY=on`.
+//! `[memory] enabled = true` in `config.toml` or `DS_MEMORY=on`.
 //! That keeps existing users on zero-overhead behavior and makes the
 //! feature explicit.
 

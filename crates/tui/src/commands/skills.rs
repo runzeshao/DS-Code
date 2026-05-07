@@ -33,7 +33,7 @@ fn render_skill_warnings(registry: &SkillRegistry) -> String {
 /// List all available skills. Pass `--remote` (or `remote`) to fetch the
 /// curated registry instead of scanning the local skills directory.
 /// Pass `sync` to pull the registry index and download all skills to the
-/// local cache (`~/.deepseek/cache/skills/`).
+/// local cache (`~/.ds/cache/skills/`).
 pub fn list_skills(app: &mut App, arg: Option<&str>) -> CommandResult {
     if let Some(arg) = arg {
         let trimmed = arg.trim();
@@ -310,7 +310,7 @@ pub fn list_remote_skills(app: &mut App) -> CommandResult {
 // ─── /skills sync ──────────────────────────────────────────────────────────
 
 /// Fetch the remote registry index and download every listed skill into the
-/// local cache (`~/.deepseek/cache/skills/<name>/`).
+/// local cache (`~/.ds/cache/skills/<name>/`).
 ///
 /// For each skill the sync checks the cached ETag / SHA-256 before
 /// downloading so unchanged skills are skipped in O(1) network round-trips.
@@ -432,14 +432,14 @@ fn path_or_default(path: &std::path::Path) -> String {
 fn needs_approval_message(host: &str) -> String {
     format!(
         "Network policy requires approval for {host}.\n\
-         Add it to your allow list with `/network allow {host}` (or set [network].default = \"allow\" in ~/.deepseek/config.toml), then retry."
+         Add it to your allow list with `/network allow {host}` (or set [network].default = \"allow\" in ~/.ds/config.toml), then retry."
     )
 }
 
 fn network_denied_message(host: &str) -> String {
     format!(
         "Network policy denied access to {host}.\n\
-         Remove the deny entry from ~/.deepseek/config.toml under [network] or contact your administrator."
+         Remove the deny entry from ~/.ds/config.toml under [network] or contact your administrator."
     )
 }
 

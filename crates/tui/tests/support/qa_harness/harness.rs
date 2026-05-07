@@ -80,7 +80,7 @@ impl HarnessBuilder {
     }
 
     /// Point `$HOME` (and `XDG_*` defaults) at a fresh dir so the spawned
-    /// binary cannot read or mutate the developer's real `~/.deepseek/`.
+    /// binary cannot read or mutate the developer's real `~/.ds/`.
     pub fn seal_home(mut self, home: impl Into<PathBuf>) -> Self {
         self.seal_home = Some(home.into());
         self
@@ -221,8 +221,8 @@ impl Harness {
         if let Some(path) = std::env::var_os(&key) {
             return PathBuf::from(path);
         }
-        if name == "deepseek-tui"
-            && let Some(path) = option_env!("CARGO_BIN_EXE_deepseek-tui")
+        if name == "DS-Code"
+            && let Some(path) = option_env!("CARGO_BIN_EXE_DS-Code")
         {
             return PathBuf::from(path);
         }
@@ -247,7 +247,7 @@ pub fn make_sealed_workspace() -> Result<SealedWorkspace> {
     let workspace = tmp.path().join("workspace");
     let home = tmp.path().join("home");
     std::fs::create_dir_all(&workspace).context("mkdir workspace")?;
-    std::fs::create_dir_all(home.join(".deepseek")).context("mkdir home/.deepseek")?;
+    std::fs::create_dir_all(home.join(".ds")).context("mkdir home/.ds")?;
     Ok(SealedWorkspace {
         _tmp: tmp,
         workspace,
@@ -269,6 +269,6 @@ impl SealedWorkspace {
         &self.home
     }
     pub fn user_skills_dir(&self) -> PathBuf {
-        self.home.join(".deepseek").join("skills")
+        self.home.join(".ds").join("skills")
     }
 }

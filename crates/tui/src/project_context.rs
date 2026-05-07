@@ -6,7 +6,7 @@
 //! - `AGENTS.md` - Project-level agent instructions (primary)
 //! - `.claude/instructions.md` - Claude-style hidden instructions
 //! - `CLAUDE.md` - Claude-style instructions
-//! - `.deepseek/instructions.md` - Hidden instructions file (legacy)
+//! - `.ds/instructions.md` - Hidden instructions file (legacy)
 //!
 //! The loaded content is injected into the system prompt to give the agent
 //! context about the project's conventions, structure, and requirements.
@@ -21,7 +21,7 @@ const PROJECT_CONTEXT_FILES: &[&str] = &[
     "AGENTS.md",
     ".claude/instructions.md",
     "CLAUDE.md",
-    ".deepseek/instructions.md",
+    ".ds/instructions.md",
 ];
 
 /// Maximum size for project context files (to prevent loading huge files)
@@ -152,7 +152,7 @@ pub fn load_project_context_with_parents(workspace: &Path) -> ProjectContext {
         }
     }
 
-    // Auto-generate .deepseek/instructions.md when no context file exists anywhere.
+    // Auto-generate .ds/instructions.md when no context file exists anywhere.
     // This avoids the per-turn filesystem scan fallback in prompts.rs that
     // breaks KV prefix cache stability.
     if !ctx.has_instructions()
@@ -171,10 +171,10 @@ pub fn load_project_context_with_parents(workspace: &Path) -> ProjectContext {
 }
 
 /// Generate a context file from project tree + summary and write it to
-/// `.deepseek/instructions.md`. Returns the generated content on success.
+/// `.ds/instructions.md`. Returns the generated content on success.
 fn auto_generate_context(workspace: &Path) -> Option<String> {
-    let deepseek_dir = workspace.join(".deepseek");
-    let instructions_path = deepseek_dir.join("instructions.md");
+    let ds_dir = workspace.join(".ds");
+    let instructions_path = ds_dir.join("instructions.md");
 
     // Don't overwrite an existing file
     if instructions_path.exists() {
@@ -192,9 +192,9 @@ fn auto_generate_context(workspace: &Path) -> Option<String> {
          **Tree:**\n```\n{tree}\n```"
     );
 
-    // Create .deepseek/ directory if needed
-    if let Err(e) = std::fs::create_dir_all(&deepseek_dir) {
-        tracing::warn!("Failed to create .deepseek/ directory: {e}");
+    // Create .ds/ directory if needed
+    if let Err(e) = std::fs::create_dir_all(&ds_dir) {
+        tracing::warn!("Failed to create .ds/ directory: {e}");
         return None;
     }
 
@@ -250,8 +250,8 @@ fn check_trust_status(workspace: &Path) -> bool {
 
     // Check for trust markers
     let trust_markers = [
-        workspace.join(".deepseek").join("trusted"),
-        workspace.join(".deepseek").join("trust.json"),
+        workspace.join(".ds").join("trusted"),
+        workspace.join(".ds").join("trust.json"),
     ];
 
     for marker in &trust_markers {
@@ -397,7 +397,7 @@ mod tests {
     #[test]
     fn test_load_project_context_hidden_dir() {
         let tmp = tempdir().expect("tempdir");
-        let hidden_dir = tmp.path().join(".deepseek");
+        let hidden_dir = tmp.path().join(".ds");
         fs::create_dir(&hidden_dir).expect("mkdir");
         fs::write(hidden_dir.join("instructions.md"), "Hidden instructions").expect("write");
 
@@ -446,9 +446,9 @@ mod tests {
         assert!(!check_trust_status(tmp.path()));
 
         // Create trust marker
-        let deepseek_dir = tmp.path().join(".deepseek");
-        fs::create_dir(&deepseek_dir).expect("mkdir");
-        fs::write(deepseek_dir.join("trusted"), "").expect("write");
+        let ds_dir = tmp.path().join(".ds");
+        fs::create_dir(&ds_dir).expect("mkdir");
+        fs::write(ds_dir.join("trusted"), "").expect("write");
 
         assert!(check_trust_status(tmp.path()));
     }

@@ -31,7 +31,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
         Line::from(Span::styled(
             "Choose your language",
             Style::default()
-                .fg(palette::DEEPSEEK_SKY)
+                .fg(palette::DS_SKY)
                 .add_modifier(Modifier::BOLD),
         )),
         Line::from(""),
@@ -46,7 +46,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
         let is_current = current == *tag;
         let bullet = if is_current { "●" } else { "○" };
         let bullet_color = if is_current {
-            palette::DEEPSEEK_BLUE
+            palette::DS_BLUE
         } else {
             palette::TEXT_MUTED
         };

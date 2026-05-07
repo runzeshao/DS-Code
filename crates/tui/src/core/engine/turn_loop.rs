@@ -8,7 +8,7 @@
 use super::*;
 
 impl Engine {
-    pub(super) async fn handle_deepseek_turn(
+    pub(super) async fn handle_ds_turn(
         &mut self,
         turn: &mut TurnContext,
         tool_registry: Option<&crate::tools::ToolRegistry>,
@@ -17,7 +17,7 @@ impl Engine {
         force_update_plan_first: bool,
     ) -> (TurnOutcomeStatus, Option<String>) {
         let client = self
-            .deepseek_client
+            .ds_client
             .clone()
             .expect("DeepSeek client should be configured");
 
@@ -1555,7 +1555,7 @@ impl Engine {
                     // `spillover_path` metadata pointing at the full file.
                     // Emit a discrete `tool.spillover` audit event so
                     // operators can correlate large-output episodes with
-                    // disk-usage growth in `~/.deepseek/tool_outputs/`.
+                    // disk-usage growth in `~/.ds/tool_outputs/`.
                     if let Ok(tool_result) = result.as_mut()
                         && let Some(path) =
                             crate::tools::truncate::apply_spillover(tool_result, &tool_id)
@@ -1834,7 +1834,7 @@ fn resolve_auto_effort(reasoning_effort: Option<&str>, messages: &[Message]) -> 
                 })
                 .unwrap_or_default();
 
-            // is_subagent is false here — handle_deepseek_turn runs in the
+            // is_subagent is false here — handle_ds_turn runs in the
             // main engine (not a sub-agent's inner loop). Sub-agents have
             // their own turn pass and can pass is_subagent=true when they
             // call this function directly.

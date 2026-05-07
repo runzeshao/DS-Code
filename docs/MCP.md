@@ -7,8 +7,8 @@ Browsing note:
 - `web_search` remains available as a compatibility alias for older prompts and integrations.
 
 Server mode note:
-- `deepseek-tui serve --mcp` runs the MCP stdio server.
-- `deepseek-tui serve --http` runs the runtime HTTP/SSE API (separate mode).
+- `DS-Code serve --mcp` runs the MCP stdio server.
+- `DS-Code serve --http` runs the runtime HTTP/SSE API (separate mode).
 - The `deepseek` dispatcher exposes `deepseek mcp-server` as an equivalent stdio
   entrypoint used by the split CLI.
 
@@ -17,22 +17,22 @@ Server mode note:
 Create a starter MCP config at your resolved MCP path:
 
 ```bash
-deepseek-tui mcp init
+DS-Code mcp init
 ```
 
-`deepseek-tui setup --mcp` performs the same MCP bootstrap alongside skills setup.
+`DS-Code setup --mcp` performs the same MCP bootstrap alongside skills setup.
 
 Common management commands:
 
 ```bash
-deepseek-tui mcp list
-deepseek-tui mcp tools [server]
-deepseek-tui mcp add <name> --command "<cmd>" --arg "<arg>"
-deepseek-tui mcp add <name> --url "http://localhost:3000/mcp"
-deepseek-tui mcp enable <name>
-deepseek-tui mcp disable <name>
-deepseek-tui mcp remove <name>
-deepseek-tui mcp validate
+DS-Code mcp list
+DS-Code mcp tools [server]
+DS-Code mcp add <name> --command "<cmd>" --arg "<arg>"
+DS-Code mcp add <name> --url "http://localhost:3000/mcp"
+DS-Code mcp enable <name>
+DS-Code mcp disable <name>
+DS-Code mcp remove <name>
+DS-Code mcp validate
 ```
 
 ## In-TUI Manager
@@ -65,14 +65,14 @@ restart-required until the TUI is restarted.
 
 Default path:
 
-- `~/.deepseek/mcp.json`
+- `~/.ds/mcp.json`
 
 Overrides:
 
 - Config: `mcp_config_path = "/path/to/mcp.json"`
-- Env: `DEEPSEEK_MCP_CONFIG=/path/to/mcp.json`
+- Env: `DS_MCP_CONFIG=/path/to/mcp.json`
 
-`deepseek-tui mcp init` (and `deepseek-tui setup --mcp`) writes to this resolved path.
+`DS-Code mcp init` (and `DS-Code setup --mcp`) writes to this resolved path.
 
 The interactive `/config` editor also exposes `mcp_config_path`. Changing it in
 the TUI updates the path used by `/mcp`, and requires a restart before the
@@ -130,10 +130,10 @@ You can register your local DeepSeek binary as an MCP server so other DeepSeek s
 ### Quick Setup
 
 ```bash
-deepseek-tui mcp add-self
+DS-Code mcp add-self
 ```
 
-This resolves the current binary path, generates a config entry that runs `deepseek-tui serve --mcp`, and writes it to your MCP config file. The default server name is `deepseek`.
+This resolves the current binary path, generates a config entry that runs `DS-Code serve --mcp`, and writes it to your MCP config file. The default server name is `deepseek`.
 
 Options:
 
@@ -142,7 +142,7 @@ Options:
 
 ### Manual Config
 
-Equivalent manual entry in `~/.deepseek/mcp.json`:
+Equivalent manual entry in `~/.ds/mcp.json`:
 
 ```json
 {
@@ -156,9 +156,9 @@ Equivalent manual entry in `~/.deepseek/mcp.json`:
 }
 ```
 
-The `deepseek-tui` binary supports `serve --mcp` directly. The `deepseek`
+The `DS-Code` binary supports `serve --mcp` directly. The `deepseek`
 dispatcher offers the equivalent `deepseek mcp-server` stdio entrypoint. Use
-whichever is on your `PATH` (run `which deepseek` or `which deepseek-tui` to
+whichever is on your `PATH` (run `which deepseek` or `which DS-Code` to
 find the full path). The `mcp add-self` command automatically resolves the
 correct binary.
 
@@ -172,17 +172,17 @@ correct binary.
 
 Tools from a self-hosted DeepSeek server follow the standard naming convention:
 
-- `mcp_deepseek_<tool>` (if the server is named `deepseek`)
+- `mcp_DS_<tool>` (if the server is named `deepseek`)
 
-For example, the `shell` tool becomes `mcp_deepseek_shell`.
+For example, the `shell` tool becomes `mcp_DS_shell`.
 
 ### MCP Server vs HTTP/SSE API vs ACP
 
-| | `deepseek-tui serve --mcp` | `deepseek-tui serve --http` | `deepseek-tui serve --acp` |
+| | `DS-Code serve --mcp` | `DS-Code serve --http` | `DS-Code serve --acp` |
 |---|---|---|---|
 | **Protocol** | MCP stdio | HTTP/SSE JSON-RPC | ACP stdio |
 | **Use case** | Tool server for MCP clients | Runtime API for apps | Editor agent for Zed/custom ACP clients |
-| **Config** | `~/.deepseek/mcp.json` entry | Direct URL connection | Editor `agent_servers` custom command |
+| **Config** | `~/.ds/mcp.json` entry | Direct URL connection | Editor `agent_servers` custom command |
 | **Lifecycle** | Spawned per client session | Long-running daemon | Spawned per editor agent session |
 
 Use `mcp add-self` when you want DeepSeek tools available to other MCP clients.
@@ -194,8 +194,8 @@ Use `serve --acp` when an editor wants to talk to DeepSeek as an ACP agent.
 After adding, test the connection:
 
 ```bash
-deepseek-tui mcp validate
-deepseek-tui mcp tools deepseek
+DS-Code mcp validate
+DS-Code mcp tools deepseek
 ```
 
 ## Server Fields
@@ -220,7 +220,7 @@ You should still only configure MCP servers you trust, and treat MCP server conf
 
 ## Troubleshooting
 
-- Run `deepseek-tui doctor` to confirm the MCP config path it resolved and whether it exists.
+- Run `DS-Code doctor` to confirm the MCP config path it resolved and whether it exists.
 - In the TUI, run `/mcp validate` to refresh the visible server/tool snapshot.
-- If the MCP config is missing, run `deepseek-tui mcp init --force` to regenerate it.
+- If the MCP config is missing, run `DS-Code mcp init --force` to regenerate it.
 - If tools don’t appear, verify the server command works from your shell and that the server supports MCP `tools/list`.

@@ -1,6 +1,6 @@
 # DeepSeek TUI
 
-> **面向 [DeepSeek V4](https://platform.deepseek.com) 的终端原生编程智能体：100 万 token 上下文、思考模式流式推理、前缀缓存感知。自包含 Rust 二进制发布——开箱即带 MCP 客户端、沙箱和持久化任务队列。**
+> **面向 [DeepSeek V4](https://platform.ds.com) 的终端原生编程智能体：100 万 token 上下文、思考模式流式推理、前缀缓存感知。自包含 Rust 二进制发布——开箱即带 MCP 客户端、沙箱和持久化任务队列。**
 
 [English README](README.md)
 
@@ -13,27 +13,27 @@
 # 1. npm —— 已装 Node 的最方便方式。npm 包只是一个下载器，
 #    会从 GitHub Releases 拉取对应平台的预编译二进制，
 #    并不会让 deepseek 本身依赖 Node 运行时。
-npm install -g deepseek-tui
+npm install -g DS-Code
 
 # 2. Cargo —— 无需 Node。
-cargo install deepseek-tui-cli --locked   # `deepseek` 入口
-cargo install deepseek-tui     --locked   # `deepseek-tui` TUI 二进制
+cargo install DS-Code-cli --locked   # `deepseek` 入口
+cargo install DS-Code     --locked   # `DS-Code` TUI 二进制
 
 # 3. Homebrew —— macOS 包管理器。
-brew tap Hmbown/deepseek-tui
-brew install deepseek-tui
+brew tap Hmbown/DS-Code
+brew install DS-Code
 
 # 4. 直接下载 —— 无需任何工具链。
-#    https://github.com/Hmbown/DeepSeek-TUI/releases
+#    https://github.com/Hmbown/DS-Code/releases
 #    覆盖 Linux x64/ARM64、macOS x64/ARM64、Windows x64
 ```
 
 > 中国大陆访问较慢时，npm 可加 `--registry=https://registry.npmmirror.com`，
 > 或使用下方的 [Cargo 镜像](#中国大陆--镜像友好安装)。
 
-[![CI](https://github.com/Hmbown/DeepSeek-TUI/actions/workflows/ci.yml/badge.svg)](https://github.com/Hmbown/DeepSeek-TUI/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/deepseek-tui)](https://www.npmjs.com/package/deepseek-tui)
-[![crates.io](https://img.shields.io/crates/v/deepseek-tui-cli?label=crates.io)](https://crates.io/crates/deepseek-tui-cli)
+[![CI](https://github.com/Hmbown/DS-Code/actions/workflows/ci.yml/badge.svg)](https://github.com/Hmbown/DS-Code/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/DS-Code)](https://www.npmjs.com/package/DS-Code)
+[![crates.io](https://img.shields.io/crates/v/DS-Code-cli?label=crates.io)](https://crates.io/crates/DS-Code-cli)
 
 ![DeepSeek TUI 截图](assets/screenshot.png)
 
@@ -68,7 +68,7 @@ DeepSeek TUI 是一个完全运行在终端里的编程智能体。它让 DeepSe
 
 ## 架构说明
 
-`deepseek`（调度器 CLI）→ `deepseek-tui`（伴随二进制）→ ratatui 界面 ↔ 异步引擎 ↔ OpenAI 兼容流式客户端。工具调用通过类型化注册表（shell、文件操作、git、web、子智能体、MCP、RLM）路由，结果流式返回对话记录。引擎管理会话状态、轮次追踪、持久化任务队列和 LSP 子系统——它在下一步推理前将编辑后诊断反馈到模型上下文中。
+`deepseek`（调度器 CLI）→ `DS-Code`（伴随二进制）→ ratatui 界面 ↔ 异步引擎 ↔ OpenAI 兼容流式客户端。工具调用通过类型化注册表（shell、文件操作、git、web、子智能体、MCP、RLM）路由，结果流式返回对话记录。引擎管理会话状态、轮次追踪、持久化任务队列和 LSP 子系统——它在下一步推理前将编辑后诊断反馈到模型上下文中。
 
 详见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)。
 
@@ -77,21 +77,21 @@ DeepSeek TUI 是一个完全运行在终端里的编程智能体。它让 DeepSe
 ## 快速开始
 
 ```bash
-npm install -g deepseek-tui
+npm install -g DS-Code
 deepseek --version
 deepseek
 ```
 
 预构建二进制覆盖 **Linux x64**、**Linux ARM64**（v0.8.8 起）、**macOS x64**、**macOS ARM64** 和 **Windows x64**。其他目标平台（musl、riscv64、FreeBSD 等）请见下方的[从源码安装](#从源码安装)或 [docs/INSTALL.md](docs/INSTALL.md)。
 
-首次启动时会提示输入 [DeepSeek API key](https://platform.deepseek.com/api_keys)。密钥保存到 `~/.deepseek/config.toml`，在任意目录、IDE 终端和脚本中都能使用，不会触发系统密钥环弹窗。
+首次启动时会提示输入 [DeepSeek API key](https://platform.ds.com/api_keys)。密钥保存到 `~/.ds/config.toml`，在任意目录、IDE 终端和脚本中都能使用，不会触发系统密钥环弹窗。
 
 也可以提前配置：
 
 ```bash
-deepseek auth set --provider deepseek   # 保存到 ~/.deepseek/config.toml
+deepseek auth set --provider deepseek   # 保存到 ~/.ds/config.toml
 
-export DEEPSEEK_API_KEY="YOUR_KEY"      # 环境变量方式；需要在非交互式 shell 中使用请放入 ~/.zshenv
+export DS_API_KEY="YOUR_KEY"      # 环境变量方式；需要在非交互式 shell 中使用请放入 ~/.zshenv
 deepseek
 
 deepseek doctor                          # 验证安装
@@ -101,7 +101,7 @@ deepseek doctor                          # 验证安装
 
 ### Linux ARM64（HarmonyOS 轻薄本、openEuler、Kylin、树莓派、Graviton 等）
 
-从 v0.8.8 起，`npm i -g deepseek-tui` 直接支持 glibc 系的 ARM64 Linux。你也可以从 [Releases 页面](https://github.com/Hmbown/DeepSeek-TUI/releases) 下载预编译二进制，放到 `PATH` 目录中。
+从 v0.8.8 起，`npm i -g DS-Code` 直接支持 glibc 系的 ARM64 Linux。你也可以从 [Releases 页面](https://github.com/Hmbown/DS-Code/releases) 下载预编译二进制，放到 `PATH` 目录中。
 
 ### 中国大陆 / 镜像友好安装
 
@@ -119,12 +119,12 @@ registry = "sparse+https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/"
 然后安装两个二进制（调度器在运行时会调用 TUI）：
 
 ```bash
-cargo install deepseek-tui-cli --locked   # 提供推荐入口 `deepseek`
-cargo install deepseek-tui     --locked   # 提供交互式 TUI 伴随二进制
+cargo install DS-Code-cli --locked   # 提供推荐入口 `deepseek`
+cargo install DS-Code     --locked   # 提供交互式 TUI 伴随二进制
 deepseek --version
 ```
 
-也可以直接从 [GitHub Releases](https://github.com/Hmbown/DeepSeek-TUI/releases) 下载预编译二进制。`DEEPSEEK_TUI_RELEASE_BASE_URL` 可用于镜像后的 release 资产。
+也可以直接从 [GitHub Releases](https://github.com/Hmbown/DS-Code/releases) 下载预编译二进制。`DS_TUI_RELEASE_BASE_URL` 可用于镜像后的 release 资产。
 
 ### Windows (Scoop)
 
@@ -134,7 +134,7 @@ release。先运行 `scoop update`，安装后用 `deepseek --version` 核对版
 
 ```bash
 scoop update
-scoop install deepseek-tui
+scoop install DS-Code
 deepseek --version
 ```
 
@@ -151,11 +151,11 @@ deepseek --version
 #   sudo apt-get install -y build-essential pkg-config libdbus-1-dev
 #   sudo dnf install -y gcc make pkgconf-pkg-config dbus-devel
 
-git clone https://github.com/Hmbown/DeepSeek-TUI.git
-cd DeepSeek-TUI
+git clone https://github.com/Hmbown/DS-Code.git
+cd DS-Code
 
 cargo install --path crates/cli --locked   # 需要 Rust 1.88+；提供 `deepseek`
-cargo install --path crates/tui --locked   # 提供 `deepseek-tui`
+cargo install --path crates/tui --locked   # 提供 `DS-Code`
 ```
 
 两个二进制都需要安装。交叉编译和平台特定说明见 [docs/INSTALL.md](docs/INSTALL.md)。
@@ -257,18 +257,18 @@ deepseek update                                # 检查并应用二进制更新
 
 ## 配置
 
-用户配置：`~/.deepseek/config.toml`。项目覆盖：`<workspace>/.deepseek/config.toml`（以下密钥被拒绝：`api_key`、`base_url`、`provider`、`mcp_config_path`）。完整选项见 [config.example.toml](config.example.toml)。
+用户配置：`~/.ds/config.toml`。项目覆盖：`<workspace>/.ds/config.toml`（以下密钥被拒绝：`api_key`、`base_url`、`provider`、`mcp_config_path`）。完整选项见 [config.example.toml](config.example.toml)。
 
 常用环境变量：
 
 | 变量 | 用途 |
 |---|---|
-| `DEEPSEEK_API_KEY` | DeepSeek API key |
-| `DEEPSEEK_BASE_URL` | API base URL |
-| `DEEPSEEK_MODEL` | 默认模型 |
-| `DEEPSEEK_PROVIDER` | `deepseek`（默认）、`nvidia-nim`、`fireworks`、`sglang`、`vllm`、`ollama` |
-| `DEEPSEEK_PROFILE` | 配置 profile 名称 |
-| `DEEPSEEK_MEMORY` | 设为 `on` 启用用户记忆 |
+| `DS_API_KEY` | DeepSeek API key |
+| `DS_BASE_URL` | API base URL |
+| `DS_MODEL` | 默认模型 |
+| `DS_PROVIDER` | `deepseek`（默认）、`nvidia-nim`、`fireworks`、`sglang`、`vllm`、`ollama` |
+| `DS_PROFILE` | 配置 profile 名称 |
+| `DS_MEMORY` | 设为 `on` 启用用户记忆 |
 | `NVIDIA_API_KEY` / `FIREWORKS_API_KEY` / `SGLANG_API_KEY` / `VLLM_API_KEY` / `OLLAMA_API_KEY` | 提供商认证 |
 | `SGLANG_BASE_URL` | 自托管 SGLang 端点 |
 | `VLLM_BASE_URL` | 自托管 vLLM 端点 |
@@ -288,10 +288,10 @@ UI 语言与模型输出语言相互独立——在 `config.toml` 中设置 `loc
 
 可选语言：`auto` | `en` | `ja` | `zh-Hans` | `pt-BR`。
 
-也可以在 `~/.deepseek/config.toml` 里直接设置 `locale = "zh-Hans"`，或通过 `LC_ALL` / `LANG` 环境变量自动选择：
+也可以在 `~/.ds/config.toml` 里直接设置 `locale = "zh-Hans"`，或通过 `LC_ALL` / `LANG` 环境变量自动选择：
 
 ```toml
-# ~/.deepseek/config.toml
+# ~/.ds/config.toml
 [tui]
 locale = "zh-Hans"
 ```
@@ -316,16 +316,16 @@ LANG=zh_CN.UTF-8 deepseek run
 *DeepSeek Pro 价格是限时 75% 折扣，有效期到 2026-05-31 15:59 UTC；该时间之后 TUI 成本估算会回退到 Pro 基础价格。*
 
 > [!Note]
-> 关于 DeepSeek-V4-Pro 的最新定价信息，请参阅官方 [DeepSeek 定价页面](https://api-docs.deepseek.com/zh-cn/quick_start/pricing)，请注意目前可享受 75% 的折扣，该优惠有效期至 **2026 年 5 月 31 日 23:59（北京时间）**。此外，README 文档中所列出的所有价格，均与官方发布的数值保持一致。
+> 关于 DeepSeek-V4-Pro 的最新定价信息，请参阅官方 [DeepSeek 定价页面](https://api-docs.ds.com/zh-cn/quick_start/pricing)，请注意目前可享受 75% 的折扣，该优惠有效期至 **2026 年 5 月 31 日 23:59（北京时间）**。此外，README 文档中所列出的所有价格，均与官方发布的数值保持一致。
 
 ---
 
 ## 创建和安装技能
 
-DeepSeek TUI 从工作区目录（`.agents/skills` → `skills` → `.opencode/skills` → `.claude/skills`）和全局 `~/.deepseek/skills` 发现技能。每个技能是一个包含 `SKILL.md` 的目录：
+DeepSeek TUI 从工作区目录（`.agents/skills` → `skills` → `.opencode/skills` → `.claude/skills`）和全局 `~/.ds/skills` 发现技能。每个技能是一个包含 `SKILL.md` 的目录：
 
 ```text
-~/.deepseek/skills/my-skill/
+~/.ds/skills/my-skill/
 └── SKILL.md
 ```
 
@@ -409,7 +409,7 @@ description: 当 DeepSeek 需要遵循我的自定义工作流时使用这个技
 
 ## 贡献
 
-欢迎提交 pull request——请先查看 [CONTRIBUTING.md](CONTRIBUTING.md) 并留意[开放 issue](https://github.com/Hmbown/DeepSeek-TUI/issues) 中的好入门任务。
+欢迎提交 pull request——请先查看 [CONTRIBUTING.md](CONTRIBUTING.md) 并留意[开放 issue](https://github.com/Hmbown/DS-Code/issues) 中的好入门任务。
 
 *本项目与 DeepSeek Inc. 无隶属关系。*
 
@@ -419,4 +419,4 @@ description: 当 DeepSeek 需要遵循我的自定义工作流时使用这个技
 
 ## Star 历史
 
-[![Star History Chart](https://api.star-history.com/chart?repos=Hmbown/DeepSeek-TUI&type=date&legend=top-left)](https://www.star-history.com/?repos=Hmbown%2FDeepSeek-TUI&type=date&logscale=&legend=top-left)
+[![Star History Chart](https://api.star-history.com/chart?repos=Hmbown/DS-Code&type=date&legend=top-left)](https://www.star-history.com/?repos=Hmbown%2FDS-Code&type=date&logscale=&legend=top-left)

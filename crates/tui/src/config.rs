@@ -1,4 +1,4 @@
-//! Configuration loading and defaults for DeepSeek TUI.
+//! Configuration loading and defaults for DS Code.
 
 use std::collections::HashMap;
 use std::fmt::Write;
@@ -20,7 +20,7 @@ use crate::hooks::HooksConfig;
 pub const DEFAULT_MAX_SUBAGENTS: usize = 10;
 pub const MAX_SUBAGENTS: usize = 20;
 pub const DEFAULT_TEXT_MODEL: &str = "deepseek-v4-pro";
-pub const DEFAULT_DEEPSEEK_BASE_URL: &str = "https://api.deepseek.com/beta";
+pub const DEFAULT_DS_BASE_URL: &str = "https://api.deepseek.com/beta";
 pub const DEFAULT_NVIDIA_NIM_MODEL: &str = "deepseek-ai/deepseek-v4-pro";
 pub const DEFAULT_NVIDIA_NIM_FLASH_MODEL: &str = "deepseek-ai/deepseek-v4-flash";
 pub const DEFAULT_NVIDIA_NIM_BASE_URL: &str = "https://integrate.api.nvidia.com/v1";
@@ -43,10 +43,10 @@ pub const DEFAULT_VLLM_BASE_URL: &str = "http://localhost:8000/v1";
 pub const DEFAULT_OLLAMA_MODEL: &str = "deepseek-coder:1.3b";
 pub const DEFAULT_OLLAMA_BASE_URL: &str = "http://localhost:11434/v1";
 /// Official DeepSeek API host per <https://api-docs.deepseek.com/> (`deepseek-cn` preset defaults here).
-/// Legacy typo hostname `api.deepseeki.com` remains recognized in URL heuristics for backward compatibility.
+/// Legacy typo hostname `api.dsi.com` remains recognized in URL heuristics for backward compatibility.
 pub const DEFAULT_DEEPSEEKCN_BASE_URL: &str = "https://api.deepseek.com";
 const API_KEYRING_SENTINEL: &str = "__KEYRING__";
-pub const COMMON_DEEPSEEK_MODELS: &[&str] = &[
+pub const COMMON_DS_MODELS: &[&str] = &[
     "deepseek-v4-pro",
     "deepseek-v4-flash",
     "deepseek-ai/deepseek-v4-pro",
@@ -75,7 +75,7 @@ impl ApiProvider {
     pub fn parse(value: &str) -> Option<Self> {
         match value.trim().to_ascii_lowercase().as_str() {
             "deepseek" | "deep-seek" => Some(Self::Deepseek),
-            "deepseek-cn" | "deepseek_china" | "deepseekcn" | "deepseek-china" => {
+            "deepseek-cn" | "DS_china" | "deepseekcn" | "deepseek-china" => {
                 Some(Self::DeepseekCN)
             }
             "nvidia" | "nvidia-nim" | "nvidia_nim" | "nim" => Some(Self::NvidiaNim),
@@ -174,9 +174,9 @@ pub struct ProviderCapability {
     pub alias_deprecation: Option<ModelAliasDeprecation>,
 }
 
-pub const DEEPSEEK_ALIAS_RETIREMENT_DATE: &str = "2026-07-24";
-pub const DEEPSEEK_ALIAS_RETIREMENT_UTC: &str = "2026-07-24T15:59:00Z";
-pub const DEEPSEEK_ALIAS_REPLACEMENT: &str = "deepseek-v4-flash";
+pub const DS_ALIAS_RETIREMENT_DATE: &str = "2026-07-24";
+pub const DS_ALIAS_RETIREMENT_UTC: &str = "2026-07-24T15:59:00Z";
+pub const DS_ALIAS_REPLACEMENT: &str = "deepseek-v4-flash";
 
 /// Upstream retirement metadata for a model alias that remains compatible.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq, Eq)]
@@ -206,7 +206,7 @@ pub fn provider_capability(provider: ApiProvider, resolved_model: &str) -> Provi
         return ProviderCapability {
             provider,
             resolved_model: resolved_model.to_string(),
-            context_window: crate::models::LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS,
+            context_window: crate::models::LEGACY_DS_CONTEXT_WINDOW_TOKENS,
             max_output: 4096,
             thinking_supported: false,
             cache_telemetry_supported: false,
@@ -230,7 +230,7 @@ pub fn provider_capability(provider: ApiProvider, resolved_model: &str) -> Provi
 
     let model_lower = resolved_model.to_ascii_lowercase();
     let alias_deprecation = if matches!(provider, ApiProvider::Deepseek | ApiProvider::DeepseekCN) {
-        deepseek_alias_deprecation(&model_lower)
+        ds_alias_deprecation(&model_lower)
     } else {
         None
     };
@@ -243,10 +243,10 @@ pub fn provider_capability(provider: ApiProvider, resolved_model: &str) -> Provi
     // Context window: V4-class models get 1M, everything else falls through
     // to the model's own lookup or a default.
     let context_window = if is_v4_pro || is_v4_flash {
-        crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+        crate::models::DS_V4_CONTEXT_WINDOW_TOKENS
     } else {
         crate::models::context_window_for_model(resolved_model)
-            .unwrap_or(crate::models::LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS)
+            .unwrap_or(crate::models::LEGACY_DS_CONTEXT_WINDOW_TOKENS)
     };
 
     // Max output tokens: official DeepSeek V4 API metadata lists 384K;
@@ -282,15 +282,15 @@ pub fn provider_capability(provider: ApiProvider, resolved_model: &str) -> Provi
     }
 }
 
-fn deepseek_alias_deprecation(model_lower: &str) -> Option<ModelAliasDeprecation> {
+fn ds_alias_deprecation(model_lower: &str) -> Option<ModelAliasDeprecation> {
     match model_lower {
         "deepseek-chat" | "deepseek-reasoner" => Some(ModelAliasDeprecation {
             alias: model_lower.to_string(),
-            replacement: DEEPSEEK_ALIAS_REPLACEMENT.to_string(),
-            retirement_date: DEEPSEEK_ALIAS_RETIREMENT_DATE.to_string(),
-            retirement_utc: DEEPSEEK_ALIAS_RETIREMENT_UTC.to_string(),
+            replacement: DS_ALIAS_REPLACEMENT.to_string(),
+            retirement_date: DS_ALIAS_RETIREMENT_DATE.to_string(),
+            retirement_utc: DS_ALIAS_RETIREMENT_UTC.to_string(),
             notice: format!(
-                "{model_lower} is a compatibility alias for {DEEPSEEK_ALIAS_REPLACEMENT} and is scheduled to retire on {DEEPSEEK_ALIAS_RETIREMENT_DATE}."
+                "{model_lower} is a compatibility alias for {DS_ALIAS_REPLACEMENT} and is scheduled to retire on {DS_ALIAS_RETIREMENT_DATE}."
             ),
         }),
         _ => None,
@@ -327,7 +327,7 @@ pub fn normalize_model_name(model: &str) -> Option<String> {
     }
 
     let normalized = trimmed.to_ascii_lowercase();
-    if !normalized.starts_with("deepseek") && !normalized.contains("/deepseek") {
+    if !normalized.starts_with("deepseek") && !normalized.contains("/ds") {
         return None;
     }
 
@@ -366,7 +366,7 @@ pub struct TuiConfig {
     /// empty `Some(vec![])` means "show nothing in the footer".
     ///
     /// Edited interactively via `/statusline`; persisted to `tui.status_items`
-    /// in `~/.deepseek/config.toml`.
+    /// in `~/.ds/config.toml`.
     pub status_items: Option<Vec<StatusItem>>,
     /// Emit OSC 8 hyperlink escape sequences around URLs in the transcript so
     /// supporting terminals (iTerm2, Terminal.app 13+, Ghostty, Kitty,
@@ -659,10 +659,10 @@ pub struct CapacityConfig {
     pub max_replay_per_turn: Option<usize>,
     pub min_turns_before_guardrail: Option<u64>,
     pub profile_window: Option<usize>,
-    pub deepseek_v3_2_chat_prior: Option<f64>,
-    pub deepseek_v3_2_reasoner_prior: Option<f64>,
-    pub deepseek_v4_pro_prior: Option<f64>,
-    pub deepseek_v4_flash_prior: Option<f64>,
+    pub ds_v3_2_chat_prior: Option<f64>,
+    pub ds_v3_2_reasoner_prior: Option<f64>,
+    pub ds_v4_pro_prior: Option<f64>,
+    pub ds_v4_flash_prior: Option<f64>,
     pub fallback_default_prior: Option<f64>,
 }
 
@@ -801,7 +801,7 @@ pub struct Config {
     #[serde(default)]
     pub hooks: Option<HooksConfig>,
 
-    /// Provider-specific credentials and defaults shared with the `deepseek` facade.
+    /// Provider-specific credentials and defaults shared with the `ds` facade.
     #[serde(default)]
     pub providers: Option<ProvidersConfig>,
 
@@ -828,7 +828,7 @@ pub struct Config {
 
     /// User-level memory file (#489). Default behaviour is **opt-in**:
     /// loading + injection happens only when `[memory] enabled = true` or
-    /// `DEEPSEEK_MEMORY=on` is set.
+    /// `DS_MEMORY=on` is set.
     #[serde(default)]
     pub memory: Option<MemoryConfig>,
 
@@ -867,7 +867,7 @@ pub struct RuntimeApiConfig {
     /// dev server port (e.g. Vite's default `:5173`).
     ///
     /// Resolution order (highest priority first): `--cors-origin` CLI flag,
-    /// `DEEPSEEK_CORS_ORIGINS` env var (comma-separated), this field. Whalescale#255 / #561.
+    /// `DS_CORS_ORIGINS` env var (comma-separated), this field. Whalescale#255 / #561.
     #[serde(default)]
     pub cors_origins: Option<Vec<String>>,
 }
@@ -902,7 +902,7 @@ impl SkillsConfig {
     }
 }
 
-/// `[network]` table — mirrors `deepseek_config::NetworkPolicyToml` so the live
+/// `[network]` table — mirrors `ds_config::NetworkPolicyToml` so the live
 /// TUI runtime can construct a [`crate::network_policy::NetworkPolicy`]
 /// without reaching into the workspace config crate. See `config.example.toml`
 /// for documentation.
@@ -1014,7 +1014,7 @@ pub struct ProvidersConfig {
     #[serde(default)]
     pub deepseek: ProviderConfig,
     #[serde(default)]
-    pub deepseek_cn: ProviderConfig,
+    pub ds_cn: ProviderConfig,
     #[serde(default)]
     pub nvidia_nim: ProviderConfig,
     #[serde(default)]
@@ -1193,7 +1193,7 @@ impl Config {
                     .or_else(|| {
                         self.base_url
                             .as_deref()
-                            .filter(|base| base.contains("api.deepseeki.com"))
+                            .filter(|base| base.contains("api.dsi.com"))
                             .map(|_| ApiProvider::DeepseekCN)
                     })
                     .unwrap_or(ApiProvider::Deepseek)
@@ -1204,7 +1204,7 @@ impl Config {
         let providers = self.providers.as_ref()?;
         Some(match provider {
             ApiProvider::Deepseek => &providers.deepseek,
-            ApiProvider::DeepseekCN => &providers.deepseek_cn,
+            ApiProvider::DeepseekCN => &providers.ds_cn,
             ApiProvider::NvidiaNim => &providers.nvidia_nim,
             ApiProvider::Openai => &providers.openai,
             ApiProvider::Openrouter => &providers.openrouter,
@@ -1282,7 +1282,7 @@ impl Config {
 
     /// Return the configured API base URL (normalized).
     #[must_use]
-    pub fn deepseek_base_url(&self) -> String {
+    pub fn ds_base_url(&self) -> String {
         let provider = self.api_provider();
         let provider_base = self
             .provider_config_for(provider)
@@ -1308,7 +1308,7 @@ impl Config {
         };
         let base = provider_base.or(root_base).unwrap_or_else(|| {
             match provider {
-                ApiProvider::Deepseek => DEFAULT_DEEPSEEK_BASE_URL,
+                ApiProvider::Deepseek => DEFAULT_DS_BASE_URL,
                 ApiProvider::DeepseekCN => DEFAULT_DEEPSEEKCN_BASE_URL,
                 ApiProvider::NvidiaNim => DEFAULT_NVIDIA_NIM_BASE_URL,
                 ApiProvider::Openai => DEFAULT_OPENAI_BASE_URL,
@@ -1326,7 +1326,7 @@ impl Config {
 
     fn active_provider_preserves_custom_base_url_model(&self) -> bool {
         let provider = self.api_provider();
-        provider_preserves_custom_base_url_model(provider, &self.deepseek_base_url())
+        provider_preserves_custom_base_url_model(provider, &self.ds_base_url())
     }
 
     /// Read the API key.
@@ -1337,7 +1337,7 @@ impl Config {
     /// The in-memory `self.api_key` override is only honored when the user
     /// explicitly set the field (not the legacy `API_KEYRING_SENTINEL`
     /// placeholder, not empty whitespace).
-    pub fn deepseek_api_key(&self) -> Result<String> {
+    pub fn ds_api_key(&self) -> Result<String> {
         let provider = self.api_provider();
         let slot = match provider {
             ApiProvider::Deepseek | ApiProvider::DeepseekCN => "deepseek",
@@ -1374,7 +1374,7 @@ impl Config {
 
         // 2. Environment variables. Do not query platform credential stores
         // here; routine startup and doctor checks must stay prompt-free.
-        if let Some(value) = deepseek_secrets::env_for(slot)
+        if let Some(value) = ds_secrets::env_for(slot)
             && !value.trim().is_empty()
         {
             return Ok(value);
@@ -1386,34 +1386,34 @@ impl Config {
                  \n\
                  1. Get a key:  https://platform.deepseek.com/api_keys\n\
                  2. Save it (works in every folder, no OS prompts):\n\
-                        deepseek auth set --provider deepseek\n\
+                        ds auth set --provider deepseek\n\
                  \n\
                  Alternatives:\n\
-                   • export DEEPSEEK_API_KEY=<your-key>      (current shell only;\n\
+                   • export DS_API_KEY=<your-key>      (current shell only;\n\
                      also note: zsh users — exports in ~/.zshrc only reach interactive\n\
                      shells, prefer ~/.zshenv for everything)\n\
-                   • api_key = \"<your-key>\"  in ~/.deepseek/config.toml"
+                   • api_key = \"<your-key>\"  in ~/.ds/config.toml"
             ),
             ApiProvider::NvidiaNim => anyhow::bail!(
-                "NVIDIA NIM API key not found. Run 'deepseek auth set --provider nvidia-nim', \
-                 set NVIDIA_API_KEY/NVIDIA_NIM_API_KEY, or save api_key in ~/.deepseek/config.toml \
+                "NVIDIA NIM API key not found. Run 'ds auth set --provider nvidia-nim', \
+                 set NVIDIA_API_KEY/NVIDIA_NIM_API_KEY, or save api_key in ~/.ds/config.toml \
                  with provider = \"nvidia-nim\"."
             ),
             ApiProvider::Openai => anyhow::bail!(
-                "OpenAI-compatible API key not found. Run 'deepseek auth set --provider openai', \
-                 set OPENAI_API_KEY, or add [providers.openai] api_key in ~/.deepseek/config.toml."
+                "OpenAI-compatible API key not found. Run 'ds auth set --provider openai', \
+                 set OPENAI_API_KEY, or add [providers.openai] api_key in ~/.ds/config.toml."
             ),
             ApiProvider::Openrouter => anyhow::bail!(
-                "OpenRouter API key not found. Run 'deepseek auth set --provider openrouter', \
-                 set OPENROUTER_API_KEY, or add [providers.openrouter] api_key in ~/.deepseek/config.toml."
+                "OpenRouter API key not found. Run 'ds auth set --provider openrouter', \
+                 set OPENROUTER_API_KEY, or add [providers.openrouter] api_key in ~/.ds/config.toml."
             ),
             ApiProvider::Novita => anyhow::bail!(
-                "Novita API key not found. Run 'deepseek auth set --provider novita', \
-                 set NOVITA_API_KEY, or add [providers.novita] api_key in ~/.deepseek/config.toml."
+                "Novita API key not found. Run 'ds auth set --provider novita', \
+                 set NOVITA_API_KEY, or add [providers.novita] api_key in ~/.ds/config.toml."
             ),
             ApiProvider::Fireworks => anyhow::bail!(
-                "Fireworks AI API key not found. Run 'deepseek auth set --provider fireworks', \
-                 set FIREWORKS_API_KEY, or add [providers.fireworks] api_key in ~/.deepseek/config.toml."
+                "Fireworks AI API key not found. Run 'ds auth set --provider fireworks', \
+                 set FIREWORKS_API_KEY, or add [providers.fireworks] api_key in ~/.ds/config.toml."
             ),
             // Self-hosted deployments commonly run without auth on localhost.
             // Return an empty key and let the client omit the Authorization header.
@@ -1481,7 +1481,7 @@ impl Config {
     /// Whether the user-memory feature is enabled. The default is **off**
     /// to preserve zero-overhead behavior for users who haven't opted in.
     /// Flips to `true` when `[memory] enabled = true` in `config.toml` or
-    /// `DEEPSEEK_MEMORY=on` is set in the environment.
+    /// `DS_MEMORY=on` is set in the environment.
     #[must_use]
     pub fn memory_enabled(&self) -> bool {
         self.memory
@@ -1656,7 +1656,7 @@ fn effective_home_dir() -> Option<PathBuf> {
 }
 
 fn home_config_path() -> Option<PathBuf> {
-    effective_home_dir().map(|home| home.join(".deepseek").join("config.toml"))
+    effective_home_dir().map(|home| home.join(".ds").join("config.toml"))
 }
 
 #[must_use]
@@ -1737,7 +1737,7 @@ fn canonicalize_or_keep(path: &Path) -> PathBuf {
 }
 
 fn env_config_path() -> Option<PathBuf> {
-    if let Ok(path) = std::env::var("DEEPSEEK_CONFIG_PATH") {
+    if let Ok(path) = std::env::var("DS_CONFIG_PATH") {
         let trimmed = path.trim();
         if !trimmed.is_empty() {
             return Some(expand_path(trimmed));
@@ -1790,9 +1790,9 @@ pub fn ensure_config_file_exists(path: Option<PathBuf>) -> Result<Option<PathBuf
 
     ensure_parent_dir(&config_path)?;
     let content = format!(
-        r#"# DeepSeek TUI Configuration
+        r#"# DS Code Configuration
 # Get your API key from https://platform.deepseek.com
-# Save it with: deepseek auth set --provider deepseek
+# Save it with: ds auth set --provider deepseek
 
 # Base URL (default: https://api.deepseek.com/beta)
 # Set https://api.deepseek.com to opt out of beta features.
@@ -1816,22 +1816,22 @@ reasoning_effort = "auto"
 fn default_managed_config_path() -> Option<PathBuf> {
     #[cfg(unix)]
     {
-        Some(PathBuf::from("/etc/deepseek/managed_config.toml"))
+        Some(PathBuf::from("/etc/ds/managed_config.toml"))
     }
     #[cfg(not(unix))]
     {
-        effective_home_dir().map(|home| home.join(".deepseek").join("managed_config.toml"))
+        effective_home_dir().map(|home| home.join(".ds").join("managed_config.toml"))
     }
 }
 
 fn default_requirements_path() -> Option<PathBuf> {
     #[cfg(unix)]
     {
-        Some(PathBuf::from("/etc/deepseek/requirements.toml"))
+        Some(PathBuf::from("/etc/ds/requirements.toml"))
     }
     #[cfg(not(unix))]
     {
-        effective_home_dir().map(|home| home.join(".deepseek").join("requirements.toml"))
+        effective_home_dir().map(|home| home.join(".ds").join("requirements.toml"))
     }
 }
 
@@ -1852,28 +1852,28 @@ pub(crate) fn expand_path(path: &str) -> PathBuf {
 }
 
 fn default_skills_dir() -> Option<PathBuf> {
-    effective_home_dir().map(|home| home.join(".deepseek").join("skills"))
+    effective_home_dir().map(|home| home.join(".ds").join("skills"))
 }
 
 fn default_mcp_config_path() -> Option<PathBuf> {
-    effective_home_dir().map(|home| home.join(".deepseek").join("mcp.json"))
+    effective_home_dir().map(|home| home.join(".ds").join("mcp.json"))
 }
 
 fn default_notes_path() -> Option<PathBuf> {
-    effective_home_dir().map(|home| home.join(".deepseek").join("notes.txt"))
+    effective_home_dir().map(|home| home.join(".ds").join("notes.txt"))
 }
 
 fn default_memory_path() -> Option<PathBuf> {
-    effective_home_dir().map(|home| home.join(".deepseek").join("memory.md"))
+    effective_home_dir().map(|home| home.join(".ds").join("memory.md"))
 }
 
 // === Environment Overrides ===
 
 fn apply_env_overrides(config: &mut Config) {
-    if let Ok(value) = std::env::var("DEEPSEEK_PROVIDER") {
+    if let Ok(value) = std::env::var("DS_PROVIDER") {
         config.provider = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_BASE_URL") {
+    if let Ok(value) = std::env::var("DS_BASE_URL") {
         match config.api_provider() {
             ApiProvider::NvidiaNim => {
                 config
@@ -1968,7 +1968,7 @@ fn apply_env_overrides(config: &mut Config) {
             .vllm
             .base_url = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_HTTP_HEADERS")
+    if let Ok(value) = std::env::var("DS_HTTP_HEADERS")
         && let Ok(headers) = parse_http_headers(&value)
         && !headers.is_empty()
     {
@@ -1982,7 +1982,7 @@ fn apply_env_overrides(config: &mut Config) {
             .get_or_insert_with(ProvidersConfig::default);
         let entry = match provider {
             ApiProvider::Deepseek => &mut providers.deepseek,
-            ApiProvider::DeepseekCN => &mut providers.deepseek_cn,
+            ApiProvider::DeepseekCN => &mut providers.ds_cn,
             ApiProvider::NvidiaNim => &mut providers.nvidia_nim,
             ApiProvider::Openai => &mut providers.openai,
             ApiProvider::Openrouter => &mut providers.openrouter,
@@ -2027,7 +2027,7 @@ fn apply_env_overrides(config: &mut Config) {
         config.default_text_model = Some(value);
     }
     if let Ok(value) =
-        std::env::var("DEEPSEEK_MODEL").or_else(|_| std::env::var("DEEPSEEK_DEFAULT_TEXT_MODEL"))
+        std::env::var("DS_MODEL").or_else(|_| std::env::var("DS_DEFAULT_TEXT_MODEL"))
     {
         config.default_text_model = Some(value);
     }
@@ -2036,19 +2036,19 @@ fn apply_env_overrides(config: &mut Config) {
     {
         config.default_text_model = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_SKILLS_DIR") {
+    if let Ok(value) = std::env::var("DS_SKILLS_DIR") {
         config.skills_dir = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_MCP_CONFIG") {
+    if let Ok(value) = std::env::var("DS_MCP_CONFIG") {
         config.mcp_config_path = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_NOTES_PATH") {
+    if let Ok(value) = std::env::var("DS_NOTES_PATH") {
         config.notes_path = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_MEMORY_PATH") {
+    if let Ok(value) = std::env::var("DS_MEMORY_PATH") {
         config.memory_path = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_MEMORY") {
+    if let Ok(value) = std::env::var("DS_MEMORY") {
         let on = matches!(
             value.trim().to_ascii_lowercase().as_str(),
             "1" | "on" | "true" | "yes" | "y" | "enabled"
@@ -2058,31 +2058,31 @@ fn apply_env_overrides(config: &mut Config) {
             .get_or_insert_with(MemoryConfig::default)
             .enabled = Some(on);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_ALLOW_SHELL") {
+    if let Ok(value) = std::env::var("DS_ALLOW_SHELL") {
         config.allow_shell = Some(value == "1" || value.eq_ignore_ascii_case("true"));
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_APPROVAL_POLICY") {
+    if let Ok(value) = std::env::var("DS_APPROVAL_POLICY") {
         config.approval_policy = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_SANDBOX_MODE") {
+    if let Ok(value) = std::env::var("DS_SANDBOX_MODE") {
         config.sandbox_mode = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_SANDBOX_BACKEND") {
+    if let Ok(value) = std::env::var("DS_SANDBOX_BACKEND") {
         config.sandbox_backend = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_SANDBOX_URL") {
+    if let Ok(value) = std::env::var("DS_SANDBOX_URL") {
         config.sandbox_url = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_SANDBOX_API_KEY") {
+    if let Ok(value) = std::env::var("DS_SANDBOX_API_KEY") {
         config.sandbox_api_key = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_MANAGED_CONFIG_PATH") {
+    if let Ok(value) = std::env::var("DS_MANAGED_CONFIG_PATH") {
         config.managed_config_path = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_REQUIREMENTS_PATH") {
+    if let Ok(value) = std::env::var("DS_REQUIREMENTS_PATH") {
         config.requirements_path = Some(value);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_MAX_SUBAGENTS")
+    if let Ok(value) = std::env::var("DS_MAX_SUBAGENTS")
         && let Ok(parsed) = value.parse::<usize>()
     {
         config.max_subagents = Some(parsed.clamp(1, MAX_SUBAGENTS));
@@ -2099,83 +2099,83 @@ fn apply_env_overrides(config: &mut Config) {
         max_replay_per_turn: None,
         min_turns_before_guardrail: None,
         profile_window: None,
-        deepseek_v3_2_chat_prior: None,
-        deepseek_v3_2_reasoner_prior: None,
-        deepseek_v4_pro_prior: None,
-        deepseek_v4_flash_prior: None,
+        ds_v3_2_chat_prior: None,
+        ds_v3_2_reasoner_prior: None,
+        ds_v4_pro_prior: None,
+        ds_v4_flash_prior: None,
         fallback_default_prior: None,
     });
 
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_ENABLED") {
+    if let Ok(value) = std::env::var("DS_CAPACITY_ENABLED") {
         let val = value.trim().to_ascii_lowercase();
         capacity.enabled = Some(matches!(val.as_str(), "1" | "true" | "yes" | "on"));
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_LOW_RISK_MAX")
+    if let Ok(value) = std::env::var("DS_CAPACITY_LOW_RISK_MAX")
         && let Ok(parsed) = value.parse::<f64>()
     {
         capacity.low_risk_max = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_MEDIUM_RISK_MAX")
+    if let Ok(value) = std::env::var("DS_CAPACITY_MEDIUM_RISK_MAX")
         && let Ok(parsed) = value.parse::<f64>()
     {
         capacity.medium_risk_max = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_SEVERE_MIN_SLACK")
+    if let Ok(value) = std::env::var("DS_CAPACITY_SEVERE_MIN_SLACK")
         && let Ok(parsed) = value.parse::<f64>()
     {
         capacity.severe_min_slack = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_SEVERE_VIOLATION_RATIO")
+    if let Ok(value) = std::env::var("DS_CAPACITY_SEVERE_VIOLATION_RATIO")
         && let Ok(parsed) = value.parse::<f64>()
     {
         capacity.severe_violation_ratio = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_REFRESH_COOLDOWN_TURNS")
+    if let Ok(value) = std::env::var("DS_CAPACITY_REFRESH_COOLDOWN_TURNS")
         && let Ok(parsed) = value.parse::<u64>()
     {
         capacity.refresh_cooldown_turns = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_REPLAN_COOLDOWN_TURNS")
+    if let Ok(value) = std::env::var("DS_CAPACITY_REPLAN_COOLDOWN_TURNS")
         && let Ok(parsed) = value.parse::<u64>()
     {
         capacity.replan_cooldown_turns = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_MAX_REPLAY_PER_TURN")
+    if let Ok(value) = std::env::var("DS_CAPACITY_MAX_REPLAY_PER_TURN")
         && let Ok(parsed) = value.parse::<usize>()
     {
         capacity.max_replay_per_turn = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_MIN_TURNS_BEFORE_GUARDRAIL")
+    if let Ok(value) = std::env::var("DS_CAPACITY_MIN_TURNS_BEFORE_GUARDRAIL")
         && let Ok(parsed) = value.parse::<u64>()
     {
         capacity.min_turns_before_guardrail = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_PROFILE_WINDOW")
+    if let Ok(value) = std::env::var("DS_CAPACITY_PROFILE_WINDOW")
         && let Ok(parsed) = value.parse::<usize>()
     {
         capacity.profile_window = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_PRIOR_CHAT")
+    if let Ok(value) = std::env::var("DS_CAPACITY_PRIOR_CHAT")
         && let Ok(parsed) = value.parse::<f64>()
     {
-        capacity.deepseek_v3_2_chat_prior = Some(parsed);
+        capacity.ds_v3_2_chat_prior = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_PRIOR_REASONER")
+    if let Ok(value) = std::env::var("DS_CAPACITY_PRIOR_REASONER")
         && let Ok(parsed) = value.parse::<f64>()
     {
-        capacity.deepseek_v3_2_reasoner_prior = Some(parsed);
+        capacity.ds_v3_2_reasoner_prior = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_PRIOR_V4_PRO")
+    if let Ok(value) = std::env::var("DS_CAPACITY_PRIOR_V4_PRO")
         && let Ok(parsed) = value.parse::<f64>()
     {
-        capacity.deepseek_v4_pro_prior = Some(parsed);
+        capacity.ds_v4_pro_prior = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_PRIOR_V4_FLASH")
+    if let Ok(value) = std::env::var("DS_CAPACITY_PRIOR_V4_FLASH")
         && let Ok(parsed) = value.parse::<f64>()
     {
-        capacity.deepseek_v4_flash_prior = Some(parsed);
+        capacity.ds_v4_flash_prior = Some(parsed);
     }
-    if let Ok(value) = std::env::var("DEEPSEEK_CAPACITY_PRIOR_FALLBACK")
+    if let Ok(value) = std::env::var("DS_CAPACITY_PRIOR_FALLBACK")
         && let Ok(parsed) = value.parse::<f64>()
     {
         capacity.fallback_default_prior = Some(parsed);
@@ -2192,10 +2192,10 @@ fn apply_env_overrides(config: &mut Config) {
             && c.max_replay_per_turn.is_none()
             && c.min_turns_before_guardrail.is_none()
             && c.profile_window.is_none()
-            && c.deepseek_v3_2_chat_prior.is_none()
-            && c.deepseek_v3_2_reasoner_prior.is_none()
-            && c.deepseek_v4_pro_prior.is_none()
-            && c.deepseek_v4_flash_prior.is_none()
+            && c.ds_v3_2_chat_prior.is_none()
+            && c.ds_v3_2_reasoner_prior.is_none()
+            && c.ds_v4_pro_prior.is_none()
+            && c.ds_v4_flash_prior.is_none()
             && c.fallback_default_prior.is_none()
     }) {
         config.capacity = None;
@@ -2218,11 +2218,11 @@ fn normalize_model_config(config: &mut Config) {
         {
             providers.deepseek.model = Some(normalized);
         }
-        if let Some(model) = providers.deepseek_cn.model.as_deref()
-            && !provider_entry_uses_custom_base_url(ApiProvider::DeepseekCN, &providers.deepseek_cn)
+        if let Some(model) = providers.ds_cn.model.as_deref()
+            && !provider_entry_uses_custom_base_url(ApiProvider::DeepseekCN, &providers.ds_cn)
             && let Some(normalized) = normalize_model_for_provider(ApiProvider::DeepseekCN, model)
         {
-            providers.deepseek_cn.model = Some(normalized);
+            providers.ds_cn.model = Some(normalized);
         }
         if let Some(model) = providers.nvidia_nim.model.as_deref()
             && !provider_entry_uses_custom_base_url(ApiProvider::NvidiaNim, &providers.nvidia_nim)
@@ -2283,7 +2283,7 @@ fn provider_entry_uses_custom_base_url(provider: ApiProvider, entry: &ProviderCo
 
 fn default_base_url_for_provider(provider: ApiProvider) -> &'static str {
     match provider {
-        ApiProvider::Deepseek => DEFAULT_DEEPSEEK_BASE_URL,
+        ApiProvider::Deepseek => DEFAULT_DS_BASE_URL,
         ApiProvider::DeepseekCN => DEFAULT_DEEPSEEKCN_BASE_URL,
         ApiProvider::NvidiaNim => DEFAULT_NVIDIA_NIM_BASE_URL,
         ApiProvider::Openai => DEFAULT_OPENAI_BASE_URL,
@@ -2331,8 +2331,8 @@ fn model_for_provider(provider: ApiProvider, normalized: String) -> String {
 
 fn normalize_base_url(base: &str) -> String {
     let trimmed = base.trim_end_matches('/');
-    let deepseek_domains = ["api.deepseek.com", "api.deepseeki.com"];
-    if deepseek_domains
+    let ds_domains = ["api.deepseek.com", "api.dsi.com"];
+    if ds_domains
         .iter()
         .any(|domain| trimmed.contains(domain))
     {
@@ -2484,7 +2484,7 @@ fn merge_providers(
         (None, Some(override_cfg)) => Some(override_cfg),
         (Some(base), Some(override_cfg)) => Some(ProvidersConfig {
             deepseek: merge_provider_config(base.deepseek, override_cfg.deepseek),
-            deepseek_cn: merge_provider_config(base.deepseek_cn, override_cfg.deepseek_cn),
+            ds_cn: merge_provider_config(base.ds_cn, override_cfg.ds_cn),
             nvidia_nim: merge_provider_config(base.nvidia_nim, override_cfg.nvidia_nim),
             openai: merge_provider_config(base.openai, override_cfg.openai),
             openrouter: merge_provider_config(base.openrouter, override_cfg.openrouter),
@@ -2676,9 +2676,9 @@ pub enum SavedCredential {
     /// `keyring → env → config-file` resolution-order shadow that
     /// would otherwise let a stale OS-keyring entry from a previous
     /// install hide the freshly-entered key (#593). The `backend`
-    /// label is the value of [`deepseek_secrets::Secrets::backend_name`]
+    /// label is the value of [`ds_secrets::Secrets::backend_name`]
     /// at write time so the toast text can name the actual backend
-    /// (`"system keyring"`, `"file-based (~/.deepseek/secrets/)"`).
+    /// (`"system keyring"`, `"file-based (~/.ds/secrets/)"`).
     KeyringAndConfigFile {
         /// `Secrets::backend_name()` at write time.
         backend: String,
@@ -2707,8 +2707,8 @@ impl SavedCredential {
 
 /// Save the active provider's API key.
 ///
-/// **Dual-write strategy (#593):** writes to `~/.deepseek/config.toml`
-/// (always) and to the OS keyring via [`deepseek_secrets::Secrets`]
+/// **Dual-write strategy (#593):** writes to `~/.ds/config.toml`
+/// (always) and to the OS keyring via [`ds_secrets::Secrets`]
 /// (when a backend is reachable). The runtime resolves credentials in
 /// `keyring → env → config-file` order; writing to the config file
 /// alone — as v0.8.8 through v0.8.10 did — let a stale keyring entry
@@ -2746,7 +2746,7 @@ pub fn save_api_key(api_key: &str) -> Result<SavedCredential> {
     // cross-test contamination).
     #[cfg(not(test))]
     {
-        let secrets = deepseek_secrets::Secrets::auto_detect();
+        let secrets = ds_secrets::Secrets::auto_detect();
         match secrets.set("deepseek", trimmed) {
             Ok(()) => {
                 let backend = secrets.backend_name().to_string();
@@ -2808,9 +2808,9 @@ fn save_api_key_to_config_file(api_key: &str) -> Result<PathBuf> {
     } else {
         // Create new minimal config
         format!(
-            r#"# DeepSeek TUI Configuration
+            r#"# DS Code Configuration
 # Get your API key from https://platform.deepseek.com
-# Or set DEEPSEEK_API_KEY environment variable
+# Or set DS_API_KEY environment variable
 
 api_key = "{key_to_write}"
 
@@ -2846,7 +2846,7 @@ reasoning_effort = "max"
 /// Check if an API key is configured anywhere the runtime can resolve it.
 ///
 /// Order of inspection:
-///   1. `DEEPSEEK_API_KEY` env var (fast, no I/O, no OS prompts).
+///   1. `DS_API_KEY` env var (fast, no I/O, no OS prompts).
 ///   2. In-memory override on the config (set by onboarding / picker).
 ///   3. Config-file `api_key` slot (cheap file read already done by
 ///      the loaded `Config`).
@@ -2854,14 +2854,14 @@ reasoning_effort = "max"
 /// Platform credential stores are intentionally not queried here.
 /// Startup/onboarding checks must be cheap and prompt-free, so v0.8.8
 /// keeps the default auth path to environment variables and
-/// `~/.deepseek/config.toml`.
+/// `~/.ds/config.toml`.
 ///
 /// Used by [`crate::tui::app::App::new`] to decide whether to gate
 /// the user behind the in-TUI api-key onboarding screen — getting
 /// this wrong made users get prompted for credentials in situations
 /// where normal env/config auth was already available.
 pub fn has_api_key(config: &Config) -> bool {
-    if std::env::var("DEEPSEEK_API_KEY").is_ok_and(|k| !k.trim().is_empty()) {
+    if std::env::var("DS_API_KEY").is_ok_and(|k| !k.trim().is_empty()) {
         return true;
     }
     if config
@@ -2897,7 +2897,7 @@ pub fn active_provider_has_config_api_key(config: &Config) -> bool {
 pub fn active_provider_has_env_api_key(config: &Config) -> bool {
     match config.api_provider() {
         ApiProvider::Deepseek | ApiProvider::DeepseekCN => {
-            std::env::var("DEEPSEEK_API_KEY").is_ok_and(|k| !k.trim().is_empty())
+            std::env::var("DS_API_KEY").is_ok_and(|k| !k.trim().is_empty())
         }
         ApiProvider::NvidiaNim => {
             std::env::var("NVIDIA_API_KEY").is_ok_and(|k| !k.trim().is_empty())
@@ -2928,7 +2928,7 @@ pub fn active_provider_uses_env_only_api_key(config: &Config) -> bool {
 #[must_use]
 pub fn has_api_key_for(config: &Config, provider: ApiProvider) -> bool {
     let env_var = match provider {
-        ApiProvider::Deepseek | ApiProvider::DeepseekCN => "DEEPSEEK_API_KEY",
+        ApiProvider::Deepseek | ApiProvider::DeepseekCN => "DS_API_KEY",
         ApiProvider::NvidiaNim => "NVIDIA_API_KEY",
         ApiProvider::Openai => "OPENAI_API_KEY",
         ApiProvider::Openrouter => "OPENROUTER_API_KEY",
@@ -2977,7 +2977,7 @@ pub fn has_api_key_for(config: &Config, provider: ApiProvider) -> bool {
 
 /// Save an API key to the appropriate place for the given provider.
 /// DeepSeek goes through [`save_api_key`]. Other providers write
-/// `[providers.<name>] api_key = "..."` to `~/.deepseek/config.toml`.
+/// `[providers.<name>] api_key = "..."` to `~/.ds/config.toml`.
 /// Returns the config file path.
 pub fn save_api_key_for(provider: ApiProvider, api_key: &str) -> Result<PathBuf> {
     if matches!(provider, ApiProvider::Deepseek | ApiProvider::DeepseekCN) {
@@ -3072,9 +3072,9 @@ pub fn save_api_key_for(provider: ApiProvider, api_key: &str) -> Result<PathBuf>
 /// root `api_key = ...` line *and* every `api_key` line nested in a
 /// `[providers.<name>]` table.
 ///
-/// Environment variables (`DEEPSEEK_API_KEY`, etc.) are intentionally
+/// Environment variables (`DS_API_KEY`, etc.) are intentionally
 /// **not** unset — they are managed by the user's shell and outside the
-/// CLI's purview. `Config::deepseek_api_key`'s explicit-override path
+/// CLI's purview. `Config::ds_api_key`'s explicit-override path
 /// (Path 0) ensures a freshly-entered key still wins over a stale env
 /// var that lingers from a previous session.
 pub fn clear_api_key() -> Result<()> {
@@ -3133,13 +3133,13 @@ mod tests {
     struct EnvGuard {
         home: Option<OsString>,
         userprofile: Option<OsString>,
-        deepseek_config_path: Option<OsString>,
-        deepseek_provider: Option<OsString>,
-        deepseek_api_key: Option<OsString>,
-        deepseek_base_url: Option<OsString>,
-        deepseek_http_headers: Option<OsString>,
-        deepseek_model: Option<OsString>,
-        deepseek_default_text_model: Option<OsString>,
+        ds_config_path: Option<OsString>,
+        DS_provider: Option<OsString>,
+        ds_api_key: Option<OsString>,
+        ds_base_url: Option<OsString>,
+        DS_http_headers: Option<OsString>,
+        DS_model: Option<OsString>,
+        DS_default_text_model: Option<OsString>,
         nvidia_api_key: Option<OsString>,
         nvidia_nim_api_key: Option<OsString>,
         nim_base_url: Option<OsString>,
@@ -3169,17 +3169,17 @@ mod tests {
     impl EnvGuard {
         fn new(home: &Path) -> Self {
             let home_str = OsString::from(home.as_os_str());
-            let config_path = home.join(".deepseek").join("config.toml");
+            let config_path = home.join(".ds").join("config.toml");
             let config_str = OsString::from(config_path.as_os_str());
             let home_prev = env::var_os("HOME");
             let userprofile_prev = env::var_os("USERPROFILE");
-            let deepseek_config_prev = env::var_os("DEEPSEEK_CONFIG_PATH");
-            let deepseek_provider_prev = env::var_os("DEEPSEEK_PROVIDER");
-            let api_key_prev = env::var_os("DEEPSEEK_API_KEY");
-            let base_url_prev = env::var_os("DEEPSEEK_BASE_URL");
-            let http_headers_prev = env::var_os("DEEPSEEK_HTTP_HEADERS");
-            let model_prev = env::var_os("DEEPSEEK_MODEL");
-            let default_text_model_prev = env::var_os("DEEPSEEK_DEFAULT_TEXT_MODEL");
+            let ds_config_prev = env::var_os("DS_CONFIG_PATH");
+            let DS_provider_prev = env::var_os("DS_PROVIDER");
+            let api_key_prev = env::var_os("DS_API_KEY");
+            let base_url_prev = env::var_os("DS_BASE_URL");
+            let http_headers_prev = env::var_os("DS_HTTP_HEADERS");
+            let model_prev = env::var_os("DS_MODEL");
+            let default_text_model_prev = env::var_os("DS_DEFAULT_TEXT_MODEL");
             let nvidia_api_key_prev = env::var_os("NVIDIA_API_KEY");
             let nvidia_nim_api_key_prev = env::var_os("NVIDIA_NIM_API_KEY");
             let nim_base_url_prev = env::var_os("NIM_BASE_URL");
@@ -3208,13 +3208,13 @@ mod tests {
             unsafe {
                 env::set_var("HOME", &home_str);
                 env::set_var("USERPROFILE", &home_str);
-                env::set_var("DEEPSEEK_CONFIG_PATH", &config_str);
-                env::remove_var("DEEPSEEK_PROVIDER");
-                env::remove_var("DEEPSEEK_API_KEY");
-                env::remove_var("DEEPSEEK_BASE_URL");
-                env::remove_var("DEEPSEEK_HTTP_HEADERS");
-                env::remove_var("DEEPSEEK_MODEL");
-                env::remove_var("DEEPSEEK_DEFAULT_TEXT_MODEL");
+                env::set_var("DS_CONFIG_PATH", &config_str);
+                env::remove_var("DS_PROVIDER");
+                env::remove_var("DS_API_KEY");
+                env::remove_var("DS_BASE_URL");
+                env::remove_var("DS_HTTP_HEADERS");
+                env::remove_var("DS_MODEL");
+                env::remove_var("DS_DEFAULT_TEXT_MODEL");
                 env::remove_var("NVIDIA_API_KEY");
                 env::remove_var("NVIDIA_NIM_API_KEY");
                 env::remove_var("NIM_BASE_URL");
@@ -3243,13 +3243,13 @@ mod tests {
             Self {
                 home: home_prev,
                 userprofile: userprofile_prev,
-                deepseek_config_path: deepseek_config_prev,
-                deepseek_provider: deepseek_provider_prev,
-                deepseek_api_key: api_key_prev,
-                deepseek_base_url: base_url_prev,
-                deepseek_http_headers: http_headers_prev,
-                deepseek_model: model_prev,
-                deepseek_default_text_model: default_text_model_prev,
+                ds_config_path: ds_config_prev,
+                DS_provider: DS_provider_prev,
+                ds_api_key: api_key_prev,
+                ds_base_url: base_url_prev,
+                DS_http_headers: http_headers_prev,
+                DS_model: model_prev,
+                DS_default_text_model: default_text_model_prev,
                 nvidia_api_key: nvidia_api_key_prev,
                 nvidia_nim_api_key: nvidia_nim_api_key_prev,
                 nim_base_url: nim_base_url_prev,
@@ -3284,15 +3284,15 @@ mod tests {
             unsafe {
                 Self::restore_var("HOME", self.home.take());
                 Self::restore_var("USERPROFILE", self.userprofile.take());
-                Self::restore_var("DEEPSEEK_CONFIG_PATH", self.deepseek_config_path.take());
-                Self::restore_var("DEEPSEEK_PROVIDER", self.deepseek_provider.take());
-                Self::restore_var("DEEPSEEK_API_KEY", self.deepseek_api_key.take());
-                Self::restore_var("DEEPSEEK_BASE_URL", self.deepseek_base_url.take());
-                Self::restore_var("DEEPSEEK_HTTP_HEADERS", self.deepseek_http_headers.take());
-                Self::restore_var("DEEPSEEK_MODEL", self.deepseek_model.take());
+                Self::restore_var("DS_CONFIG_PATH", self.ds_config_path.take());
+                Self::restore_var("DS_PROVIDER", self.DS_provider.take());
+                Self::restore_var("DS_API_KEY", self.ds_api_key.take());
+                Self::restore_var("DS_BASE_URL", self.ds_base_url.take());
+                Self::restore_var("DS_HTTP_HEADERS", self.DS_http_headers.take());
+                Self::restore_var("DS_MODEL", self.DS_model.take());
                 Self::restore_var(
-                    "DEEPSEEK_DEFAULT_TEXT_MODEL",
-                    self.deepseek_default_text_model.take(),
+                    "DS_DEFAULT_TEXT_MODEL",
+                    self.DS_default_text_model.take(),
                 );
                 Self::restore_var("NVIDIA_API_KEY", self.nvidia_api_key.take());
                 Self::restore_var("NVIDIA_NIM_API_KEY", self.nvidia_nim_api_key.take());
@@ -3388,7 +3388,7 @@ mod tests {
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-test-{}-{}",
+            "DS-Code-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -3396,7 +3396,7 @@ mod tests {
         let _guard = EnvGuard::new(&temp_root);
 
         let saved = save_api_key("test-key")?;
-        let expected = temp_root.join(".deepseek").join("config.toml");
+        let expected = temp_root.join(".ds").join("config.toml");
         assert_eq!(saved, SavedCredential::ConfigFile(expected.clone()));
         assert_eq!(saved.describe(), expected.display().to_string());
 
@@ -3424,7 +3424,7 @@ mod tests {
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-first-run-config-{}-{}",
+            "DS-Code-first-run-config-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -3434,7 +3434,7 @@ mod tests {
         let created = ensure_config_file_exists(None)?.expect("should create config");
         let content = fs::read_to_string(&created)?;
 
-        assert_eq!(created, temp_root.join(".deepseek").join("config.toml"));
+        assert_eq!(created, temp_root.join(".ds").join("config.toml"));
         assert!(content.contains("default_text_model = \"deepseek-v4-pro\""));
         assert!(content.contains("reasoning_effort = \"auto\""));
         assert!(!content.contains("api_key ="));
@@ -3450,7 +3450,7 @@ mod tests {
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-workspace-trust-{}-{}",
+            "DS-Code-workspace-trust-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -3462,12 +3462,12 @@ mod tests {
         assert!(!is_workspace_trusted(&workspace));
         let saved = save_workspace_trust(&workspace)?;
 
-        assert_eq!(saved, temp_root.join(".deepseek").join("config.toml"));
+        assert_eq!(saved, temp_root.join(".ds").join("config.toml"));
         assert!(is_workspace_trusted(&workspace));
         assert!(!crate::tui::onboarding::needs_trust(&workspace));
         assert!(
-            !workspace.join(".deepseek").exists(),
-            "trust persistence must not create a project-local .deepseek directory"
+            !workspace.join(".ds").exists(),
+            "trust persistence must not create a project-local .ds directory"
         );
 
         let parsed: toml::Value = toml::from_str(&fs::read_to_string(saved)?)?;
@@ -3486,7 +3486,7 @@ mod tests {
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-existing-project-trust-{}-{}",
+            "DS-Code-existing-project-trust-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -3494,7 +3494,7 @@ mod tests {
         let _guard = EnvGuard::new(&temp_root);
         let workspace = temp_root.join("project");
         fs::create_dir_all(&workspace)?;
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         fs::create_dir_all(config_path.parent().unwrap())?;
         fs::write(
             &config_path,
@@ -3547,11 +3547,11 @@ mod tests {
     #[test]
     fn has_api_key_detects_in_memory_override_and_env_var() -> Result<()> {
         // Pins the v0.8.8 contract: `has_api_key` covers the prompt-free
-        // sources used by `Config::deepseek_api_key` (in-memory override,
+        // sources used by `Config::ds_api_key` (in-memory override,
         // env var, config-file slot).
         let _lock = lock_test_env();
         // Explicit in-memory key wins over every other source per
-        // `Config::deepseek_api_key`'s "Path 0" override.
+        // `Config::ds_api_key`'s "Path 0" override.
         let cfg = Config {
             api_key: Some("sk-in-memory-override".to_string()),
             ..Default::default()
@@ -3564,14 +3564,14 @@ mod tests {
         // Env var path.
         let env_cfg = Config::default();
         unsafe {
-            std::env::set_var("DEEPSEEK_API_KEY", "sk-test-from-env");
+            std::env::set_var("DS_API_KEY", "sk-test-from-env");
         }
         assert!(
             has_api_key(&env_cfg),
             "env-var key must be detected even with empty config"
         );
         unsafe {
-            std::env::remove_var("DEEPSEEK_API_KEY");
+            std::env::remove_var("DS_API_KEY");
         }
         Ok(())
     }
@@ -3587,14 +3587,14 @@ mod tests {
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-clear-{}-{}",
+            "DS-Code-clear-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_dir = temp_root.join(".deepseek");
+        let config_dir = temp_root.join(".ds");
         fs::create_dir_all(&config_dir)?;
         let config_path = config_dir.join("config.toml");
         fs::write(
@@ -3636,14 +3636,14 @@ api_key = "old-openrouter-key"
     /// non-sentinel) wins over env/config so a freshly-typed onboarding
     /// key takes effect immediately.
     #[test]
-    fn deepseek_api_key_prefers_explicit_in_memory_override() -> Result<()> {
+    fn DS_api_key_prefers_explicit_in_memory_override() -> Result<()> {
         let _lock = lock_test_env();
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-override-{}-{}",
+            "DS-Code-override-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -3655,21 +3655,21 @@ api_key = "old-openrouter-key"
             ..Config::default()
         };
         let resolved = config
-            .deepseek_api_key()
+            .ds_api_key()
             .expect("explicit override must resolve");
         assert_eq!(resolved, "freshly-typed-key");
         Ok(())
     }
 
     #[test]
-    fn deepseek_api_key_prefers_saved_config_over_stale_env() -> Result<()> {
+    fn DS_api_key_prefers_saved_config_over_stale_env() -> Result<()> {
         let _lock = lock_test_env();
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-config-over-env-{}-{}",
+            "DS-Code-config-over-env-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -3677,15 +3677,15 @@ api_key = "old-openrouter-key"
         let _guard = EnvGuard::new(&temp_root);
 
         unsafe {
-            env::set_var("DEEPSEEK_API_KEY", "stale-env-key");
+            env::set_var("DS_API_KEY", "stale-env-key");
         }
         let config = Config {
             api_key: Some("fresh-config-key".to_string()),
             ..Config::default()
         };
-        assert_eq!(config.deepseek_api_key()?, "fresh-config-key");
+        assert_eq!(config.ds_api_key()?, "fresh-config-key");
         unsafe {
-            env::remove_var("DEEPSEEK_API_KEY");
+            env::remove_var("DS_API_KEY");
         }
         Ok(())
     }
@@ -3694,12 +3694,12 @@ api_key = "old-openrouter-key"
     fn active_provider_detects_env_only_api_key() -> Result<()> {
         let _lock = lock_test_env();
         let temp_root =
-            env::temp_dir().join(format!("deepseek-tui-env-only-key-{}", std::process::id()));
+            env::temp_dir().join(format!("DS-Code-env-only-key-{}", std::process::id()));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
         unsafe {
-            env::set_var("DEEPSEEK_API_KEY", "env-only-key");
+            env::set_var("DS_API_KEY", "env-only-key");
         }
         let mut config = Config::default();
         assert!(active_provider_has_env_api_key(&config));
@@ -3711,20 +3711,20 @@ api_key = "old-openrouter-key"
         assert!(!active_provider_uses_env_only_api_key(&config));
 
         unsafe {
-            env::remove_var("DEEPSEEK_API_KEY");
+            env::remove_var("DS_API_KEY");
         }
         Ok(())
     }
 
     #[test]
-    fn deepseek_api_key_ignores_sentinel_placeholder() -> Result<()> {
+    fn DS_api_key_ignores_sentinel_placeholder() -> Result<()> {
         let _lock = lock_test_env();
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-sentinel-{}-{}",
+            "DS-Code-sentinel-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -3739,7 +3739,7 @@ api_key = "old-openrouter-key"
         // fall through to env / config-provider and ultimately bail out
         // with a "key not found" error.
         let _err = config
-            .deepseek_api_key()
+            .ds_api_key()
             .expect_err("sentinel placeholder must not satisfy the API key check");
         Ok(())
     }
@@ -3752,7 +3752,7 @@ api_key = "old-openrouter-key"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-tilde-test-{}-{}",
+            "DS-Code-tilde-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -3760,10 +3760,10 @@ api_key = "old-openrouter-key"
         let _guard = EnvGuard::new(&temp_root);
 
         let config = Config {
-            skills_dir: Some("~/.deepseek/skills".to_string()),
+            skills_dir: Some("~/.ds/skills".to_string()),
             ..Default::default()
         };
-        let expected_skills = temp_root.join(".deepseek").join("skills");
+        let expected_skills = temp_root.join(".ds").join("skills");
         let actual_skills = config.skills_dir();
         assert_eq!(
             actual_skills.components().collect::<Vec<_>>(),
@@ -3774,14 +3774,14 @@ api_key = "old-openrouter-key"
     }
 
     #[test]
-    fn test_load_uses_tilde_expanded_deepseek_config_path() -> Result<()> {
+    fn test_load_uses_tilde_expanded_DS_config_path() -> Result<()> {
         let _lock = lock_test_env();
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-load-tilde-test-{}-{}",
+            "DS-Code-load-tilde-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -3794,7 +3794,7 @@ api_key = "old-openrouter-key"
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_CONFIG_PATH", "~/.custom-deepseek/config.toml");
+            env::set_var("DS_CONFIG_PATH", "~/.custom-deepseek/config.toml");
         }
 
         let config = Config::load(None, None)?;
@@ -3810,21 +3810,21 @@ api_key = "old-openrouter-key"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-load-fallback-test-{}-{}",
+            "DS-Code-load-fallback-test-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let home_config = temp_root.join(".deepseek").join("config.toml");
+        let home_config = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&home_config)?;
         fs::write(&home_config, "api_key = \"home-key\"\n")?;
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
             env::set_var(
-                "DEEPSEEK_CONFIG_PATH",
+                "DS_CONFIG_PATH",
                 temp_root.join("missing-config.toml").as_os_str(),
             );
         }
@@ -3869,14 +3869,14 @@ api_key = "old-openrouter-key"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-api-key-test-{}-{}",
+            "DS-Code-api-key-test-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&config_path)?;
         fs::write(
             &config_path,
@@ -3916,7 +3916,7 @@ api_key = "old-openrouter-key"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-empty-key-{}-{}",
+            "DS-Code-empty-key-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -3924,10 +3924,10 @@ api_key = "old-openrouter-key"
         let _guard = EnvGuard::new(&temp_root);
 
         // Simulate a fresh user who copied .env.example to .env without
-        // filling in DEEPSEEK_API_KEY: dotenv loads it as the empty string.
+        // filling in DS_API_KEY: dotenv loads it as the empty string.
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_API_KEY", "");
+            env::set_var("DS_API_KEY", "");
         }
 
         let mut config = Config {
@@ -3949,7 +3949,7 @@ api_key = "old-openrouter-key"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-env-key-not-config-{}-{}",
+            "DS-Code-env-key-not-config-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -3957,15 +3957,15 @@ api_key = "old-openrouter-key"
         let _guard = EnvGuard::new(&temp_root);
 
         unsafe {
-            env::set_var("DEEPSEEK_API_KEY", "env-key");
+            env::set_var("DS_API_KEY", "env-key");
         }
         let mut config = Config::default();
         apply_env_overrides(&mut config);
 
         assert_eq!(config.api_key, None);
-        assert_eq!(config.deepseek_api_key()?, "env-key");
+        assert_eq!(config.ds_api_key()?, "env-key");
         unsafe {
-            env::remove_var("DEEPSEEK_API_KEY");
+            env::remove_var("DS_API_KEY");
         }
         Ok(())
     }
@@ -4025,14 +4025,14 @@ api_key = "old-openrouter-key"
     }
 
     #[test]
-    fn normalize_model_name_rejects_invalid_or_non_deepseek_ids() {
+    fn normalize_model_name_rejects_invalid_or_non_DS_ids() {
         assert!(normalize_model_name("gpt-4o").is_none());
         assert!(normalize_model_name("deepseek v4").is_none());
         assert!(normalize_model_name("").is_none());
     }
 
     #[test]
-    fn normalize_model_name_accepts_provider_prefixed_deepseek_ids() {
+    fn normalize_model_name_accepts_provider_prefixed_DS_ids() {
         assert_eq!(
             normalize_model_name("accounts/fireworks/models/deepseek-v4-flash").as_deref(),
             Some("accounts/fireworks/models/deepseek-v4-flash")
@@ -4079,7 +4079,7 @@ api_key = "old-openrouter-key"
     }
 
     #[test]
-    fn validate_accepts_future_deepseek_model_id() -> Result<()> {
+    fn validate_accepts_future_DS_model_id() -> Result<()> {
         let config = Config {
             default_text_model: Some("deepseek-v4".to_string()),
             ..Default::default()
@@ -4100,33 +4100,33 @@ api_key = "old-openrouter-key"
     }
 
     #[test]
-    fn deepseek_provider_defaults_to_beta_endpoint() {
+    fn DS_provider_defaults_to_beta_endpoint() {
         let config = Config::default();
 
         assert_eq!(config.api_provider(), ApiProvider::Deepseek);
-        assert_eq!(config.deepseek_base_url(), DEFAULT_DEEPSEEK_BASE_URL);
+        assert_eq!(config.ds_base_url(), DEFAULT_DS_BASE_URL);
     }
 
     #[test]
-    fn explicit_deepseek_base_url_overrides_beta_default() {
+    fn explicit_DS_base_url_overrides_beta_default() {
         let config = Config {
             base_url: Some("https://api.deepseek.com".to_string()),
             ..Default::default()
         };
 
         assert_eq!(config.api_provider(), ApiProvider::Deepseek);
-        assert_eq!(config.deepseek_base_url(), "https://api.deepseek.com");
+        assert_eq!(config.ds_base_url(), "https://api.deepseek.com");
     }
 
     #[test]
-    fn deepseek_model_env_overrides_default_text_model() -> Result<()> {
+    fn DS_model_env_overrides_default_text_model() -> Result<()> {
         let _lock = lock_test_env();
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-model-env-test-{}-{}",
+            "DS-Code-model-env-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4135,7 +4135,7 @@ api_key = "old-openrouter-key"
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_MODEL", "deepseek-v4-flash-20260423");
+            env::set_var("DS_MODEL", "deepseek-v4-flash-20260423");
         }
 
         let config = Config::load(None, None)?;
@@ -4155,14 +4155,14 @@ api_key = "old-openrouter-key"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-http-headers-root-{}-{}",
+            "DS-Code-http-headers-root-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&config_path)?;
         fs::write(
             &config_path,
@@ -4219,14 +4219,14 @@ http_headers = { "X-Model-Provider-Id" = "tongyi" }
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-http-headers-env-{}-{}",
+            "DS-Code-http-headers-env-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&config_path)?;
         fs::write(
             &config_path,
@@ -4237,7 +4237,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
         )?;
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_HTTP_HEADERS", "X-Model-Provider-Id=from-env");
+            env::set_var("DS_HTTP_HEADERS", "X-Model-Provider-Id=from-env");
         }
 
         let config = Config::load(None, None)?;
@@ -4261,26 +4261,26 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
         config.validate()?;
         assert_eq!(config.api_provider(), ApiProvider::NvidiaNim);
         assert_eq!(config.default_model(), DEFAULT_NVIDIA_NIM_MODEL);
-        assert_eq!(config.deepseek_base_url(), DEFAULT_NVIDIA_NIM_BASE_URL);
+        assert_eq!(config.ds_base_url(), DEFAULT_NVIDIA_NIM_BASE_URL);
         Ok(())
     }
 
     #[test]
-    fn nvidia_nim_provider_normalizes_deepseek_v4_pro_alias() -> Result<()> {
+    fn nvidia_nim_provider_normalizes_DS_v4_pro_alias() -> Result<()> {
         let _lock = lock_test_env();
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-nim-model-alias-test-{}-{}",
+            "DS-Code-nim-model-alias-test-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&config_path)?;
         fs::write(
             &config_path,
@@ -4297,7 +4297,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
     }
 
     #[test]
-    fn nvidia_nim_provider_normalizes_deepseek_v4_flash_alias() -> Result<()> {
+    fn nvidia_nim_provider_normalizes_DS_v4_flash_alias() -> Result<()> {
         let config = Config {
             provider: Some("nvidia-nim".to_string()),
             default_text_model: Some("deepseek-v4-flash".to_string()),
@@ -4317,7 +4317,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-nim-env-test-{}-{}",
+            "DS-Code-nim-env-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4326,14 +4326,14 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "nvidia-nim");
+            env::set_var("DS_PROVIDER", "nvidia-nim");
             env::set_var("NVIDIA_API_KEY", "nim-env-key");
             env::set_var("NVIDIA_NIM_MODEL", "deepseek-ai/deepseek-v4-pro");
         }
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::NvidiaNim);
-        assert_eq!(config.deepseek_api_key()?, "nim-env-key");
+        assert_eq!(config.ds_api_key()?, "nim-env-key");
         assert_eq!(config.default_model(), DEFAULT_NVIDIA_NIM_MODEL);
         Ok(())
     }
@@ -4346,7 +4346,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-nim-base-url-alias-test-{}-{}",
+            "DS-Code-nim-base-url-alias-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4355,13 +4355,13 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "nvidia-nim");
+            env::set_var("DS_PROVIDER", "nvidia-nim");
             env::set_var("NIM_BASE_URL", "https://short-nim.example/v1");
         }
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::NvidiaNim);
-        assert_eq!(config.deepseek_base_url(), "https://short-nim.example/v1");
+        assert_eq!(config.ds_base_url(), "https://short-nim.example/v1");
         Ok(())
     }
 
@@ -4373,7 +4373,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-nim-forwarded-base-url-test-{}-{}",
+            "DS-Code-nim-forwarded-base-url-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4382,14 +4382,14 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "nvidia-nim");
-            env::set_var("DEEPSEEK_BASE_URL", "https://forwarded-nim.example/v1");
+            env::set_var("DS_PROVIDER", "nvidia-nim");
+            env::set_var("DS_BASE_URL", "https://forwarded-nim.example/v1");
         }
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::NvidiaNim);
         assert_eq!(
-            config.deepseek_base_url(),
+            config.ds_base_url(),
             "https://forwarded-nim.example/v1"
         );
         Ok(())
@@ -4405,7 +4405,7 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
         config.validate()?;
         assert_eq!(config.api_provider(), ApiProvider::Openai);
         assert_eq!(config.default_model(), DEFAULT_OPENAI_MODEL);
-        assert_eq!(config.deepseek_base_url(), DEFAULT_OPENAI_BASE_URL);
+        assert_eq!(config.ds_base_url(), DEFAULT_OPENAI_BASE_URL);
         Ok(())
     }
 
@@ -4417,14 +4417,14 @@ http_headers = { "X-Model-Provider-Id" = "from-file" }
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-openai-table-{}-{}",
+            "DS-Code-openai-table-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&config_path)?;
         fs::write(
             &config_path,
@@ -4439,9 +4439,9 @@ model = "glm-5"
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::Openai);
-        assert_eq!(config.deepseek_api_key()?, "openai-table-key");
+        assert_eq!(config.ds_api_key()?, "openai-table-key");
         assert_eq!(
-            config.deepseek_base_url(),
+            config.ds_base_url(),
             "https://openai-compatible.example/api/coding/paas/v4"
         );
         assert_eq!(config.default_model(), "glm-5");
@@ -4456,7 +4456,7 @@ model = "glm-5"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-openai-env-test-{}-{}",
+            "DS-Code-openai-env-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4465,7 +4465,7 @@ model = "glm-5"
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "openai");
+            env::set_var("DS_PROVIDER", "openai");
             env::set_var("OPENAI_API_KEY", "openai-env-key");
             env::set_var("OPENAI_BASE_URL", "https://openai-compatible.example/v4");
             env::set_var("OPENAI_MODEL", "glm-5");
@@ -4473,9 +4473,9 @@ model = "glm-5"
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::Openai);
-        assert_eq!(config.deepseek_api_key()?, "openai-env-key");
+        assert_eq!(config.ds_api_key()?, "openai-env-key");
         assert_eq!(
-            config.deepseek_base_url(),
+            config.ds_base_url(),
             "https://openai-compatible.example/v4"
         );
         assert_eq!(config.default_model(), "glm-5");
@@ -4490,7 +4490,7 @@ model = "glm-5"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-openai-forwarded-base-url-test-{}-{}",
+            "DS-Code-openai-forwarded-base-url-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4499,17 +4499,17 @@ model = "glm-5"
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "openai");
+            env::set_var("DS_PROVIDER", "openai");
             env::set_var("OPENAI_API_KEY", "forwarded-openai-key");
-            env::set_var("DEEPSEEK_BASE_URL", "https://forwarded-openai.example/v4");
-            env::set_var("DEEPSEEK_MODEL", "glm-5");
+            env::set_var("DS_BASE_URL", "https://forwarded-openai.example/v4");
+            env::set_var("DS_MODEL", "glm-5");
         }
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::Openai);
-        assert_eq!(config.deepseek_api_key()?, "forwarded-openai-key");
+        assert_eq!(config.ds_api_key()?, "forwarded-openai-key");
         assert_eq!(
-            config.deepseek_base_url(),
+            config.ds_base_url(),
             "https://forwarded-openai.example/v4"
         );
         assert_eq!(config.default_model(), "glm-5");
@@ -4524,7 +4524,7 @@ model = "glm-5"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-or-defaults-{}-{}",
+            "DS-Code-or-defaults-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4538,7 +4538,7 @@ model = "glm-5"
         config.validate()?;
         assert_eq!(config.api_provider(), ApiProvider::Openrouter);
         assert_eq!(config.default_model(), DEFAULT_OPENROUTER_MODEL);
-        assert_eq!(config.deepseek_base_url(), DEFAULT_OPENROUTER_BASE_URL);
+        assert_eq!(config.ds_base_url(), DEFAULT_OPENROUTER_BASE_URL);
         Ok(())
     }
 
@@ -4550,7 +4550,7 @@ model = "glm-5"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-novita-defaults-{}-{}",
+            "DS-Code-novita-defaults-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4564,7 +4564,7 @@ model = "glm-5"
         config.validate()?;
         assert_eq!(config.api_provider(), ApiProvider::Novita);
         assert_eq!(config.default_model(), DEFAULT_NOVITA_MODEL);
-        assert_eq!(config.deepseek_base_url(), DEFAULT_NOVITA_BASE_URL);
+        assert_eq!(config.ds_base_url(), DEFAULT_NOVITA_BASE_URL);
         Ok(())
     }
 
@@ -4576,7 +4576,7 @@ model = "glm-5"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-fireworks-defaults-{}-{}",
+            "DS-Code-fireworks-defaults-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4590,7 +4590,7 @@ model = "glm-5"
         config.validate()?;
         assert_eq!(config.api_provider(), ApiProvider::Fireworks);
         assert_eq!(config.default_model(), DEFAULT_FIREWORKS_MODEL);
-        assert_eq!(config.deepseek_base_url(), DEFAULT_FIREWORKS_BASE_URL);
+        assert_eq!(config.ds_base_url(), DEFAULT_FIREWORKS_BASE_URL);
         Ok(())
     }
 
@@ -4602,7 +4602,7 @@ model = "glm-5"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-sglang-defaults-{}-{}",
+            "DS-Code-sglang-defaults-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4616,8 +4616,8 @@ model = "glm-5"
         config.validate()?;
         assert_eq!(config.api_provider(), ApiProvider::Sglang);
         assert_eq!(config.default_model(), DEFAULT_SGLANG_MODEL);
-        assert_eq!(config.deepseek_base_url(), DEFAULT_SGLANG_BASE_URL);
-        assert_eq!(config.deepseek_api_key()?, "");
+        assert_eq!(config.ds_base_url(), DEFAULT_SGLANG_BASE_URL);
+        assert_eq!(config.ds_api_key()?, "");
         assert!(has_api_key_for(&config, ApiProvider::Sglang));
         Ok(())
     }
@@ -4630,7 +4630,7 @@ model = "glm-5"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-ollama-defaults-{}-{}",
+            "DS-Code-ollama-defaults-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4644,8 +4644,8 @@ model = "glm-5"
         config.validate()?;
         assert_eq!(config.api_provider(), ApiProvider::Ollama);
         assert_eq!(config.default_model(), DEFAULT_OLLAMA_MODEL);
-        assert_eq!(config.deepseek_base_url(), DEFAULT_OLLAMA_BASE_URL);
-        assert_eq!(config.deepseek_api_key()?, "");
+        assert_eq!(config.ds_base_url(), DEFAULT_OLLAMA_BASE_URL);
+        assert_eq!(config.ds_api_key()?, "");
         assert!(has_api_key_for(&config, ApiProvider::Ollama));
         Ok(())
     }
@@ -4658,14 +4658,14 @@ model = "glm-5"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-ollama-model-test-{}-{}",
+            "DS-Code-ollama-model-test-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&config_path)?;
         fs::write(
             &config_path,
@@ -4680,7 +4680,7 @@ model = "qwen2.5-coder:7b"
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::Ollama);
         assert_eq!(config.default_model(), "qwen2.5-coder:7b");
-        assert_eq!(config.deepseek_base_url(), "http://127.0.0.1:11434/v1");
+        assert_eq!(config.ds_base_url(), "http://127.0.0.1:11434/v1");
         Ok(())
     }
 
@@ -4692,7 +4692,7 @@ model = "qwen2.5-coder:7b"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-ollama-env-test-{}-{}",
+            "DS-Code-ollama-env-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4701,27 +4701,27 @@ model = "qwen2.5-coder:7b"
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "ollama-local");
+            env::set_var("DS_PROVIDER", "ollama-local");
             env::set_var("OLLAMA_BASE_URL", "http://ollama.example/v1");
             env::set_var("OLLAMA_MODEL", "deepseek-coder-v2:16b");
         }
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::Ollama);
-        assert_eq!(config.deepseek_base_url(), "http://ollama.example/v1");
+        assert_eq!(config.ds_base_url(), "http://ollama.example/v1");
         assert_eq!(config.default_model(), "deepseek-coder-v2:16b");
         Ok(())
     }
 
     #[test]
-    fn openrouter_env_api_key_resolves_via_deepseek_api_key() -> Result<()> {
+    fn openrouter_env_api_key_resolves_via_DS_api_key() -> Result<()> {
         let _lock = lock_test_env();
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-or-env-key-{}-{}",
+            "DS-Code-or-env-key-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4730,25 +4730,25 @@ model = "qwen2.5-coder:7b"
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "openrouter");
+            env::set_var("DS_PROVIDER", "openrouter");
             env::set_var("OPENROUTER_API_KEY", "or-env-key");
         }
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::Openrouter);
-        assert_eq!(config.deepseek_api_key()?, "or-env-key");
+        assert_eq!(config.ds_api_key()?, "or-env-key");
         Ok(())
     }
 
     #[test]
-    fn novita_env_api_key_resolves_via_deepseek_api_key() -> Result<()> {
+    fn novita_env_api_key_resolves_via_DS_api_key() -> Result<()> {
         let _lock = lock_test_env();
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-novita-env-key-{}-{}",
+            "DS-Code-novita-env-key-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4757,13 +4757,13 @@ model = "qwen2.5-coder:7b"
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "novita");
+            env::set_var("DS_PROVIDER", "novita");
             env::set_var("NOVITA_API_KEY", "novita-env-key");
         }
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::Novita);
-        assert_eq!(config.deepseek_api_key()?, "novita-env-key");
+        assert_eq!(config.ds_api_key()?, "novita-env-key");
         Ok(())
     }
 
@@ -4775,7 +4775,7 @@ model = "qwen2.5-coder:7b"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-or-base-url-{}-{}",
+            "DS-Code-or-base-url-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4784,13 +4784,13 @@ model = "qwen2.5-coder:7b"
 
         // Safety: test-only environment mutation guarded by a global mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "openrouter");
+            env::set_var("DS_PROVIDER", "openrouter");
             env::set_var("OPENROUTER_BASE_URL", "https://or-mirror.example/v1");
         }
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::Openrouter);
-        assert_eq!(config.deepseek_base_url(), "https://or-mirror.example/v1");
+        assert_eq!(config.ds_base_url(), "https://or-mirror.example/v1");
         Ok(())
     }
 
@@ -4802,14 +4802,14 @@ model = "qwen2.5-coder:7b"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-or-table-{}-{}",
+            "DS-Code-or-table-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&config_path)?;
         fs::write(
             &config_path,
@@ -4823,8 +4823,8 @@ base_url = "https://or-table.example/v1"
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::Openrouter);
-        assert_eq!(config.deepseek_api_key()?, "or-table-key");
-        assert_eq!(config.deepseek_base_url(), "https://or-table.example/v1");
+        assert_eq!(config.ds_api_key()?, "or-table-key");
+        assert_eq!(config.ds_base_url(), "https://or-table.example/v1");
         Ok(())
     }
 
@@ -4836,14 +4836,14 @@ base_url = "https://or-table.example/v1"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-or-custom-model-{}-{}",
+            "DS-Code-or-custom-model-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&config_path)?;
         fs::write(
             &config_path,
@@ -4858,8 +4858,8 @@ model = "DeepSeek-V4-Pro"
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::Openrouter);
-        assert_eq!(config.deepseek_api_key()?, "or-table-key");
-        assert_eq!(config.deepseek_base_url(), "https://gateway.example.com/v1");
+        assert_eq!(config.ds_api_key()?, "or-table-key");
+        assert_eq!(config.ds_base_url(), "https://gateway.example.com/v1");
         assert_eq!(config.default_model(), "DeepSeek-V4-Pro");
         Ok(())
     }
@@ -4872,14 +4872,14 @@ model = "DeepSeek-V4-Pro"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-novita-table-{}-{}",
+            "DS-Code-novita-table-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&config_path)?;
         fs::write(
             &config_path,
@@ -4892,8 +4892,8 @@ api_key = "novita-table-key"
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::Novita);
-        assert_eq!(config.deepseek_api_key()?, "novita-table-key");
-        assert_eq!(config.deepseek_base_url(), DEFAULT_NOVITA_BASE_URL);
+        assert_eq!(config.ds_api_key()?, "novita-table-key");
+        assert_eq!(config.ds_base_url(), DEFAULT_NOVITA_BASE_URL);
         Ok(())
     }
 
@@ -4905,7 +4905,7 @@ api_key = "novita-table-key"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-has-key-{}-{}",
+            "DS-Code-has-key-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4949,14 +4949,14 @@ api_key = "novita-table-key"
     }
 
     #[test]
-    fn has_api_key_for_uses_deepseek_cn_provider_table() -> Result<()> {
+    fn has_api_key_for_uses_ds_cn_provider_table() -> Result<()> {
         let _lock = lock_test_env();
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-has-key-cn-{}-{}",
+            "DS-Code-has-key-cn-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -4964,7 +4964,7 @@ api_key = "novita-table-key"
         let _guard = EnvGuard::new(&temp_root);
 
         let mut providers = ProvidersConfig::default();
-        providers.deepseek_cn.api_key = Some("cn-file-key".to_string());
+        providers.ds_cn.api_key = Some("cn-file-key".to_string());
         let config = Config {
             providers: Some(providers),
             ..Config::default()
@@ -4982,7 +4982,7 @@ api_key = "novita-table-key"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-save-key-or-{}-{}",
+            "DS-Code-save-key-or-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -5053,14 +5053,14 @@ api_key = "novita-table-key"
     }
 
     #[test]
-    fn save_api_key_for_deepseek_cn_uses_root_deepseek_storage() -> Result<()> {
+    fn save_api_key_for_ds_cn_uses_root_DS_storage() -> Result<()> {
         let _lock = lock_test_env();
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-save-key-cn-{}-{}",
+            "DS-Code-save-key-cn-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -5086,14 +5086,14 @@ api_key = "novita-table-key"
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-nim-provider-table-test-{}-{}",
+            "DS-Code-nim-provider-table-test-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&config_path)?;
         fs::write(
             &config_path,
@@ -5109,28 +5109,28 @@ model = "deepseek-v4-pro"
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::NvidiaNim);
-        assert_eq!(config.deepseek_api_key()?, "nim-table-key");
-        assert_eq!(config.deepseek_base_url(), "https://nim-table.example/v1");
+        assert_eq!(config.ds_api_key()?, "nim-table-key");
+        assert_eq!(config.ds_base_url(), "https://nim-table.example/v1");
         assert_eq!(config.default_model(), DEFAULT_NVIDIA_NIM_MODEL);
         Ok(())
     }
 
     #[test]
-    fn nvidia_nim_provider_table_key_overrides_root_deepseek_key() -> Result<()> {
+    fn nvidia_nim_provider_table_key_overrides_root_DS_key() -> Result<()> {
         let _lock = lock_test_env();
         let nanos = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-nim-root-key-precedence-test-{}-{}",
+            "DS-Code-nim-root-key-precedence-test-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root)?;
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         ensure_parent_dir(&config_path)?;
         fs::write(
             &config_path,
@@ -5146,7 +5146,7 @@ model = "deepseek-ai/deepseek-v4-pro"
 
         let config = Config::load(None, None)?;
         assert_eq!(config.api_provider(), ApiProvider::NvidiaNim);
-        assert_eq!(config.deepseek_api_key()?, "nim-table-key");
+        assert_eq!(config.ds_api_key()?, "nim-table-key");
         Ok(())
     }
 
@@ -5155,11 +5155,11 @@ model = "deepseek-ai/deepseek-v4-pro"
     // ========================================================================
 
     #[test]
-    fn provider_capability_deepseek_v4_pro_has_1m_window_and_thinking() {
+    fn provider_capability_DS_v4_pro_has_1m_window_and_thinking() {
         let cap = provider_capability(ApiProvider::Deepseek, "deepseek-v4-pro");
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::DS_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -5171,11 +5171,11 @@ model = "deepseek-ai/deepseek-v4-pro"
     }
 
     #[test]
-    fn provider_capability_deepseek_v4_flash_has_1m_window_and_thinking() {
+    fn provider_capability_DS_v4_flash_has_1m_window_and_thinking() {
         let cap = provider_capability(ApiProvider::Deepseek, "deepseek-v4-flash");
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::DS_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -5183,11 +5183,11 @@ model = "deepseek-ai/deepseek-v4-pro"
     }
 
     #[test]
-    fn provider_capability_deepseek_chat_alias_has_v4_flash_caps_and_metadata() {
+    fn provider_capability_DS_chat_alias_has_v4_flash_caps_and_metadata() {
         let cap = provider_capability(ApiProvider::Deepseek, "deepseek-chat");
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::DS_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -5204,11 +5204,11 @@ model = "deepseek-ai/deepseek-v4-pro"
     }
 
     #[test]
-    fn provider_capability_deepseek_reasoner_alias_has_v4_flash_caps_and_metadata() {
+    fn provider_capability_DS_reasoner_alias_has_v4_flash_caps_and_metadata() {
         let cap = provider_capability(ApiProvider::Deepseek, "deepseek-reasoner");
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::DS_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -5223,7 +5223,7 @@ model = "deepseek-ai/deepseek-v4-pro"
     }
 
     #[test]
-    fn provider_capability_deepseek_v4_flash_has_no_alias_deprecation() {
+    fn provider_capability_DS_v4_flash_has_no_alias_deprecation() {
         let cap = provider_capability(ApiProvider::Deepseek, "deepseek-v4-flash");
         assert!(cap.alias_deprecation.is_none());
     }
@@ -5233,7 +5233,7 @@ model = "deepseek-ai/deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::NvidiaNim, DEFAULT_NVIDIA_NIM_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::DS_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -5249,7 +5249,7 @@ model = "deepseek-ai/deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::NvidiaNim, DEFAULT_NVIDIA_NIM_FLASH_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::DS_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -5261,7 +5261,7 @@ model = "deepseek-ai/deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Openrouter, DEFAULT_OPENROUTER_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::DS_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -5278,7 +5278,7 @@ model = "deepseek-ai/deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Novita, DEFAULT_NOVITA_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::DS_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -5290,7 +5290,7 @@ model = "deepseek-ai/deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Fireworks, DEFAULT_FIREWORKS_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::DS_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -5302,7 +5302,7 @@ model = "deepseek-ai/deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Sglang, DEFAULT_SGLANG_MODEL);
         assert_eq!(
             cap.context_window,
-            crate::models::DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS
+            crate::models::DS_V4_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 384_000);
         assert!(cap.thinking_supported);
@@ -5314,7 +5314,7 @@ model = "deepseek-ai/deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Openai, "glm-5");
         assert_eq!(
             cap.context_window,
-            crate::models::LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS
+            crate::models::LEGACY_DS_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 4096);
         assert!(!cap.thinking_supported);
@@ -5343,7 +5343,7 @@ model = "deepseek-ai/deepseek-v4-pro"
         let cap = provider_capability(ApiProvider::Deepseek, "deepseek-coder");
         assert_eq!(
             cap.context_window,
-            crate::models::LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS
+            crate::models::LEGACY_DS_CONTEXT_WINDOW_TOKENS
         );
         assert_eq!(cap.max_output, 4096);
         assert!(!cap.thinking_supported);

@@ -56,14 +56,14 @@ fail=0
 
 echo "Checking published release ${version}..."
 
-if npm_version="$(npm view "deepseek-tui@${version}" version 2>/dev/null)"; then
-  echo "npm deepseek-tui@${npm_version} is published."
+if npm_version="$(npm view "DS-Code@${version}" version 2>/dev/null)"; then
+  echo "npm DS-Code@${npm_version} is published."
 else
-  echo "npm deepseek-tui@${version} is not published." >&2
+  echo "npm DS-Code@${version} is not published." >&2
   fail=1
 fi
 
-if npm_binary_version="$(npm view "deepseek-tui@${version}" deepseekBinaryVersion 2>/dev/null)"; then
+if npm_binary_version="$(npm view "DS-Code@${version}" deepseekBinaryVersion 2>/dev/null)"; then
   if [[ "${npm_binary_version}" == "${version}" ]]; then
     echo "npm deepseekBinaryVersion=${npm_binary_version}."
   elif [[ "${allow_npm_binary_mismatch}" == "1" ]]; then
@@ -75,7 +75,7 @@ if npm_binary_version="$(npm view "deepseek-tui@${version}" deepseekBinaryVersio
 elif [[ "${allow_npm_binary_mismatch}" == "1" ]]; then
   echo "npm deepseekBinaryVersion is absent (allowed packaging-only mismatch)."
 else
-  echo "npm deepseekBinaryVersion is absent for deepseek-tui@${version}." >&2
+  echo "npm deepseekBinaryVersion is absent for DS-Code@${version}." >&2
   fail=1
 fi
 
@@ -89,7 +89,7 @@ for crate in "${release_crates[@]}"; do
 done
 
 if [[ "${fail}" == "0" ]]; then
-  echo "Published release OK: npm deepseek-tui@${version} and ${#release_crates[@]} crates are visible."
+  echo "Published release OK: npm DS-Code@${version} and ${#release_crates[@]} crates are visible."
 fi
 
 exit "${fail}"

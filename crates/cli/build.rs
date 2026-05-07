@@ -1,7 +1,7 @@
 use std::{path::PathBuf, process::Command};
 
 fn main() {
-    println!("cargo:rerun-if-env-changed=DEEPSEEK_BUILD_SHA");
+    println!("cargo:rerun-if-env-changed=DS_BUILD_SHA");
     println!("cargo:rerun-if-env-changed=GITHUB_SHA");
 
     let package_version = env!("CARGO_PKG_VERSION");
@@ -9,11 +9,11 @@ fn main() {
         .map(|sha| format!("{package_version} ({sha})"))
         .unwrap_or_else(|| package_version.to_string());
 
-    println!("cargo:rustc-env=DEEPSEEK_BUILD_VERSION={build_version}");
+    println!("cargo:rustc-env=DS_BUILD_VERSION={build_version}");
 }
 
 fn build_sha() -> Option<String> {
-    env_sha("DEEPSEEK_BUILD_SHA")
+    env_sha("DS_BUILD_SHA")
         .or_else(|| env_sha("GITHUB_SHA"))
         .or_else(git_sha)
 }

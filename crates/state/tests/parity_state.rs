@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
-use deepseek_state::{SessionSource, StateStore, ThreadListFilters, ThreadMetadata, ThreadStatus};
+use ds_state::{SessionSource, StateStore, ThreadListFilters, ThreadMetadata, ThreadStatus};
 
 fn temp_state_path(label: &str) -> PathBuf {
     std::env::temp_dir().join(format!(
-        "deepseek_state_test_{}_{}_{}.db",
+        "ds_state_test_{}_{}_{}.db",
         label,
         std::process::id(),
         chrono::Utc::now().timestamp_nanos_opt().unwrap_or(0)

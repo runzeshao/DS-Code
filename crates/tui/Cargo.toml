@@ -1,11 +1,11 @@
 [package]
-name = "deepseek-tui"
+name = "ds-tui"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 description = "Terminal UI for DeepSeek"
-default-run = "deepseek-tui"
+default-run = "ds-tui"
 
 [features]
 default = ["tui", "json", "toml"]
@@ -15,14 +15,14 @@ json = ["schemaui/json"]
 toml = ["schemaui/toml"]
 
 [[bin]]
-name = "deepseek-tui"
+name = "ds-tui"
 path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.100"
 arboard = "3.4"
-deepseek-secrets = { path = "../secrets", version = "0.8.17" }
-deepseek-tools = { path = "../tools", version = "0.8.17" }
+ds-secrets = { path = "../secrets", version = "0.8.17" }
+ds-tools = { path = "../tools", version = "0.8.17" }
 schemaui = { version = "0.12.0", default-features = false, optional = true }
 async-stream = "0.3.6"
 async-trait = "0.1"

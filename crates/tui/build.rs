@@ -1,7 +1,7 @@
 use std::{path::PathBuf, process::Command};
 
 fn main() {
-    println!("cargo:rerun-if-env-changed=DEEPSEEK_BUILD_SHA");
+    println!("cargo:rerun-if-env-changed=DS_BUILD_SHA");
     println!("cargo:rerun-if-env-changed=GITHUB_SHA");
     configure_windows_stack();
 
@@ -10,7 +10,7 @@ fn main() {
         .map(|sha| format!("{package_version} ({sha})"))
         .unwrap_or_else(|| package_version.to_string());
 
-    println!("cargo:rustc-env=DEEPSEEK_BUILD_VERSION={build_version}");
+    println!("cargo:rustc-env=DS_BUILD_VERSION={build_version}");
 }
 
 fn configure_windows_stack() {
@@ -19,14 +19,14 @@ fn configure_windows_stack() {
     }
 
     match std::env::var("CARGO_CFG_TARGET_ENV").as_deref() {
-        Ok("msvc") => println!("cargo:rustc-link-arg-bin=deepseek-tui=/STACK:8388608"),
-        Ok("gnu") => println!("cargo:rustc-link-arg-bin=deepseek-tui=-Wl,--stack,8388608"),
+        Ok("msvc") => println!("cargo:rustc-link-arg-bin=ds-tui=/STACK:8388608"),
+        Ok("gnu") => println!("cargo:rustc-link-arg-bin=ds-tui=-Wl,--stack,8388608"),
         _ => {}
     }
 }
 
 fn build_sha() -> Option<String> {
-    env_sha("DEEPSEEK_BUILD_SHA")
+    env_sha("DS_BUILD_SHA")
         .or_else(|| env_sha("GITHUB_SHA"))
         .or_else(git_sha)
 }

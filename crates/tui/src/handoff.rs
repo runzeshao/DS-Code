@@ -5,9 +5,9 @@
 pub const THRESHOLDS: [(f32, &str); 3] = [
     (
         0.9,
-        "Context at 90%: stop and write handoff to .deepseek/handoff.md now",
+        "Context at 90%: stop and write handoff to .ds/handoff.md now",
     ),
-    (0.8, "Context at 80%: draft handoff to .deepseek/handoff.md"),
+    (0.8, "Context at 80%: draft handoff to .ds/handoff.md"),
     (0.7, "Context at 70%: consider wrapping current sub-task"),
 ];
 #[allow(dead_code)]

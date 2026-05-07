@@ -1,4 +1,4 @@
-//! Tool approval system for `DeepSeek` CLI.
+//! Tool approval system for `ds` CLI.
 //!
 //! Hosts the [`ApprovalRequest`] / [`ApprovalView`] pair the engine asks
 //! the TUI to present whenever a tool needs human approval, plus the

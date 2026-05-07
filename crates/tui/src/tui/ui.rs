@@ -1,4 +1,4 @@
-//! TUI event loop and rendering logic for `DeepSeek` CLI.
+//! TUI event loop and rendering logic for `ds` CLI.
 
 use std::collections::HashSet;
 use std::io::{self, Stdout};
@@ -1798,7 +1798,7 @@ async fn run_event_loop(
                                     // `Config` reference so any future clone
                                     // (e.g. a subsequent /provider switch)
                                     // sees it; the explicit-override path
-                                    // in `deepseek_api_key` (#343) makes
+                                    // in `DS_api_key` (#343) makes
                                     // this win immediately.
                                     config.api_key = Some(key.clone());
                                     let mut refreshed_config = config.clone();
@@ -3060,7 +3060,7 @@ pub(crate) fn apply_engine_error_to_app(
         app.onboarding_needs_api_key = true;
         app.onboarding = OnboardingState::ApiKey;
         app.status_message = Some(
-            "The API key from DEEPSEEK_API_KEY was rejected. Paste a valid key to save it to ~/.deepseek/config.toml, or update the environment variable.".to_string(),
+            "The API key from DS_API_KEY was rejected. Paste a valid key to save it to ~/.ds/config.toml, or update the environment variable.".to_string(),
         );
         return;
     }
@@ -3909,7 +3909,7 @@ async fn drain_web_config_events(
 
 /// Apply the choice made in the `/model` picker (#39): mutate App state so
 /// the next turn uses the new model/effort, persist the selection to
-/// `~/.deepseek/settings.toml` so it survives a restart, push the change to
+/// `~/.ds/settings.toml` so it survives a restart, push the change to
 /// the running engine via `Op::SetModel`/`Op::SetCompaction`, and surface
 /// a one-line status describing what changed.
 async fn apply_model_picker_choice(
@@ -4854,7 +4854,7 @@ async fn execute_command_input(
         config.api_key = None;
         if let Some(providers) = config.providers.as_mut() {
             providers.deepseek.api_key = None;
-            providers.deepseek_cn.api_key = None;
+            providers.ds_cn.api_key = None;
             providers.nvidia_nim.api_key = None;
             providers.openrouter.api_key = None;
             providers.novita.api_key = None;
@@ -5826,7 +5826,7 @@ fn apply_backtrack(app: &mut App, depth: usize) {
     app.needs_redraw = true;
 }
 
-/// Persist the typed API key to `~/.deepseek/config.toml`, refresh the
+/// Persist the typed API key to `~/.ds/config.toml`, refresh the
 /// in-memory config so the engine can see it, then switch to the provider.
 async fn apply_provider_picker_api_key(
     app: &mut App,
@@ -6213,7 +6213,7 @@ fn resume_terminal(
 
 fn status_color(level: StatusToastLevel) -> ratatui::style::Color {
     match level {
-        StatusToastLevel::Info => palette::DEEPSEEK_SKY,
+        StatusToastLevel::Info => palette::DS_SKY,
         StatusToastLevel::Success => palette::STATUS_SUCCESS,
         StatusToastLevel::Warning => palette::STATUS_WARNING,
         StatusToastLevel::Error => palette::STATUS_ERROR,
@@ -6326,7 +6326,7 @@ fn render_footer(f: &mut Frame, area: Rect, app: &mut App) {
         props.state_label = active_subagent_status_label(app)
             .or_else(|| active_tool_status_label(app))
             .unwrap_or_else(|| crate::tui::widgets::footer_working_label(dot_frame, app.ui_locale));
-        props.state_color = palette::DEEPSEEK_SKY;
+        props.state_color = palette::DS_SKY;
 
         // Spout drift: only animate when low_motion is off. The textual
         // `working...` pulse stays even in low-motion mode so the user still
@@ -6820,7 +6820,7 @@ fn footer_coherence_spans(app: &App) -> Vec<Span<'static>> {
     let (label, color) = match app.coherence_state {
         CoherenceState::Healthy | CoherenceState::GettingCrowded => return Vec::new(),
         CoherenceState::RefreshingContext => ("refreshing context", palette::STATUS_WARNING),
-        CoherenceState::VerifyingRecentWork => ("verifying", palette::DEEPSEEK_SKY),
+        CoherenceState::VerifyingRecentWork => ("verifying", palette::DS_SKY),
         CoherenceState::ResettingPlan => ("resetting plan", palette::STATUS_ERROR),
     };
 

@@ -28,7 +28,7 @@ fn modal_block() -> Block<'static> {
     Block::default()
         .title(Line::from(vec![Span::styled(
             " Plan Confirmation ",
-            Style::default().fg(palette::DEEPSEEK_BLUE).bold(),
+            Style::default().fg(palette::DS_BLUE).bold(),
         )]))
         .borders(Borders::ALL)
         .border_style(Style::default().fg(palette::BORDER_COLOR))
@@ -188,7 +188,7 @@ impl ModalView for PlanPromptView {
         let mut lines: Vec<Line> = Vec::new();
         lines.push(Line::from(vec![Span::styled(
             "Action required",
-            Style::default().fg(palette::DEEPSEEK_SKY).bold(),
+            Style::default().fg(palette::DS_SKY).bold(),
         )]));
         lines.push(Line::from(vec![Span::styled(
             "Choose what should happen after this plan.",
@@ -205,17 +205,17 @@ impl ModalView for PlanPromptView {
         lines.push(Line::from(vec![
             Span::styled(
                 "1-4 / a / y / r / q",
-                Style::default().fg(palette::DEEPSEEK_SKY).bold(),
+                Style::default().fg(palette::DS_SKY).bold(),
             ),
             Span::styled(" quick pick", Style::default().fg(palette::TEXT_MUTED)),
             Span::raw("  "),
-            Span::styled("Up/Down", Style::default().fg(palette::DEEPSEEK_SKY).bold()),
+            Span::styled("Up/Down", Style::default().fg(palette::DS_SKY).bold()),
             Span::styled(" move", Style::default().fg(palette::TEXT_MUTED)),
             Span::raw("  "),
-            Span::styled("Enter", Style::default().fg(palette::DEEPSEEK_SKY).bold()),
+            Span::styled("Enter", Style::default().fg(palette::DS_SKY).bold()),
             Span::styled(" confirm", Style::default().fg(palette::TEXT_MUTED)),
             Span::raw("  "),
-            Span::styled("Esc", Style::default().fg(palette::DEEPSEEK_SKY).bold()),
+            Span::styled("Esc", Style::default().fg(palette::DS_SKY).bold()),
             Span::styled(" close", Style::default().fg(palette::TEXT_MUTED)),
         ]));
 

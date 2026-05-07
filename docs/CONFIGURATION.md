@@ -9,22 +9,22 @@ only the provider and safety knobs you need.
 
 Default config path:
 
-- `~/.deepseek/config.toml`
+- `~/.ds/config.toml`
 
 Overrides:
 
 - CLI: `deepseek --config /path/to/config.toml`
-- Env: `DEEPSEEK_CONFIG_PATH=/path/to/config.toml`
+- Env: `DS_CONFIG_PATH=/path/to/config.toml`
 
 If both are set, `--config` wins. Environment variable overrides are applied after the file is loaded.
 
 ### Per-project overlay (#485)
 
 When the TUI starts in a workspace that contains a
-`<workspace>/.deepseek/config.toml` file, the values declared in that
+`<workspace>/.ds/config.toml` file, the values declared in that
 file are merged on top of the global config. This lets a repo lock its
 own provider, model, sandbox policy, or approval policy without
-touching the user's `~/.deepseek/config.toml`. Pass
+touching the user's `~/.ds/config.toml`. Pass
 `--no-project-config` to skip the overlay for one launch.
 
 Supported keys in the project overlay (top-level fields only):
@@ -49,11 +49,11 @@ Other settings (skills_dir, hooks, capacity, retry, etc.) stay
 user-global. If your repo needs more, file an issue describing the
 specific use case.
 
-The `deepseek` facade and `deepseek-tui` binary share the same config file for
+The `deepseek` facade and `DS-Code` binary share the same config file for
 DeepSeek auth and model defaults. `deepseek auth set --provider deepseek` (and
 the legacy `deepseek login --api-key ...` alias) saves the key to
-`~/.deepseek/config.toml`, and `deepseek --model deepseek-v4-flash` is forwarded
-to the TUI as `DEEPSEEK_MODEL`.
+`~/.ds/config.toml`, and `deepseek --model deepseek-v4-flash` is forwarded
+to the TUI as `DS_MODEL`.
 
 Credential lookup uses `config -> keyring -> env` after any explicit CLI
 `--api-key`. Run `deepseek auth status` to inspect the active provider's config
@@ -78,22 +78,22 @@ or `qwen2.5-coder:7b` unchanged.
 
 Third-party OpenAI-compatible gateways that need extra request headers can set
 `http_headers = { "X-Model-Provider-Id" = "your-model-provider" }` at the top
-level or under a provider table such as `[providers.deepseek]`. When configured,
+level or under a provider table such as `[providers.ds]`. When configured,
 DeepSeek TUI sends those custom headers on model API requests. The equivalent
-environment override is `DEEPSEEK_HTTP_HEADERS`, using comma-separated
+environment override is `DS_HTTP_HEADERS`, using comma-separated
 `name=value` pairs such as
 `X-Model-Provider-Id=your-model-provider,X-Gateway-Route=dev`. `Authorization`
 and `Content-Type` are managed by the client and are not overridden by this
 setting.
 
-To bootstrap MCP and skills directories at their resolved paths, run `deepseek-tui setup`.
-To only scaffold MCP, run `deepseek-tui mcp init`.
+To bootstrap MCP and skills directories at their resolved paths, run `DS-Code setup`.
+To only scaffold MCP, run `DS-Code mcp init`.
 
 Note: setup, doctor, mcp, features, sessions, resume/fork, exec, review, and eval
-are subcommands of the `deepseek-tui` binary. The `deepseek` dispatcher exposes a
+are subcommands of the `DS-Code` binary. The `deepseek` dispatcher exposes a
 distinct set of commands (`auth`, `config`, `model`, `thread`, `sandbox`,
 `app-server`, `mcp-server`, `completion`) and forwards plain prompts to
-`deepseek-tui`.
+`DS-Code`.
 
 ## Profiles
 
@@ -143,7 +143,7 @@ default_text_model = "deepseek-coder:1.3b"
 Select a profile with:
 
 - CLI: `deepseek --profile work`
-- Env: `DEEPSEEK_PROFILE=work`
+- Env: `DS_PROFILE=work`
 
 If a profile is selected but missing, DeepSeek TUI exits with an error listing available profiles.
 
@@ -152,13 +152,13 @@ If a profile is selected but missing, DeepSeek TUI exits with an error listing a
 Most runtime environment variables override config values. API-key variables are
 fallbacks after saved config and keyring credentials:
 
-- `DEEPSEEK_API_KEY`
-- `DEEPSEEK_BASE_URL`
-- `DEEPSEEK_HTTP_HEADERS` (custom model request headers, comma-separated `name=value` pairs)
-- `DEEPSEEK_PROVIDER` (`deepseek|deepseek-cn|nvidia-nim|openai|openrouter|novita|fireworks|sglang|vllm|ollama`)
-- `DEEPSEEK_MODEL` or `DEEPSEEK_DEFAULT_TEXT_MODEL`
-- `DEEPSEEK_STREAM_IDLE_TIMEOUT_SECS` (stream idle timeout in seconds; default `300`, clamped to `1..=3600`)
-- `NVIDIA_API_KEY` or `NVIDIA_NIM_API_KEY` (preferred when provider is `nvidia-nim`; falls back to `DEEPSEEK_API_KEY`)
+- `DS_API_KEY`
+- `DS_BASE_URL`
+- `DS_HTTP_HEADERS` (custom model request headers, comma-separated `name=value` pairs)
+- `DS_PROVIDER` (`deepseek|deepseek-cn|nvidia-nim|openai|openrouter|novita|fireworks|sglang|vllm|ollama`)
+- `DS_MODEL` or `DS_DEFAULT_TEXT_MODEL`
+- `DS_STREAM_IDLE_TIMEOUT_SECS` (stream idle timeout in seconds; default `300`, clamped to `1..=3600`)
+- `NVIDIA_API_KEY` or `NVIDIA_NIM_API_KEY` (preferred when provider is `nvidia-nim`; falls back to `DS_API_KEY`)
 - `NVIDIA_NIM_BASE_URL`, `NIM_BASE_URL`, or `NVIDIA_BASE_URL`
 - `NVIDIA_NIM_MODEL`
 - `OPENAI_API_KEY`
@@ -179,35 +179,35 @@ fallbacks after saved config and keyring credentials:
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
 - `OLLAMA_API_KEY` (optional; many localhost Ollama servers do not require auth)
-- `DEEPSEEK_LOG_LEVEL` or `RUST_LOG` (`info`/`debug`/`trace` enables lightweight verbose logs)
-- `DEEPSEEK_SKILLS_DIR`
-- `DEEPSEEK_MCP_CONFIG`
-- `DEEPSEEK_NOTES_PATH`
-- `DEEPSEEK_MEMORY` (`1|on|true|yes|y|enabled` turns user memory on)
-- `DEEPSEEK_MEMORY_PATH`
-- `DEEPSEEK_ALLOW_SHELL` (`1`/`true` enables)
-- `DEEPSEEK_APPROVAL_POLICY` (`on-request|untrusted|never`)
-- `DEEPSEEK_SANDBOX_MODE` (`read-only|workspace-write|danger-full-access|external-sandbox`)
-- `DEEPSEEK_MANAGED_CONFIG_PATH`
-- `DEEPSEEK_REQUIREMENTS_PATH`
-- `DEEPSEEK_MAX_SUBAGENTS` (clamped to `1..=20`)
-- `DEEPSEEK_TASKS_DIR` (runtime task queue/artifact storage, default `~/.deepseek/tasks`)
-- `DEEPSEEK_ALLOW_INSECURE_HTTP` (`1`/`true` allows non-local `http://` base URLs; default is reject)
-- `DEEPSEEK_CAPACITY_ENABLED`
-- `DEEPSEEK_CAPACITY_LOW_RISK_MAX`
-- `DEEPSEEK_CAPACITY_MEDIUM_RISK_MAX`
-- `DEEPSEEK_CAPACITY_SEVERE_MIN_SLACK`
-- `DEEPSEEK_CAPACITY_SEVERE_VIOLATION_RATIO`
-- `DEEPSEEK_CAPACITY_REFRESH_COOLDOWN_TURNS`
-- `DEEPSEEK_CAPACITY_REPLAN_COOLDOWN_TURNS`
-- `DEEPSEEK_CAPACITY_MAX_REPLAY_PER_TURN`
-- `DEEPSEEK_CAPACITY_MIN_TURNS_BEFORE_GUARDRAIL`
-- `DEEPSEEK_CAPACITY_PROFILE_WINDOW`
-- `DEEPSEEK_CAPACITY_PRIOR_CHAT`
-- `DEEPSEEK_CAPACITY_PRIOR_REASONER`
-- `DEEPSEEK_CAPACITY_PRIOR_V4_PRO`
-- `DEEPSEEK_CAPACITY_PRIOR_V4_FLASH`
-- `DEEPSEEK_CAPACITY_PRIOR_FALLBACK`
+- `DS_LOG_LEVEL` or `RUST_LOG` (`info`/`debug`/`trace` enables lightweight verbose logs)
+- `DS_SKILLS_DIR`
+- `DS_MCP_CONFIG`
+- `DS_NOTES_PATH`
+- `DS_MEMORY` (`1|on|true|yes|y|enabled` turns user memory on)
+- `DS_MEMORY_PATH`
+- `DS_ALLOW_SHELL` (`1`/`true` enables)
+- `DS_APPROVAL_POLICY` (`on-request|untrusted|never`)
+- `DS_SANDBOX_MODE` (`read-only|workspace-write|danger-full-access|external-sandbox`)
+- `DS_MANAGED_CONFIG_PATH`
+- `DS_REQUIREMENTS_PATH`
+- `DS_MAX_SUBAGENTS` (clamped to `1..=20`)
+- `DS_TASKS_DIR` (runtime task queue/artifact storage, default `~/.ds/tasks`)
+- `DS_ALLOW_INSECURE_HTTP` (`1`/`true` allows non-local `http://` base URLs; default is reject)
+- `DS_CAPACITY_ENABLED`
+- `DS_CAPACITY_LOW_RISK_MAX`
+- `DS_CAPACITY_MEDIUM_RISK_MAX`
+- `DS_CAPACITY_SEVERE_MIN_SLACK`
+- `DS_CAPACITY_SEVERE_VIOLATION_RATIO`
+- `DS_CAPACITY_REFRESH_COOLDOWN_TURNS`
+- `DS_CAPACITY_REPLAN_COOLDOWN_TURNS`
+- `DS_CAPACITY_MAX_REPLAY_PER_TURN`
+- `DS_CAPACITY_MIN_TURNS_BEFORE_GUARDRAIL`
+- `DS_CAPACITY_PROFILE_WINDOW`
+- `DS_CAPACITY_PRIOR_CHAT`
+- `DS_CAPACITY_PRIOR_REASONER`
+- `DS_CAPACITY_PRIOR_V4_PRO`
+- `DS_CAPACITY_PRIOR_V4_FLASH`
+- `DS_CAPACITY_PRIOR_FALLBACK`
 - `NO_ANIMATIONS` (`1|true|yes|on` forces `low_motion = true` and
   `fancy_animations = false` at startup, regardless of the saved
   settings; see [`docs/ACCESSIBILITY.md`](./ACCESSIBILITY.md)).
@@ -226,7 +226,7 @@ concatenated, in declared order, alongside the auto-loaded
 ```toml
 instructions = [
     "./AGENTS.md",
-    "~/.deepseek/global.md",
+    "~/.ds/global.md",
     "~/team/agents-shared.md",
 ]
 ```
@@ -238,7 +238,7 @@ Rules:
   truncated with a `[…elided]` marker rather than skipped.
 - Missing files are skipped with a tracing warning so a stale
   entry doesn't fail the launch.
-- Project config (`<workspace>/.deepseek/config.toml`)
+- Project config (`<workspace>/.ds/config.toml`)
   **replaces** the user array wholesale rather than merging.
   If you want both, list `~/global.md` inside the project
   array. Set `instructions = []` in the project to clear the
@@ -257,7 +257,7 @@ hook-system documentation for the full schema.
 ### Composer stash (`/stash`, Ctrl+S)
 
 Press **Ctrl+S** in the composer to park the current draft to
-`~/.deepseek/composer_stash.jsonl`. `/stash list` shows parked
+`~/.ds/composer_stash.jsonl`. `/stash list` shows parked
 drafts with one-line previews and timestamps; `/stash pop`
 restores the most recently parked draft (LIFO); `/stash clear`
 wipes the file. Capped at 200 entries; multiline drafts
@@ -356,10 +356,10 @@ If you are upgrading from older releases:
 
 ### Core keys (used by the TUI/engine)
 
-- `provider` (string, optional): `deepseek` (default), `deepseek-cn`, `nvidia-nim`, `openai`, `openrouter`, `novita`, `fireworks`, `sglang`, `vllm`, or `ollama`. `deepseek-cn` presets DeepSeek Platform for mainland China with the documented host [`https://api.deepseek.com`](https://api-docs.deepseek.com/) (distinct from typo `api.deepseeki.com`, which older configs may still carry and the client accepts as a DeepSeek-compatible host); `nvidia-nim` targets NVIDIA's NIM-hosted DeepSeek endpoints through `https://integrate.api.nvidia.com/v1`; `openai` targets a generic OpenAI-compatible endpoint, defaulting to `https://api.openai.com/v1`; `fireworks` targets `https://api.fireworks.ai/inference/v1`; `sglang` targets a self-hosted OpenAI-compatible endpoint, defaulting to `http://localhost:30000/v1`; `vllm` targets a self-hosted vLLM OpenAI-compatible endpoint, defaulting to `http://localhost:8000/v1`; `ollama` targets Ollama's OpenAI-compatible endpoint, defaulting to `http://localhost:11434/v1`.
+- `provider` (string, optional): `deepseek` (default), `deepseek-cn`, `nvidia-nim`, `openai`, `openrouter`, `novita`, `fireworks`, `sglang`, `vllm`, or `ollama`. `deepseek-cn` presets DeepSeek Platform for mainland China with the documented host [`https://api.deepseek.com`](https://api-docs.ds.com/) (distinct from typo `api.dsi.com`, which older configs may still carry and the client accepts as a DeepSeek-compatible host); `nvidia-nim` targets NVIDIA's NIM-hosted DeepSeek endpoints through `https://integrate.api.nvidia.com/v1`; `openai` targets a generic OpenAI-compatible endpoint, defaulting to `https://api.openai.com/v1`; `fireworks` targets `https://api.fireworks.ai/inference/v1`; `sglang` targets a self-hosted OpenAI-compatible endpoint, defaulting to `http://localhost:30000/v1`; `vllm` targets a self-hosted vLLM OpenAI-compatible endpoint, defaulting to `http://localhost:8000/v1`; `ollama` targets Ollama's OpenAI-compatible endpoint, defaulting to `http://localhost:11434/v1`.
 - `api_key` (string, required for hosted providers): must be non-empty for DeepSeek/hosted providers (or set the provider API key env var). Self-hosted SGLang, vLLM, and Ollama can omit it.
 - `base_url` (string, optional): defaults to `https://api.deepseek.com/beta` for DeepSeek's OpenAI-compatible Chat Completions API in v0.8.16, `https://api.deepseek.com` for `provider = "deepseek-cn"`, `https://api.openai.com/v1` for `provider = "openai"`, or the provider-specific endpoint for hosted/self-hosted providers. Set `https://api.deepseek.com` or `https://api.deepseek.com/v1` explicitly to opt out of DeepSeek beta features.
-- `default_text_model` (string, optional): defaults to `deepseek-v4-pro` for DeepSeek, `deepseek-ai/deepseek-v4-pro` for NVIDIA NIM, `gpt-4.1` for generic OpenAI-compatible endpoints, `accounts/fireworks/models/deepseek-v4-pro` for Fireworks, `deepseek-ai/DeepSeek-V4-Pro` for SGLang/vLLM, and `deepseek-coder:1.3b` for Ollama. Current public DeepSeek IDs are `deepseek-v4-pro` and `deepseek-v4-flash`, both with 1M context windows, 384K max output, and thinking mode enabled by default. Legacy `deepseek-chat` and `deepseek-reasoner` remain compatibility aliases for `deepseek-v4-flash` until July 24, 2026. Provider-specific mappings translate `deepseek-v4-pro` / `deepseek-v4-flash` to each provider's model ID where supported. Generic `openai` and Ollama model IDs are passed through unchanged. OpenRouter provider configs with a custom `base_url` also preserve explicit model values, which lets OpenAI-compatible gateways accept bare model IDs. Use `/models` or `deepseek models` to discover live IDs from your configured endpoint. `DEEPSEEK_MODEL` overrides this for a single process.
+- `default_text_model` (string, optional): defaults to `deepseek-v4-pro` for DeepSeek, `deepseek-ai/deepseek-v4-pro` for NVIDIA NIM, `gpt-4.1` for generic OpenAI-compatible endpoints, `accounts/fireworks/models/deepseek-v4-pro` for Fireworks, `deepseek-ai/DeepSeek-V4-Pro` for SGLang/vLLM, and `deepseek-coder:1.3b` for Ollama. Current public DeepSeek IDs are `deepseek-v4-pro` and `deepseek-v4-flash`, both with 1M context windows, 384K max output, and thinking mode enabled by default. Legacy `deepseek-chat` and `deepseek-reasoner` remain compatibility aliases for `deepseek-v4-flash` until July 24, 2026. Provider-specific mappings translate `deepseek-v4-pro` / `deepseek-v4-flash` to each provider's model ID where supported. Generic `openai` and Ollama model IDs are passed through unchanged. OpenRouter provider configs with a custom `base_url` also preserve explicit model values, which lets OpenAI-compatible gateways accept bare model IDs. Use `/models` or `deepseek models` to discover live IDs from your configured endpoint. `DS_MODEL` overrides this for a single process.
 - `reasoning_effort` (string, optional): `off`, `low`, `medium`, `high`, or `max`; defaults to the configured UI tier. DeepSeek Platform receives top-level `thinking` / `reasoning_effort` fields. NVIDIA NIM receives equivalent settings through `chat_template_kwargs`.
 - `allow_shell` (bool, optional): defaults to `true` (sandboxed).
 - `approval_policy` (string, optional): `on-request`, `untrusted`, or `never`. Runtime `approval_mode` editing in `/config` also accepts `on-request` and `untrusted` aliases.
@@ -377,18 +377,18 @@ If you are upgrading from older releases:
   keys such as `worker`, `explorer`, `general`, `explore`, `plan`, and
   `review`. Values must normalize to a supported DeepSeek model id before an
   agent is spawned.
-- `skills_dir` (string, optional): defaults to `~/.deepseek/skills` (each skill is a directory containing `SKILL.md`). Workspace-local `.agents/skills` or `./skills` are preferred when present; the runtime also discovers global agentskills.io-compatible `~/.agents/skills` and the broader Claude-ecosystem `~/.claude/skills`.
-- `mcp_config_path` (string, optional): defaults to `~/.deepseek/mcp.json`.
+- `skills_dir` (string, optional): defaults to `~/.ds/skills` (each skill is a directory containing `SKILL.md`). Workspace-local `.agents/skills` or `./skills` are preferred when present; the runtime also discovers global agentskills.io-compatible `~/.agents/skills` and the broader Claude-ecosystem `~/.claude/skills`.
+- `mcp_config_path` (string, optional): defaults to `~/.ds/mcp.json`.
   It is visible in `/config` and can be changed from the TUI. The new path is
   used immediately by `/mcp`, but rebuilding the model-visible MCP tool pool
   requires restarting the TUI.
-- `notes_path` (string, optional): defaults to `~/.deepseek/notes.txt` and is used by the `note` tool.
+- `notes_path` (string, optional): defaults to `~/.ds/notes.txt` and is used by the `note` tool.
 - `[memory].enabled` (bool, optional): defaults to `false`. When `true`,
   the TUI loads the user memory file into a `<user_memory>` prompt block,
   enables `# foo` quick-capture in the composer, surfaces the `/memory`
   slash command, and registers the `remember` tool. The same toggle is
-  available via `DEEPSEEK_MEMORY=on`.
-- `memory_path` (string, optional): defaults to `~/.deepseek/memory.md`.
+  available via `DS_MEMORY=on`.
+- `memory_path` (string, optional): defaults to `~/.ds/memory.md`.
   Used by the user-memory feature when enabled — see
   [`MEMORY.md`](MEMORY.md) for the full feature surface (`# foo`
   composer prefix, `/memory` slash command, `remember` tool, opt-in
@@ -396,7 +396,7 @@ If you are upgrading from older releases:
 - `snapshots.*` (optional): side-git workspace snapshots for file rollback:
   - `[snapshots].enabled` (bool, default `true`)
   - `[snapshots].max_age_days` (int, default `7`)
-  - snapshots live under `~/.deepseek/snapshots/<project_hash>/<worktree_hash>/.git` and never use the workspace's own `.git` directory
+  - snapshots live under `~/.ds/snapshots/<project_hash>/<worktree_hash>/.git` and never use the workspace's own `.git` directory
 - `context.*` (optional): append-only Flash seam manager, currently opt-in.
   Thresholds use the active request input estimate, not lifetime summed API
   usage:
@@ -425,10 +425,10 @@ If you are upgrading from older releases:
   - `[capacity].max_replay_per_turn` (int, default `1`)
   - `[capacity].min_turns_before_guardrail` (int, default `4`)
   - `[capacity].profile_window` (int, default `8`)
-  - `[capacity].deepseek_v3_2_chat_prior` (float, default `3.9`)
-  - `[capacity].deepseek_v3_2_reasoner_prior` (float, default `4.1`)
-  - `[capacity].deepseek_v4_pro_prior` (float, default `3.5`)
-  - `[capacity].deepseek_v4_flash_prior` (float, default `4.2`)
+  - `[capacity].DS_v3_2_chat_prior` (float, default `3.9`)
+  - `[capacity].DS_v3_2_reasoner_prior` (float, default `4.1`)
+  - `[capacity].DS_v4_pro_prior` (float, default `3.5`)
+  - `[capacity].DS_v4_flash_prior` (float, default `4.2`)
   - `[capacity].fallback_default_prior` (float, default `3.8`)
 - `[notifications].method` (string, optional): `auto`, `osc9`, `bel`, or
   `off`. Defaults to `auto`. The TUI fires this on completed (successful)
@@ -457,7 +457,7 @@ User memory is split across one top-level path setting and one opt-in
 toggle table:
 
 ```toml
-memory_path = "~/.deepseek/memory.md"
+memory_path = "~/.ds/memory.md"
 
 [memory]
 enabled = true
@@ -467,8 +467,8 @@ Notes:
 
 - `memory_path` stays at the top level beside `notes_path` and
   `skills_dir`; it is not nested under `[memory]`.
-- `DEEPSEEK_MEMORY_PATH` overrides the file path from the environment.
-- `DEEPSEEK_MEMORY=on` (also `1`, `true`, `yes`, `y`, or `enabled`)
+- `DS_MEMORY_PATH` overrides the file path from the environment.
+- `DS_MEMORY=on` (also `1`, `true`, `yes`, `y`, or `enabled`)
   flips the feature on without editing `config.toml`.
 - The feature is inert when disabled: no file is injected, `# foo`
   falls through to normal message submission, and the model does not
@@ -520,10 +520,10 @@ exec_policy = true
 
 You can also override features for a single run:
 
-- `deepseek-tui --enable web_search`
-- `deepseek-tui --disable subagents`
+- `DS-Code --enable web_search`
+- `DS-Code --disable subagents`
 
-Use `deepseek-tui features list` to inspect known flags and their effective state.
+Use `DS-Code features list` to inspect known flags and their effective state.
 
 ## Local Media Attachments
 
@@ -559,17 +559,17 @@ If configured values violate requirements, startup fails with a descriptive erro
 
 See `docs/capacity_controller.md` for formulas, intervention behavior, and telemetry.
 
-## Notes On `deepseek-tui doctor`
+## Notes On `DS-Code doctor`
 
-`deepseek-tui doctor` follows the same config resolution rules as the rest of the
-TUI. That means `--config` / `DEEPSEEK_CONFIG_PATH` are respected, and MCP/skills
+`DS-Code doctor` follows the same config resolution rules as the rest of the
+TUI. That means `--config` / `DS_CONFIG_PATH` are respected, and MCP/skills
 checks use the resolved `mcp_config_path` / `skills_dir` (including env overrides).
 
-To bootstrap missing MCP/skills paths, run `deepseek-tui setup --all`. You can
-also run `deepseek-tui setup --skills --local` to create a workspace-local
+To bootstrap missing MCP/skills paths, run `DS-Code setup --all`. You can
+also run `DS-Code setup --skills --local` to create a workspace-local
 `./skills` dir.
 
-`deepseek-tui doctor --json` prints a machine-readable report that skips the
+`DS-Code doctor --json` prints a machine-readable report that skips the
 live API connectivity probe. Top-level keys: `version`, `config_path`,
 `config_present`, `workspace`, `api_key.source`, `base_url`,
 `default_text_model`, `mcp`, `skills`, `tools`, `plugins`, `sandbox`,
@@ -590,24 +590,24 @@ configure reasoning effort.
 
 ## Setup status, clean, and extension dirs
 
-`deepseek-tui setup` accepts a few flags beyond the existing `--mcp`,
+`DS-Code setup` accepts a few flags beyond the existing `--mcp`,
 `--skills`, `--local`, `--all`, and `--force`:
 
 - `--status` — print a compact one-screen status (api key, base URL, model,
   MCP/skills/tools/plugins counts, sandbox, `.env` presence). Read-only and
   network-free; safe to run in CI. If `.env` is missing and `.env.example` is
   present in the workspace, the status output points at `cp .env.example .env`.
-- `--tools` — scaffold `~/.deepseek/tools/` with a `README.md` describing the
+- `--tools` — scaffold `~/.ds/tools/` with a `README.md` describing the
   self-describing frontmatter convention (`# name:` / `# description:` /
   `# usage:`) and an `example.sh` that follows it. The directory is
   intentionally not auto-loaded; wire individual scripts into the agent via
   MCP, hooks, or skills.
-- `--plugins` — scaffold `~/.deepseek/plugins/` with a `README.md` and an
+- `--plugins` — scaffold `~/.ds/plugins/` with a `README.md` and an
   `example/PLUGIN.md` placeholder using the same frontmatter shape as
   `SKILL.md`. Plugins are not loaded automatically either; reference them
   from a skill or MCP wrapper when you want them active.
 - `--all` now scaffolds MCP + skills + tools + plugins together.
-- `--clean` — list `~/.deepseek/sessions/checkpoints/latest.json` and
+- `--clean` — list `~/.ds/sessions/checkpoints/latest.json` and
   `offline_queue.json` if they exist. Pass `--force` to actually remove them.
   This never touches real session history or the task queue.
 

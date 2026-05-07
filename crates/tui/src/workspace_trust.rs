@@ -1,14 +1,14 @@
 //! Per-workspace trust list of external paths the agent may read/write
 //! without triggering a `PathEscape` error (#29).
 //!
-//! Storage: `~/.deepseek/workspace-trust.json`. The file is a JSON object
+//! Storage: `~/.ds/workspace-trust.json`. The file is a JSON object
 //! mapping each workspace's canonical path to a sorted list of canonical
 //! paths the user has explicitly trusted from that workspace. Trust granted
 //! in workspace A does not apply when running from workspace B.
 //!
 //! Threat model: this is a deliberate user opt-in to a path the workspace
 //! sandbox would otherwise refuse. The only access the trust list grants is
-//! through DeepSeek-TUI's own file tools (`read_file`, `write_file`, etc.) —
+//! through DS-Code's own file tools (`read_file`, `write_file`, etc.) —
 //! it does not loosen the OS sandbox profile (Seatbelt/Landlock) used for
 //! shell commands. Sandbox-profile expansion is tracked separately so a
 //! shell tool can opt into the same paths in a future release.
@@ -158,7 +158,7 @@ fn canonicalize_or_keep(path: &Path) -> PathBuf {
 }
 
 fn trust_file_path() -> Option<PathBuf> {
-    dirs::home_dir().map(|home| home.join(".deepseek").join(TRUST_FILE_NAME))
+    dirs::home_dir().map(|home| home.join(".ds").join(TRUST_FILE_NAME))
 }
 
 fn read_trust_file_at(path: &Path) -> Result<TrustFile> {
@@ -184,13 +184,13 @@ mod tests {
     use super::*;
     use tempfile::TempDir;
 
-    /// Set up an isolated fake `~/.deepseek/workspace-trust.json` location.
+    /// Set up an isolated fake `~/.ds/workspace-trust.json` location.
     /// Returns the tmpdir (kept alive for the test) plus the explicit trust
     /// file path passed to the `*_at` helpers — avoids touching `$HOME` so
     /// tests run safely in parallel.
     fn isolated_trust_path() -> (TempDir, PathBuf) {
         let tmp = TempDir::new().expect("tempdir");
-        let trust_path = tmp.path().join(".deepseek").join("workspace-trust.json");
+        let trust_path = tmp.path().join(".ds").join("workspace-trust.json");
         (tmp, trust_path)
     }
 

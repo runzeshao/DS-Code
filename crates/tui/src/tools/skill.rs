@@ -100,7 +100,7 @@ impl ToolSpec for LoadSkillTool {
                     .map(|p| p.display().to_string())
                     .collect();
                 if dirs.is_empty() {
-                    "no skills directories found; install skills under `<workspace>/.agents/skills/<name>/SKILL.md`, `~/.agents/skills/<name>/SKILL.md`, or `~/.deepseek/skills/<name>/SKILL.md`"
+                    "no skills directories found; install skills under `<workspace>/.agents/skills/<name>/SKILL.md`, `~/.agents/skills/<name>/SKILL.md`, or `~/.ds/skills/<name>/SKILL.md`"
                         .to_string()
                 } else {
                     format!("no skills installed. Searched: {}", dirs.join(", "))
@@ -306,7 +306,7 @@ mod tests {
         let mut context = ToolContext::new(workspace);
         // The skill tool reads $HOME for the global default; pin it to a
         // tempdir so the test is hermetic regardless of the host's
-        // ~/.deepseek/skills.
+        // ~/.ds/skills.
         context.workspace = tmp.path().to_path_buf();
 
         let tool = LoadSkillTool;

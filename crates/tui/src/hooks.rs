@@ -1,4 +1,4 @@
-//! Hooks system for `DeepSeek` CLI
+//! Hooks system for `ds` CLI
 //!
 //! Provides lifecycle hooks that execute user-defined shell commands at:
 //! - Session start/end
@@ -333,10 +333,10 @@ impl HookContext {
         let mut env = HashMap::new();
 
         if let Some(ref name) = self.tool_name {
-            env.insert("DEEPSEEK_TOOL_NAME".to_string(), name.clone());
+            env.insert("DS_TOOL_NAME".to_string(), name.clone());
         }
         if let Some(ref args) = self.tool_args {
-            env.insert("DEEPSEEK_TOOL_ARGS".to_string(), args.clone());
+            env.insert("DS_TOOL_ARGS".to_string(), args.clone());
         }
         if let Some(ref result) = self.tool_result {
             // Truncate result to 10KB to avoid environment variable size limits
@@ -351,22 +351,22 @@ impl HookContext {
             } else {
                 result.clone()
             };
-            env.insert("DEEPSEEK_TOOL_RESULT".to_string(), truncated);
+            env.insert("DS_TOOL_RESULT".to_string(), truncated);
         }
         if let Some(code) = self.tool_exit_code {
-            env.insert("DEEPSEEK_TOOL_EXIT_CODE".to_string(), code.to_string());
+            env.insert("DS_TOOL_EXIT_CODE".to_string(), code.to_string());
         }
         if let Some(success) = self.tool_success {
-            env.insert("DEEPSEEK_TOOL_SUCCESS".to_string(), success.to_string());
+            env.insert("DS_TOOL_SUCCESS".to_string(), success.to_string());
         }
         if let Some(ref mode) = self.mode {
-            env.insert("DEEPSEEK_MODE".to_string(), mode.clone());
+            env.insert("DS_MODE".to_string(), mode.clone());
         }
         if let Some(ref prev) = self.previous_mode {
-            env.insert("DEEPSEEK_PREVIOUS_MODE".to_string(), prev.clone());
+            env.insert("DS_PREVIOUS_MODE".to_string(), prev.clone());
         }
         if let Some(ref session_id) = self.session_id {
-            env.insert("DEEPSEEK_SESSION_ID".to_string(), session_id.clone());
+            env.insert("DS_SESSION_ID".to_string(), session_id.clone());
         }
         if let Some(ref message) = self.message {
             // Truncate message to prevent env var issues
@@ -381,22 +381,22 @@ impl HookContext {
             } else {
                 message.clone()
             };
-            env.insert("DEEPSEEK_MESSAGE".to_string(), truncated);
+            env.insert("DS_MESSAGE".to_string(), truncated);
         }
         if let Some(ref error) = self.error_message {
-            env.insert("DEEPSEEK_ERROR".to_string(), error.clone());
+            env.insert("DS_ERROR".to_string(), error.clone());
         }
         if let Some(ref ws) = self.workspace {
-            env.insert("DEEPSEEK_WORKSPACE".to_string(), ws.display().to_string());
+            env.insert("DS_WORKSPACE".to_string(), ws.display().to_string());
         }
         if let Some(ref model) = self.model {
-            env.insert("DEEPSEEK_MODEL".to_string(), model.clone());
+            env.insert("DS_MODEL".to_string(), model.clone());
         }
         if let Some(tokens) = self.total_tokens {
-            env.insert("DEEPSEEK_TOTAL_TOKENS".to_string(), tokens.to_string());
+            env.insert("DS_TOTAL_TOKENS".to_string(), tokens.to_string());
         }
         if let Some(cost) = self.session_cost {
-            env.insert("DEEPSEEK_SESSION_COST".to_string(), format!("{cost:.6}"));
+            env.insert("DS_SESSION_COST".to_string(), format!("{cost:.6}"));
         }
 
         env
@@ -480,7 +480,7 @@ impl HookExecutor {
     /// Get the session ID
     /// Read-only access to the underlying configuration. Used by
     /// `/hooks` (#460 read-only MVP) so the user can list configured
-    /// hooks without reaching for `cat ~/.deepseek/config.toml`.
+    /// hooks without reaching for `cat ~/.ds/config.toml`.
     pub fn config(&self) -> &HooksConfig {
         &self.config
     }
@@ -585,7 +585,7 @@ impl HookExecutor {
             };
 
             // Log failures via tracing so operators tailing
-            // `deepseek` with `RUST_LOG=warn` can see hook errors
+            // `ds` with `RUST_LOG=warn` can see hook errors
             // without instrumenting each call site. Successful runs
             // log nothing (would be too noisy on per-tool events).
             if !result.success {
@@ -867,11 +867,11 @@ NOEQUAL line dropped
         let env = ctx.to_env_vars();
 
         assert_eq!(
-            env.get("DEEPSEEK_TOOL_NAME"),
+            env.get("DS_TOOL_NAME"),
             Some(&"exec_shell".to_string())
         );
-        assert_eq!(env.get("DEEPSEEK_MODE"), Some(&"agent".to_string()));
-        assert_eq!(env.get("DEEPSEEK_WORKSPACE"), Some(&"/tmp".to_string()));
+        assert_eq!(env.get("DS_MODE"), Some(&"agent".to_string()));
+        assert_eq!(env.get("DS_WORKSPACE"), Some(&"/tmp".to_string()));
     }
 
     #[test]

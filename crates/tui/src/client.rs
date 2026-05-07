@@ -137,7 +137,7 @@ const RECOVERY_PROBE_COOLDOWN: Duration = Duration::from_secs(15);
 
 const DEFAULT_CLIENT_RATE_LIMIT_RPS: f64 = 8.0;
 const DEFAULT_CLIENT_RATE_LIMIT_BURST: f64 = 16.0;
-const ALLOW_INSECURE_HTTP_ENV: &str = "DEEPSEEK_ALLOW_INSECURE_HTTP";
+const ALLOW_INSECURE_HTTP_ENV: &str = "DS_ALLOW_INSECURE_HTTP";
 
 pub(super) const SSE_BACKPRESSURE_HIGH_WATERMARK: usize = 8 * 1024 * 1024; // 8 MB
 pub(super) const SSE_BACKPRESSURE_SLEEP_MS: u64 = 10;
@@ -182,12 +182,12 @@ struct TokenBucket {
 
 impl TokenBucket {
     fn from_env() -> Self {
-        let rps = std::env::var("DEEPSEEK_RATE_LIMIT_RPS")
+        let rps = std::env::var("DS_RATE_LIMIT_RPS")
             .ok()
             .and_then(|v| v.parse::<f64>().ok())
             .unwrap_or(DEFAULT_CLIENT_RATE_LIMIT_RPS)
             .max(0.0);
-        let burst = std::env::var("DEEPSEEK_RATE_LIMIT_BURST")
+        let burst = std::env::var("DS_RATE_LIMIT_BURST")
             .ok()
             .and_then(|v| v.parse::<f64>().ok())
             .unwrap_or(DEFAULT_CLIENT_RATE_LIMIT_BURST)
@@ -403,12 +403,12 @@ pub(super) fn api_url(base_url: &str, path: &str) -> String {
 
 // === DeepSeekClient ===
 
-/// Returns true when DEEPSEEK_FORCE_HTTP1 is set to a truthy value
+/// Returns true when DS_FORCE_HTTP1 is set to a truthy value
 /// (`1`, `true`, `yes`, `on`, case-insensitive). Used by `build_http_client`
 /// to opt out of HTTP/2 entirely when DeepSeek's edge mishandles long-lived H2
 /// streams (#103). Anything else (unset, `0`, `false`, ...) leaves HTTP/2 on.
 fn force_http1_from_env() -> bool {
-    std::env::var("DEEPSEEK_FORCE_HTTP1")
+    std::env::var("DS_FORCE_HTTP1")
         .ok()
         .map(|v| v.trim().to_ascii_lowercase())
         .is_some_and(|v| matches!(v.as_str(), "1" | "true" | "yes" | "on"))
@@ -461,8 +461,8 @@ fn add_extra_root_certs(
 impl DeepSeekClient {
     /// Create a DeepSeek client from CLI configuration.
     pub fn new(config: &Config) -> Result<Self> {
-        let api_key = config.deepseek_api_key()?;
-        let base_url = config.deepseek_base_url();
+        let api_key = config.ds_api_key()?;
+        let base_url = config.ds_base_url();
         let api_provider = config.api_provider();
         validate_base_url_security(&base_url)?;
         let retry = config.retry_policy();
@@ -509,7 +509,7 @@ impl DeepSeekClient {
             .http2_keep_alive_timeout(Duration::from_secs(20))
             .min_tls_version(reqwest::tls::Version::TLS_1_2);
         if force_http1_from_env() {
-            logging::info("DEEPSEEK_FORCE_HTTP1=1 — pinning HTTP client to HTTP/1.1");
+            logging::info("DS_FORCE_HTTP1=1 — pinning HTTP client to HTTP/1.1");
             builder = builder.http1_only();
         }
         if let Ok(cert_path) = std::env::var("SSL_CERT_FILE")
@@ -1056,7 +1056,7 @@ mod tests {
     }
 
     #[test]
-    fn api_url_routes_beta_paths_from_any_deepseek_base() {
+    fn api_url_routes_beta_paths_from_any_DS_base() {
         assert_eq!(
             api_url("https://api.deepseek.com", "beta/completions"),
             "https://api.deepseek.com/beta/completions"
@@ -1337,7 +1337,7 @@ mod tests {
     }
 
     #[test]
-    fn reasoning_effort_uses_deepseek_top_level_thinking_parameter() {
+    fn reasoning_effort_uses_DS_top_level_thinking_parameter() {
         let mut body = json!({});
         apply_reasoning_effort(&mut body, Some("max"), ApiProvider::Deepseek);
 
@@ -1485,7 +1485,7 @@ mod tests {
     }
 
     #[test]
-    fn deepseek_non_beta_base_url_strips_strict_tool_flag() {
+    fn DS_non_beta_base_url_strips_strict_tool_flag() {
         let tool = Tool {
             tool_type: Some("function".to_string()),
             name: "emit_json".to_string(),
@@ -1509,7 +1509,7 @@ mod tests {
     }
 
     #[test]
-    fn deepseek_beta_and_custom_base_urls_keep_strict_tool_flag() {
+    fn DS_beta_and_custom_base_urls_keep_strict_tool_flag() {
         let tool = Tool {
             tool_type: Some("function".to_string()),
             name: "emit_json".to_string(),
@@ -1970,7 +1970,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_usage_reads_deepseek_cache_and_reasoning_tokens() {
+    fn parse_usage_reads_DS_cache_and_reasoning_tokens() {
         let usage = parse_usage(Some(&json!({
             "prompt_tokens": 100,
             "completion_tokens": 20,
@@ -2237,7 +2237,7 @@ mod tests {
 
     // === #103 Phase 2: HTTP/1 escape hatch ===================================
 
-    /// Serialize tests that mutate `DEEPSEEK_FORCE_HTTP1` so they don't race
+    /// Serialize tests that mutate `DS_FORCE_HTTP1` so they don't race
     /// against each other — env vars are process-global.
     static FORCE_HTTP1_ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
@@ -2247,7 +2247,7 @@ mod tests {
     impl ForceHttp1EnvGuard {
         fn capture() -> Self {
             Self {
-                prior: std::env::var_os("DEEPSEEK_FORCE_HTTP1"),
+                prior: std::env::var_os("DS_FORCE_HTTP1"),
             }
         }
     }
@@ -2255,8 +2255,8 @@ mod tests {
         fn drop(&mut self) {
             // Safety: scoped to test process; reverts to the captured value.
             match &self.prior {
-                Some(v) => unsafe { std::env::set_var("DEEPSEEK_FORCE_HTTP1", v) },
-                None => unsafe { std::env::remove_var("DEEPSEEK_FORCE_HTTP1") },
+                Some(v) => unsafe { std::env::set_var("DS_FORCE_HTTP1", v) },
+                None => unsafe { std::env::remove_var("DS_FORCE_HTTP1") },
             }
         }
     }
@@ -2265,7 +2265,7 @@ mod tests {
     fn force_http1_unset_is_false() {
         let _lock = FORCE_HTTP1_ENV_LOCK.lock().unwrap();
         let _guard = ForceHttp1EnvGuard::capture();
-        unsafe { std::env::remove_var("DEEPSEEK_FORCE_HTTP1") };
+        unsafe { std::env::remove_var("DS_FORCE_HTTP1") };
         assert!(!force_http1_from_env());
     }
 
@@ -2275,7 +2275,7 @@ mod tests {
         let _guard = ForceHttp1EnvGuard::capture();
         for value in ["1", "true", "True", "YES", "on", " 1 "] {
             // Safety: serialized by FORCE_HTTP1_ENV_LOCK; reverted by guard.
-            unsafe { std::env::set_var("DEEPSEEK_FORCE_HTTP1", value) };
+            unsafe { std::env::set_var("DS_FORCE_HTTP1", value) };
             assert!(
                 force_http1_from_env(),
                 "{value:?} should be parsed as truthy",
@@ -2288,7 +2288,7 @@ mod tests {
         let _lock = FORCE_HTTP1_ENV_LOCK.lock().unwrap();
         let _guard = ForceHttp1EnvGuard::capture();
         for value in ["0", "false", "no", "off", "", "garbage", "2"] {
-            unsafe { std::env::set_var("DEEPSEEK_FORCE_HTTP1", value) };
+            unsafe { std::env::set_var("DS_FORCE_HTTP1", value) };
             assert!(
                 !force_http1_from_env(),
                 "{value:?} should NOT be parsed as truthy",

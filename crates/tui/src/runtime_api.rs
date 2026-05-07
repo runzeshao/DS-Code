@@ -70,11 +70,11 @@ pub struct RuntimeApiOptions {
     /// Additional CORS origins to allow on top of the built-in defaults
     /// (`http://localhost:{3000,1420}`, `http://127.0.0.1:{3000,1420}`,
     /// `tauri://localhost`). Populated by `--cors-origin` (repeatable),
-    /// `DEEPSEEK_CORS_ORIGINS` (comma-separated), and `[runtime_api]
+    /// `DS_CORS_ORIGINS` (comma-separated), and `[runtime_api]
     /// cors_origins` in `config.toml`. Whalescale#255 / #561.
     pub cors_origins: Vec<String>,
     /// Optional bearer token required for `/v1/*` routes. If omitted here,
-    /// `run_http_server` also checks `DEEPSEEK_RUNTIME_TOKEN`.
+    /// `run_http_server` also checks `DS_RUNTIME_TOKEN`.
     pub auth_token: Option<String>,
 }
 
@@ -345,13 +345,13 @@ pub async fn run_http_server(
 
     let sessions_dir = default_sessions_dir().unwrap_or_else(|_| {
         dirs::home_dir()
-            .map(|h| h.join(".deepseek").join("sessions"))
-            .unwrap_or_else(|| PathBuf::from(".deepseek").join("sessions"))
+            .map(|h| h.join(".ds").join("sessions"))
+            .unwrap_or_else(|| PathBuf::from(".ds").join("sessions"))
     });
     let runtime_token = options
         .auth_token
         .clone()
-        .or_else(|| std::env::var("DEEPSEEK_RUNTIME_TOKEN").ok())
+        .or_else(|| std::env::var("DS_RUNTIME_TOKEN").ok())
         .filter(|token| !token.trim().is_empty());
     let auth_enabled = runtime_token.is_some();
     let skill_state = SkillStateStore::load_default().unwrap_or_else(|err| {
@@ -396,7 +396,7 @@ pub async fn run_http_server(
         );
         if !auth_enabled {
             println!(
-                "  WARNING: --auth-token (or DEEPSEEK_RUNTIME_TOKEN) is unset. Anyone on the network can call /v1/* without authentication."
+                "  WARNING: --auth-token (or DS_RUNTIME_TOKEN) is unset. Anyone on the network can call /v1/* without authentication."
             );
         }
         println!(
@@ -1896,10 +1896,10 @@ mod tests {
             max_replay_per_turn: None,
             min_turns_before_guardrail: None,
             profile_window: None,
-            deepseek_v3_2_chat_prior: None,
-            deepseek_v3_2_reasoner_prior: None,
-            deepseek_v4_pro_prior: None,
-            deepseek_v4_flash_prior: None,
+            ds_v3_2_chat_prior: None,
+            ds_v3_2_reasoner_prior: None,
+            ds_v4_pro_prior: None,
+            ds_v4_flash_prior: None,
             fallback_default_prior: None,
         });
         let runtime_threads: SharedRuntimeThreadManager = Arc::new(RuntimeThreadManager::open(

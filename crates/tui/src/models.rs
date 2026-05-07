@@ -1,14 +1,14 @@
-//! API request/response models for `DeepSeek` and OpenAI-compatible endpoints.
+//! API request/response models for `ds` and OpenAI-compatible endpoints.
 
 use serde::{Deserialize, Serialize};
 
 /// Context window used only for legacy DeepSeek model IDs that do not name a
 /// newer V4 alias and do not carry an explicit `*k` suffix.
-pub const LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS: u32 = 128_000;
-pub const DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS: u32 = 1_000_000;
+pub const LEGACY_DS_CONTEXT_WINDOW_TOKENS: u32 = 128_000;
+pub const DS_V4_CONTEXT_WINDOW_TOKENS: u32 = 1_000_000;
 /// Last-resort compaction trigger when [`context_window_for_model`] returns
 /// `None` (an unrecognised model id). v0.8.11 raised this from `50_000` to
-/// `102_400` (80% of [`LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS`]) so unknown
+/// `102_400` (80% of [`LEGACY_DS_CONTEXT_WINDOW_TOKENS`]) so unknown
 /// models inherit the same late-trigger discipline as V4 instead of paying
 /// the prefix-cache hit at 5% of the V4 window. Known DeepSeek / Claude
 /// models resolve to their own scaled value via
@@ -215,13 +215,13 @@ pub fn context_window_for_model(model: &str) -> Option<u32> {
     // *k suffix is present. DeepSeek-V4 family and current compatibility
     // aliases ship with a 1M context window.
     if lower.contains("deepseek") {
-        if let Some(explicit_window) = deepseek_context_window_hint(&lower) {
+        if let Some(explicit_window) = ds_context_window_hint(&lower) {
             return Some(explicit_window);
         }
         if lower.contains("v4") {
-            return Some(DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS);
+            return Some(DS_V4_CONTEXT_WINDOW_TOKENS);
         }
-        return Some(LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS);
+        return Some(LEGACY_DS_CONTEXT_WINDOW_TOKENS);
     }
     if lower.contains("claude") {
         return Some(200_000);
@@ -229,7 +229,7 @@ pub fn context_window_for_model(model: &str) -> Option<u32> {
     None
 }
 
-fn deepseek_context_window_hint(model_lower: &str) -> Option<u32> {
+fn ds_context_window_hint(model_lower: &str) -> Option<u32> {
     let bytes = model_lower.as_bytes();
     let mut i = 0usize;
     while i < bytes.len() {
@@ -373,44 +373,44 @@ mod tests {
         // v-series snapshots get 1M context since they contain "v4"
         assert_eq!(
             context_window_for_model("deepseek-v4-flash-20260423"),
-            Some(DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS)
+            Some(DS_V4_CONTEXT_WINDOW_TOKENS)
         );
         assert_eq!(
             context_window_for_model("deepseek-v4-pro-20260423"),
-            Some(DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS)
+            Some(DS_V4_CONTEXT_WINDOW_TOKENS)
         );
     }
 
     #[test]
-    fn unknown_legacy_deepseek_models_map_to_128k_context_window() {
+    fn unknown_legacy_DS_models_map_to_128k_context_window() {
         assert_eq!(
             context_window_for_model("deepseek-coder"),
-            Some(LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS)
+            Some(LEGACY_DS_CONTEXT_WINDOW_TOKENS)
         );
         assert_eq!(
             context_window_for_model("deepseek-v3.2-0324"),
-            Some(LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS)
+            Some(LEGACY_DS_CONTEXT_WINDOW_TOKENS)
         );
     }
 
     #[test]
-    fn deepseek_v4_models_map_to_1m_context_window() {
+    fn DS_v4_models_map_to_1m_context_window() {
         assert_eq!(
             context_window_for_model("deepseek-v4-pro"),
-            Some(DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS)
+            Some(DS_V4_CONTEXT_WINDOW_TOKENS)
         );
         assert_eq!(
             context_window_for_model("deepseek-v4-flash"),
-            Some(DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS)
+            Some(DS_V4_CONTEXT_WINDOW_TOKENS)
         );
         assert_eq!(
             context_window_for_model("deepseek-ai/deepseek-v4-pro"),
-            Some(DEEPSEEK_V4_CONTEXT_WINDOW_TOKENS)
+            Some(DS_V4_CONTEXT_WINDOW_TOKENS)
         );
     }
 
     #[test]
-    fn deepseek_models_with_k_suffix_use_hint() {
+    fn DS_models_with_k_suffix_use_hint() {
         assert_eq!(context_window_for_model("deepseek-v3.2-32k"), Some(32_000));
         assert_eq!(
             context_window_for_model("deepseek-v3.2-256k-preview"),
@@ -418,7 +418,7 @@ mod tests {
         );
         assert_eq!(
             context_window_for_model("deepseek-v3.2-2k-preview"),
-            Some(LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS)
+            Some(LEGACY_DS_CONTEXT_WINDOW_TOKENS)
         );
     }
 
@@ -429,7 +429,7 @@ mod tests {
             102_400
         );
         // v0.8.11 (#664): unknown-model fallback also resolves to 80% of
-        // `LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS` (128K legacy DeepSeek
+        // `LEGACY_DS_CONTEXT_WINDOW_TOKENS` (128K legacy DeepSeek
         // fallback) — same late-trigger discipline as the V4 path. Was
         // `50_000` pre-v0.8.11; that hardcoded value compacted at ~5% of a
         // 1M window when model detection silently fell through, which is
@@ -438,7 +438,7 @@ mod tests {
     }
 
     #[test]
-    fn compaction_scales_for_deepseek_v4_1m_context() {
+    fn compaction_scales_for_DS_v4_1m_context() {
         assert_eq!(compaction_threshold_for_model("deepseek-v4-pro"), 800_000);
     }
 

@@ -1,6 +1,6 @@
 # Capacity Controller
 
-`deepseek-tui` includes an opt-in capacity-aware context controller. In the
+`DS-Code` includes an opt-in capacity-aware context controller. In the
 default V4 path it is disabled, because its active interventions can rewrite
 the live prompt and break prefix-cache affinity. Treat it as telemetry or an
 experimental guardrail unless `capacity.enabled = true` is set explicitly.
@@ -29,10 +29,10 @@ Formula:
 
 Per-model priors:
 
-- `deepseek_v3_2_chat = 3.9`
-- `deepseek_v3_2_reasoner = 4.1`
-- `deepseek_v4_pro = 3.5`
-- `deepseek_v4_flash = 4.2`
+- `DS_v3_2_chat = 3.9`
+- `DS_v3_2_reasoner = 4.1`
+- `DS_v4_pro = 3.5`
+- `DS_v4_flash = 4.2`
 - fallback `3.8` (used for other DeepSeek IDs, including future releases)
 
 ### Failure Probability
@@ -111,9 +111,9 @@ the model input budget.
 
 Path:
 
-- `DEEPSEEK_CAPACITY_MEMORY_DIR` (if set)
-- otherwise `~/.deepseek/memory/<session_id>.jsonl`
-- fallback: `<workspace>/.deepseek/memory/<session_id>.jsonl` when home path is unavailable/unwritable
+- `DS_CAPACITY_MEMORY_DIR` (if set)
+- otherwise `~/.ds/memory/<session_id>.jsonl`
+- fallback: `<workspace>/.ds/memory/<session_id>.jsonl` when home path is unavailable/unwritable
 
 Record fields:
 
@@ -139,10 +139,10 @@ Loader utility supports fetching last `K` snapshots for rehydration.
 - `max_replay_per_turn` (default `1`)
 - `min_turns_before_guardrail` (default `4`)
 - `profile_window` (default `8`)
-- `deepseek_v3_2_chat_prior` (default `3.9`)
-- `deepseek_v3_2_reasoner_prior` (default `4.1`)
-- `deepseek_v4_pro_prior` (default `3.5`)
-- `deepseek_v4_flash_prior` (default `4.2`)
+- `DS_v3_2_chat_prior` (default `3.9`)
+- `DS_v3_2_reasoner_prior` (default `4.1`)
+- `DS_v4_pro_prior` (default `3.5`)
+- `DS_v4_flash_prior` (default `4.2`)
 - `fallback_default_prior` (default `3.8`)
 
-Equivalent environment overrides are available with `DEEPSEEK_CAPACITY_*`.
+Equivalent environment overrides are available with `DS_CAPACITY_*`.

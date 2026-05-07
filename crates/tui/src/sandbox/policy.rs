@@ -186,10 +186,10 @@ impl SandboxPolicy {
                     .map(|root| {
                         let mut read_only_subpaths = Vec::new();
 
-                        // Protect .deepseek directories from modification
-                        let deepseek_dir = root.join(".deepseek");
-                        if deepseek_dir.is_dir() {
-                            read_only_subpaths.push(deepseek_dir);
+                        // Protect .ds directories from modification
+                        let ds_dir = root.join(".ds");
+                        if ds_dir.is_dir() {
+                            read_only_subpaths.push(ds_dir);
                         }
 
                         WritableRoot {
@@ -205,7 +205,7 @@ impl SandboxPolicy {
 
 /// A directory tree where writes are allowed, with optional read-only subpaths.
 ///
-/// This allows fine-grained control like "allow writes to /project but not /project/.deepseek".
+/// This allows fine-grained control like "allow writes to /project but not /project/.ds".
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WritableRoot {
     /// The root directory where writes are allowed.
@@ -298,10 +298,10 @@ mod tests {
     fn test_writable_root_with_exceptions() {
         let root = WritableRoot::with_exceptions(
             PathBuf::from("/project"),
-            vec![PathBuf::from("/project/.deepseek")],
+            vec![PathBuf::from("/project/.ds")],
         );
         assert!(root.is_path_writable(Path::new("/project/src/main.rs")));
-        assert!(!root.is_path_writable(Path::new("/project/.deepseek/config")));
+        assert!(!root.is_path_writable(Path::new("/project/.ds/config")));
     }
 
     #[test]

@@ -46,7 +46,7 @@ pub enum SecretsError {
 }
 
 /// Abstract secret store; concrete implementations may use the OS
-/// keyring, a JSON file under `~/.deepseek/secrets/`, or an in-memory
+/// keyring, a JSON file under `~/.ds/secrets/`, or an in-memory
 /// map (tests).
 pub trait KeyringStore: Send + Sync {
     /// Read a secret. Returns `Ok(None)` if no entry exists.
@@ -181,7 +181,7 @@ impl KeyringStore for InMemoryKeyringStore {
 }
 
 /// JSON-on-disk fallback for headless environments without a Secret
-/// Service / dbus. Stored at `<home>/.deepseek/secrets/secrets.json`
+/// Service / dbus. Stored at `<home>/.ds/secrets/secrets.json`
 /// with mode `0600`.
 #[derive(Debug, Clone)]
 pub struct FileKeyringStore {
@@ -202,7 +202,7 @@ impl FileKeyringStore {
         Self { path: path.into() }
     }
 
-    /// Default path: `<home>/.deepseek/secrets/secrets.json`. Honours
+    /// Default path: `<home>/.ds/secrets/secrets.json`. Honours
     /// `HOME` (Unix) and `USERPROFILE` (Windows) via the `dirs` crate.
     pub fn default_path() -> Result<PathBuf, SecretsError> {
         let home = dirs::home_dir().ok_or_else(|| {
@@ -211,7 +211,7 @@ impl FileKeyringStore {
                 "could not resolve home directory for FileKeyringStore",
             ))
         })?;
-        Ok(home.join(".deepseek").join("secrets").join("secrets.json"))
+        Ok(home.join(".ds").join("secrets").join("secrets.json"))
     }
 
     /// Path used for storage.
@@ -305,7 +305,7 @@ impl KeyringStore for FileKeyringStore {
     }
 
     fn backend_name(&self) -> &'static str {
-        "file-based (~/.deepseek/secrets/)"
+        "file-based (~/.ds/secrets/)"
     }
 }
 
@@ -356,7 +356,7 @@ impl Secrets {
     /// Construct the platform-appropriate default backend. On platforms
     /// where an OS keyring backend is reachable this returns
     /// [`DefaultKeyringStore`]; otherwise it falls back to
-    /// [`FileKeyringStore`] under `~/.deepseek/secrets/`.
+    /// [`FileKeyringStore`] under `~/.ds/secrets/`.
     pub fn auto_detect() -> Self {
         let default_store = DefaultKeyringStore::default();
         match default_store.probe() {
@@ -366,7 +366,7 @@ impl Secrets {
                     "OS keyring unavailable ({err}); falling back to file-backed secret store"
                 );
                 let path = FileKeyringStore::default_path()
-                    .unwrap_or_else(|_| PathBuf::from(".deepseek-secrets.json"));
+                    .unwrap_or_else(|_| PathBuf::from(".ds-secrets.json"));
                 Self::new(Arc::new(FileKeyringStore::new(path)))
             }
         }
@@ -420,14 +420,14 @@ impl Secrets {
 #[must_use]
 pub fn env_for(name: &str) -> Option<String> {
     let candidates: &[&str] = match name.to_ascii_lowercase().as_str() {
-        "deepseek" => &["DEEPSEEK_API_KEY"],
+        "deepseek" => &["DS_API_KEY"],
         "openrouter" => &["OPENROUTER_API_KEY"],
         "novita" => &["NOVITA_API_KEY"],
-        // NVIDIA NIM falls back to `DEEPSEEK_API_KEY` last because the
+        // NVIDIA NIM falls back to `DS_API_KEY` last because the
         // catalog endpoint accepts the same DeepSeek-issued key when no
         // dedicated NVIDIA token is set. This mirrors pre-v0.7 behaviour.
         "nvidia" | "nvidia-nim" | "nvidia_nim" | "nim" => {
-            &["NVIDIA_API_KEY", "NVIDIA_NIM_API_KEY", "DEEPSEEK_API_KEY"]
+            &["NVIDIA_API_KEY", "NVIDIA_NIM_API_KEY", "DS_API_KEY"]
         }
         "fireworks" | "fireworks-ai" => &["FIREWORKS_API_KEY"],
         "sglang" | "sg-lang" => &["SGLANG_API_KEY"],
@@ -452,7 +452,7 @@ mod tests {
     use std::sync::{Mutex, OnceLock};
 
     /// Serialise env-mutating tests: tests in this module poke
-    /// `DEEPSEEK_API_KEY` etc., which is process-global.
+    /// `DS_API_KEY` etc., which is process-global.
     fn env_lock() -> std::sync::MutexGuard<'static, ()> {
         static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
         LOCK.get_or_init(|| Mutex::new(()))
@@ -462,7 +462,7 @@ mod tests {
 
     fn clear_known_envs() {
         for var in [
-            "DEEPSEEK_API_KEY",
+            "DS_API_KEY",
             "OPENROUTER_API_KEY",
             "NOVITA_API_KEY",
             "NVIDIA_API_KEY",
@@ -501,7 +501,7 @@ mod tests {
         let _lock = env_lock();
         clear_known_envs();
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::set_var("DEEPSEEK_API_KEY", "env-key") };
+        unsafe { std::env::set_var("DS_API_KEY", "env-key") };
 
         let store = Arc::new(InMemoryKeyringStore::new());
         store.set("deepseek", "ring-key").unwrap();
@@ -513,7 +513,7 @@ mod tests {
             Some(("ring-key".to_string(), SecretSource::Keyring))
         );
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::remove_var("DEEPSEEK_API_KEY") };
+        unsafe { std::env::remove_var("DS_API_KEY") };
     }
 
     #[test]
@@ -521,7 +521,7 @@ mod tests {
         let _lock = env_lock();
         clear_known_envs();
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::set_var("DEEPSEEK_API_KEY", "env-fallback") };
+        unsafe { std::env::set_var("DS_API_KEY", "env-fallback") };
 
         let secrets = Secrets::new(Arc::new(InMemoryKeyringStore::new()));
         assert_eq!(secrets.resolve("deepseek").as_deref(), Some("env-fallback"));
@@ -530,7 +530,7 @@ mod tests {
             Some(("env-fallback".to_string(), SecretSource::Env))
         );
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::remove_var("DEEPSEEK_API_KEY") };
+        unsafe { std::env::remove_var("DS_API_KEY") };
     }
 
     #[test]
@@ -546,14 +546,14 @@ mod tests {
         let _lock = env_lock();
         clear_known_envs();
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::set_var("DEEPSEEK_API_KEY", "env-real") };
+        unsafe { std::env::set_var("DS_API_KEY", "env-real") };
 
         let store = Arc::new(InMemoryKeyringStore::new());
         store.set("deepseek", "   ").unwrap();
         let secrets = Secrets::new(store);
         assert_eq!(secrets.resolve("deepseek").as_deref(), Some("env-real"));
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::remove_var("DEEPSEEK_API_KEY") };
+        unsafe { std::env::remove_var("DS_API_KEY") };
     }
 
     #[test]
@@ -762,7 +762,7 @@ mod tests {
     #[test]
     fn file_store_default_path_uses_home() {
         // We don't override HOME here (other tests do); we just check the
-        // shape of the path is `<home>/.deepseek/secrets/secrets.json`.
+        // shape of the path is `<home>/.ds/secrets/secrets.json`.
         let path = FileKeyringStore::default_path().unwrap();
         assert!(
             path.ends_with("secrets/secrets.json") || path.ends_with("secrets\\secrets.json"),

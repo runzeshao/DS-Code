@@ -1,4 +1,4 @@
-//! Terminal UI (TUI) module for `DeepSeek` CLI.
+//! Terminal UI (TUI) module for `ds` CLI.
 
 // === Submodules ===
 

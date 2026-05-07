@@ -3,11 +3,11 @@
 //! Lets the model itself notice a durable preference, convention, or fact
 //! worth keeping across sessions and write it to the user's `memory.md`.
 //! The tool is auto-approved and side-effecting only on the user-owned
-//! memory file (`~/.deepseek/memory.md` by default), so it doesn't get
+//! memory file (`~/.ds/memory.md` by default), so it doesn't get
 //! gated behind the same approval flow as shell or arbitrary file writes.
 //!
 //! Only registered when `[memory] enabled = true` (or
-//! `DEEPSEEK_MEMORY=on`). When disabled, the tool isn't surfaced to the
+//! `DS_MEMORY=on`). When disabled, the tool isn't surfaced to the
 //! model at all, so prompts that mention `remember` simply fall through.
 
 use async_trait::async_trait;
@@ -65,7 +65,7 @@ impl ToolSpec for RememberTool {
         let path = context.memory_path.as_ref().ok_or_else(|| {
             ToolError::execution_failed(
                 "user memory is disabled — set `[memory] enabled = true` in config.toml or \
-                 `DEEPSEEK_MEMORY=on` in the environment to enable",
+                 `DS_MEMORY=on` in the environment to enable",
             )
         })?;
 

@@ -11,7 +11,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
     lines.push(Line::from(Span::styled(
         "Trust Workspace",
         Style::default()
-            .fg(palette::DEEPSEEK_SKY)
+            .fg(palette::DS_SKY)
             .add_modifier(Modifier::BOLD),
     )));
     lines.push(Line::from(""));

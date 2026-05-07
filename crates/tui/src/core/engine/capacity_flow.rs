@@ -161,9 +161,9 @@ impl Engine {
             self.recent_unique_reference_count(message_window, turn);
         let context_window = usize::try_from(
             context_window_for_model(&self.session.model)
-                .unwrap_or(LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS),
+                .unwrap_or(LEGACY_DS_CONTEXT_WINDOW_TOKENS),
         )
-        .unwrap_or(usize::try_from(LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS).unwrap_or(128_000))
+        .unwrap_or(usize::try_from(LEGACY_DS_CONTEXT_WINDOW_TOKENS).unwrap_or(128_000))
         .max(1);
         let context_used_ratio = (self.estimated_input_tokens() as f64) / (context_window as f64);
 

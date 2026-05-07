@@ -1,6 +1,6 @@
 # PTY/frame-capture TUI QA harness
 
-Tiny helper for integration tests that need to drive `deepseek-tui` like a real
+Tiny helper for integration tests that need to drive `DS-Code` like a real
 user typing in a real terminal — keys, paste, resize, plus assertions over the
 parsed terminal frame and the workspace filesystem.
 
@@ -36,7 +36,7 @@ spin up a PTY just to assert a function returns the right value.
    belongs in a unit test (or a `wiremock`-driven turn test) instead.
 
 2. Build a sealed workspace so the scenario doesn't see the developer's real
-   `~/.deepseek/` or API keys:
+   `~/.ds/` or API keys:
 
    ```rust
    let ws = qa_harness::harness::make_sealed_workspace()?;
@@ -46,10 +46,10 @@ spin up a PTY just to assert a function returns the right value.
 3. Spawn:
 
    ```rust
-   let mut h = Harness::builder(Harness::cargo_bin("deepseek-tui"))
+   let mut h = Harness::builder(Harness::cargo_bin("DS-Code"))
        .cwd(ws.workspace())
        .seal_home(ws.home())
-       .env("DEEPSEEK_API_KEY", "ci-test-key")
+       .env("DS_API_KEY", "ci-test-key")
        .args(["--workspace", ws.workspace().to_str().unwrap(),
               "--no-project-config", "--skip-onboarding"])
        .size(40, 120)
@@ -81,9 +81,9 @@ spin up a PTY just to assert a function returns the right value.
 ## Conventions
 
 - **Sealed env always.** No scenario should be able to see the real
-  `$HOME/.deepseek/` or contact `api.deepseek.com`. If a scenario *has* to do a
+  `$HOME/.ds/` or contact `api.deepseek.com`. If a scenario *has* to do a
   real model turn, route through a local `wiremock` or `tiny_http` fake
-  provider and pass `DEEPSEEK_BASE_URL=<localhost>`.
+  provider and pass `DS_BASE_URL=<localhost>`.
 - **Fail noisily.** When an assertion fails, print `frame.debug_dump()` so the
   CI log shows the rendered screen, not just `assertion failed`.
 - **Prefer `wait_for_text` over `sleep`.** A scenario that sleeps 500ms before

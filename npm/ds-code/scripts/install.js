@@ -3,9 +3,9 @@ function assertSupportedNode() {
   const major = Number.parseInt(String(version).split(".")[0], 10);
   if (Number.isNaN(major) || major < 18) {
     process.stderr.write(
-      "deepseek-tui: Node.js 18 or newer is required for npm installation. " +
+      "DS-Code: Node.js 18 or newer is required for npm installation. " +
       `Current Node.js version is ${version}. ` +
-      "Please upgrade Node.js and rerun `npm install -g deepseek-tui`.\n",
+      "Please upgrade Node.js and rerun `npm install -g DS-Code`.\n",
     );
     process.exit(1);
   }
@@ -75,15 +75,15 @@ class DownloadTimeoutError extends Error {
 
 function resolvePackageVersion() {
   const configuredVersion =
-    process.env.DEEPSEEK_TUI_VERSION ||
-    process.env.DEEPSEEK_VERSION ||
-    pkg.deepseekBinaryVersion ||
+    process.env.DS_TUI_VERSION ||
+    process.env.DS_VERSION ||
+    pkg.dsBinaryVersion ||
     pkg.version;
   return String(configuredVersion).trim();
 }
 
 function resolveRepo() {
-  return process.env.DEEPSEEK_TUI_GITHUB_REPO || process.env.DEEPSEEK_GITHUB_REPO || "Hmbown/DeepSeek-TUI";
+  return process.env.DS_TUI_GITHUB_REPO || process.env.DS_GITHUB_REPO || "runzeshao/DS-Code";
 }
 
 function binaryPaths() {
@@ -96,7 +96,7 @@ function binaryPaths() {
     },
     tui: {
       asset: tui,
-      target: path.join(releaseDir, process.platform === "win32" ? "deepseek-tui.exe" : "deepseek-tui"),
+      target: path.join(releaseDir, process.platform === "win32" ? "DS-Code.exe" : "DS-Code"),
     },
   };
 }
@@ -106,7 +106,7 @@ function binaryPaths() {
 // ────────────────────────────────────────────────────────────────────────────
 
 function isQuietInstall() {
-  if (process.env.DEEPSEEK_TUI_QUIET_INSTALL === "1") {
+  if (process.env.DS_TUI_QUIET_INSTALL === "1") {
     return true;
   }
   const level = (process.env.npm_config_loglevel || "").toLowerCase();
@@ -117,15 +117,15 @@ function logInfo(message) {
   if (isQuietInstall()) {
     return;
   }
-  process.stderr.write(`deepseek-tui: ${message}\n`);
+  process.stderr.write(`DS-Code: ${message}\n`);
 }
 
 function installFailureHint(error) {
   const message = error && error.message ? String(error.message) : "";
   const code = error && error.code ? String(error.code) : "";
   const releaseBase =
-    process.env.DEEPSEEK_TUI_RELEASE_BASE_URL ||
-    process.env.DEEPSEEK_RELEASE_BASE_URL;
+    process.env.DS_TUI_RELEASE_BASE_URL ||
+    process.env.DS_RELEASE_BASE_URL;
   const networkMarkers = [
     "github.com",
     "ENOTFOUND",
@@ -145,18 +145,18 @@ function installFailureHint(error) {
 
   if (releaseBase) {
     return [
-      "deepseek-tui install hint:",
-      `  DEEPSEEK_TUI_RELEASE_BASE_URL is set to ${releaseBase}`,
+      "DS-Code install hint:",
+      `  DS_TUI_RELEASE_BASE_URL is set to ${releaseBase}`,
       "  Verify that this directory contains deepseek-artifacts-sha256.txt",
-      "  plus the deepseek/deepseek-tui binary assets for your platform.",
+      "  plus the deepseek/DS-Code binary assets for your platform.",
     ].join("\n");
   }
 
   return [
-    "deepseek-tui install hint:",
+    "DS-Code install hint:",
     "  The npm package downloads prebuilt binaries from GitHub Releases.",
     "  If GitHub is unavailable on this network, mirror the release assets and set:",
-    "    DEEPSEEK_TUI_RELEASE_BASE_URL=https://<mirror>/<release-asset-directory>/",
+    "    DS_TUI_RELEASE_BASE_URL=https://<mirror>/<release-asset-directory>/",
     "  The directory must contain deepseek-artifacts-sha256.txt and the platform binaries.",
     "  See docs/INSTALL.md#npm-download-is-slow-or-times-out-from-mainland-china.",
   ].join("\n");
@@ -176,15 +176,15 @@ function envInt(name, fallback) {
 
 function downloadTimeoutMs() {
   return envInt(
-    "DEEPSEEK_TUI_DOWNLOAD_TIMEOUT_MS",
-    envInt("DEEPSEEK_DOWNLOAD_TIMEOUT_MS", DEFAULT_TIMEOUT_MS),
+    "DS_TUI_DOWNLOAD_TIMEOUT_MS",
+    envInt("DS_DOWNLOAD_TIMEOUT_MS", DEFAULT_TIMEOUT_MS),
   );
 }
 
 function downloadStallMs() {
   return envInt(
-    "DEEPSEEK_TUI_DOWNLOAD_STALL_MS",
-    envInt("DEEPSEEK_DOWNLOAD_STALL_MS", DEFAULT_STALL_MS),
+    "DS_TUI_DOWNLOAD_STALL_MS",
+    envInt("DS_DOWNLOAD_STALL_MS", DEFAULT_STALL_MS),
   );
 }
 
@@ -209,14 +209,14 @@ function createProgressReporter(assetName, totalBytes) {
   const render = (final) => {
     if (totalBytes && totalBytes > 0) {
       const pct = Math.min(100, Math.round((received / totalBytes) * 100));
-      const line = `deepseek-tui: downloading ${assetName}: ${formatMb(received)} / ${formatMb(totalBytes)} MB (${pct}%)`;
+      const line = `DS-Code: downloading ${assetName}: ${formatMb(received)} / ${formatMb(totalBytes)} MB (${pct}%)`;
       if (interactive) {
         process.stderr.write(`${line}\r`);
       } else {
         process.stderr.write(`${line}\n`);
       }
     } else {
-      const line = `deepseek-tui: downloading ${assetName}: ${formatMb(received)} MB downloaded`;
+      const line = `DS-Code: downloading ${assetName}: ${formatMb(received)} MB downloaded`;
       if (interactive) {
         process.stderr.write(`${line}\r`);
       } else {
@@ -246,7 +246,7 @@ function createProgressReporter(assetName, totalBytes) {
         // Move past the carriage-return line and emit a "done" footer.
         process.stderr.write("\n");
       }
-      process.stderr.write(`deepseek-tui: ${assetName} ... done.\n`);
+      process.stderr.write(`DS-Code: ${assetName} ... done.\n`);
     },
   };
 }
@@ -357,7 +357,7 @@ function connectThroughProxy(proxy, targetHost, targetPort, timeoutMs) {
       const lines = [
         `CONNECT ${targetHost}:${targetPort} HTTP/1.1`,
         `Host: ${targetHost}:${targetPort}`,
-        "User-Agent: deepseek-tui-installer",
+        "User-Agent: DS-Code-installer",
         "Proxy-Connection: keep-alive",
       ];
       if (proxy.auth) {
@@ -480,7 +480,7 @@ function httpRequest(rawUrl, opts = {}) {
       totalTimer = setTimeout(() => {
         fail(new DownloadTimeoutError(
           `download exceeded total timeout of ${totalTimeoutMs} ms ` +
-          `(set DEEPSEEK_TUI_DOWNLOAD_TIMEOUT_MS to raise it; current stall budget is ${stallMs} ms)`,
+          `(set DS_TUI_DOWNLOAD_TIMEOUT_MS to raise it; current stall budget is ${stallMs} ms)`,
         ));
       }, totalTimeoutMs);
     }
@@ -491,7 +491,7 @@ function httpRequest(rawUrl, opts = {}) {
       stallTimer = setTimeout(() => {
         fail(new DownloadTimeoutError(
           `download stalled — no bytes received for ${stallMs} ms ` +
-          `(set DEEPSEEK_TUI_DOWNLOAD_STALL_MS to raise it; total budget is ${totalTimeoutMs} ms)`,
+          `(set DS_TUI_DOWNLOAD_STALL_MS to raise it; total budget is ${totalTimeoutMs} ms)`,
         ));
       }, stallMs);
     };
@@ -504,7 +504,7 @@ function httpRequest(rawUrl, opts = {}) {
         path: `${url.pathname}${url.search || ""}`,
         headers: {
           Host: url.host,
-          "User-Agent": "deepseek-tui-installer",
+          "User-Agent": "DS-Code-installer",
           Accept: "*/*",
           Connection: "close",
         },
@@ -590,7 +590,7 @@ function httpRequest(rawUrl, opts = {}) {
               path: rawUrl,
               headers: {
                 Host: url.host,
-                "User-Agent": "deepseek-tui-installer",
+                "User-Agent": "DS-Code-installer",
                 Accept: "*/*",
                 Connection: "close",
                 ...(proxy.auth ? { "Proxy-Authorization": `Basic ${proxy.auth}` } : {}),
@@ -653,7 +653,7 @@ function httpRequest(rawUrl, opts = {}) {
               path: `${url.pathname}${url.search || ""}`,
               headers: {
                 Host: url.host,
-                "User-Agent": "deepseek-tui-installer",
+                "User-Agent": "DS-Code-installer",
                 Accept: "*/*",
                 Connection: "close",
               },
@@ -920,7 +920,7 @@ async function loadChecksums(version, repo) {
 async function ensureBinary(targetPath, assetName, version, repo, getChecksums) {
   const marker = `${targetPath}.version`;
   const downloadIfNeeded =
-    process.env.DEEPSEEK_TUI_FORCE_DOWNLOAD === "1" || process.env.DEEPSEEK_FORCE_DOWNLOAD === "1";
+    process.env.DS_TUI_FORCE_DOWNLOAD === "1" || process.env.DS_FORCE_DOWNLOAD === "1";
   if (!downloadIfNeeded) {
     const existing = await fileExists(targetPath);
     if (existing) {
@@ -950,7 +950,7 @@ async function ensureBinary(targetPath, assetName, version, repo, getChecksums) 
 }
 
 async function run() {
-  if (process.env.DEEPSEEK_TUI_DISABLE_INSTALL === "1" || process.env.DEEPSEEK_DISABLE_INSTALL === "1") {
+  if (process.env.DS_TUI_DISABLE_INSTALL === "1" || process.env.DS_DISABLE_INSTALL === "1") {
     return;
   }
   const version = resolvePackageVersion();
@@ -968,7 +968,7 @@ async function run() {
   };
 
   await Promise.all([
-    ensureBinary(paths.deepseek.target, paths.deepseek.asset, version, repo, getChecksums),
+    ensureBinary(paths.ds.target, paths.ds.asset, version, repo, getChecksums),
     ensureBinary(paths.tui.target, paths.tui.asset, version, repo, getChecksums),
   ]);
 }
@@ -977,9 +977,9 @@ async function getBinaryPath(name) {
   await run();
   const paths = binaryPaths();
   if (name === "deepseek") {
-    return paths.deepseek.target;
+    return paths.ds.target;
   }
-  if (name === "deepseek-tui") {
+  if (name === "DS-Code") {
     return paths.tui.target;
   }
   throw new Error(`Unknown binary: ${name}`);
@@ -993,14 +993,14 @@ module.exports = {
 
 if (require.main === module) {
   run().catch((error) => {
-    console.error("deepseek-tui install failed:", error.message);
+    console.error("DS-Code install failed:", error.message);
     const hint = installFailureHint(error);
     if (hint) {
       console.error(hint);
     }
-    if (process.env.DEEPSEEK_TUI_OPTIONAL_INSTALL === "1") {
+    if (process.env.DS_TUI_OPTIONAL_INSTALL === "1") {
       console.error(
-        "DEEPSEEK_TUI_OPTIONAL_INSTALL=1 set; continuing without a usable binary.",
+        "DS_TUI_OPTIONAL_INSTALL=1 set; continuing without a usable binary.",
       );
       process.exit(0);
     }

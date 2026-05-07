@@ -207,7 +207,7 @@ pub fn render_parsed(parsed: &ParsedMarkdown, width: u16, base_style: Style) -> 
         match &parsed.blocks[i] {
             Block::Heading { text, .. } => {
                 let style = Style::default()
-                    .fg(palette::DEEPSEEK_SKY)
+                    .fg(palette::DS_SKY)
                     .add_modifier(Modifier::BOLD);
                 out.extend(render_wrapped_line(text, width, style, false));
             }
@@ -224,7 +224,7 @@ pub fn render_parsed(parsed: &ParsedMarkdown, width: u16, base_style: Style) -> 
                 )));
             }
             Block::ListItem { bullet, text } => {
-                let bullet_style = Style::default().fg(palette::DEEPSEEK_SKY);
+                let bullet_style = Style::default().fg(palette::DS_SKY);
                 out.extend(render_list_line(
                     bullet,
                     text,
@@ -235,13 +235,13 @@ pub fn render_parsed(parsed: &ParsedMarkdown, width: u16, base_style: Style) -> 
             }
             Block::Code { line } => {
                 let code_style = Style::default()
-                    .fg(palette::DEEPSEEK_SKY)
+                    .fg(palette::DS_SKY)
                     .add_modifier(Modifier::ITALIC);
                 out.extend(render_wrapped_line(line, width, code_style, true));
             }
             Block::Paragraph { text } => {
                 let link_style = Style::default()
-                    .fg(palette::DEEPSEEK_BLUE)
+                    .fg(palette::DS_BLUE)
                     .add_modifier(Modifier::UNDERLINED);
                 out.extend(render_line_with_links(text, width, base_style, link_style));
             }
@@ -718,7 +718,7 @@ fn render_table_group(blocks: &[Block], width: usize, base_style: Style) -> Vec<
 
 fn link_style() -> Style {
     Style::default()
-        .fg(palette::DEEPSEEK_BLUE)
+        .fg(palette::DS_BLUE)
         .add_modifier(Modifier::UNDERLINED)
 }
 

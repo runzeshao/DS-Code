@@ -241,7 +241,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn nvidia_nim_deepseek_model_does_not_use_deepseek_platform_pricing() {
+    fn nvidia_nim_DS_model_does_not_use_DS_platform_pricing() {
         assert!(calculate_turn_cost("deepseek-ai/deepseek-v4-pro", 1_000, 1_000).is_none());
     }
 

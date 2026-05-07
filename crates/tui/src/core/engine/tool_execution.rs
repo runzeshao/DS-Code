@@ -92,7 +92,7 @@ impl Drop for InteractiveTerminalGuard {
 }
 
 pub(super) fn emit_tool_audit(event: serde_json::Value) {
-    let Some(path) = std::env::var_os("DEEPSEEK_TOOL_AUDIT_LOG") else {
+    let Some(path) = std::env::var_os("DS_TOOL_AUDIT_LOG") else {
         return;
     };
     let line = match serde_json::to_string(&event) {
@@ -282,7 +282,7 @@ mod tests {
     use serde_json::json;
     use std::{sync::Mutex, time::Duration};
 
-    /// Tests in this module mutate `DEEPSEEK_TOOL_AUDIT_LOG` which is
+    /// Tests in this module mutate `DS_TOOL_AUDIT_LOG` which is
     /// process-global; serialise through this guard so the parallel
     /// runner doesn't observe interleaved env mutations.
     static AUDIT_TEST_GUARD: Mutex<()> = Mutex::new(());
@@ -313,7 +313,7 @@ mod tests {
         let path = tmp.path().join("audit.log");
         // SAFETY: serialised by the guard above.
         unsafe {
-            std::env::set_var("DEEPSEEK_TOOL_AUDIT_LOG", &path);
+            std::env::set_var("DS_TOOL_AUDIT_LOG", &path);
         }
 
         emit_tool_audit(json!({
@@ -352,7 +352,7 @@ mod tests {
 
         // SAFETY: cleanup under the guard.
         unsafe {
-            std::env::remove_var("DEEPSEEK_TOOL_AUDIT_LOG");
+            std::env::remove_var("DS_TOOL_AUDIT_LOG");
         }
     }
 
@@ -361,7 +361,7 @@ mod tests {
         let _g = audit_test_guard();
         // SAFETY: serialised by the guard above.
         unsafe {
-            std::env::remove_var("DEEPSEEK_TOOL_AUDIT_LOG");
+            std::env::remove_var("DS_TOOL_AUDIT_LOG");
         }
         // Should not panic and should not create any file. We can't
         // assert "no file written" without knowing where one might be
@@ -380,14 +380,14 @@ mod tests {
         let nested = tmp.path().join("nested").join("dir").join("audit.log");
         // SAFETY: serialised by the guard above.
         unsafe {
-            std::env::set_var("DEEPSEEK_TOOL_AUDIT_LOG", &nested);
+            std::env::set_var("DS_TOOL_AUDIT_LOG", &nested);
         }
         emit_tool_audit(json!({"event": "test"}));
         assert!(nested.exists(), "writer should mkdir -p the parent chain");
 
         // SAFETY: cleanup under the guard.
         unsafe {
-            std::env::remove_var("DEEPSEEK_TOOL_AUDIT_LOG");
+            std::env::remove_var("DS_TOOL_AUDIT_LOG");
         }
     }
 }

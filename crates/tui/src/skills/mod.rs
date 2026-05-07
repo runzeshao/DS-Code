@@ -32,7 +32,7 @@ const MAX_AVAILABLE_SKILLS_CHARS: usize = 12_000;
 pub fn default_skills_dir() -> PathBuf {
     dirs::home_dir().map_or_else(
         || PathBuf::from("/tmp/deepseek/skills"),
-        |p| p.join(".deepseek").join("skills"),
+        |p| p.join(".ds").join("skills"),
     )
 }
 
@@ -334,7 +334,7 @@ impl SkillRegistry {
 /// Resolve the active skills directory given a workspace, mirroring the
 /// hierarchy `App::new` walks: `<workspace>/.agents/skills` →
 /// `<workspace>/skills` → [`agents_global_skills_dir`] (`~/.agents/skills`,
-/// when present) → [`default_skills_dir`] (`~/.deepseek/skills`).
+/// when present) → [`default_skills_dir`] (`~/.ds/skills`).
 /// Returns the first directory that exists, or the global default
 /// (which itself falls back to `/tmp/deepseek/skills` if the user
 /// has no home directory).
@@ -841,37 +841,37 @@ mod tests {
         let tmpdir = TempDir::new().unwrap();
         let agents_global = tmpdir.path().join(".agents").join("skills");
         let claude_global = tmpdir.path().join(".claude").join("skills");
-        let deepseek_global = tmpdir.path().join(".deepseek").join("skills");
+        let DS_global = tmpdir.path().join(".ds").join("skills");
         std::fs::create_dir_all(&agents_global).unwrap();
         std::fs::create_dir_all(&claude_global).unwrap();
-        std::fs::create_dir_all(&deepseek_global).unwrap();
+        std::fs::create_dir_all(&DS_global).unwrap();
 
         let dirs = super::existing_skill_dirs(vec![
             agents_global.clone(),
             claude_global.clone(),
-            deepseek_global.clone(),
+            DS_global.clone(),
         ]);
 
-        assert_eq!(dirs, vec![agents_global, claude_global, deepseek_global]);
+        assert_eq!(dirs, vec![agents_global, claude_global, DS_global]);
     }
 
     #[test]
-    fn existing_skill_dirs_keeps_agents_global_before_deepseek_global() {
+    fn existing_skill_dirs_keeps_agents_global_before_DS_global() {
         let tmpdir = TempDir::new().unwrap();
         let agents_global = tmpdir.path().join(".agents").join("skills");
-        let deepseek_global = tmpdir.path().join(".deepseek").join("skills");
+        let DS_global = tmpdir.path().join(".ds").join("skills");
         let missing = tmpdir.path().join("missing").join("skills");
         std::fs::create_dir_all(&agents_global).unwrap();
-        std::fs::create_dir_all(&deepseek_global).unwrap();
+        std::fs::create_dir_all(&DS_global).unwrap();
 
         let dirs = super::existing_skill_dirs(vec![
             missing,
             agents_global.clone(),
-            deepseek_global.clone(),
+            DS_global.clone(),
             agents_global.clone(),
         ]);
 
-        assert_eq!(dirs, vec![agents_global, deepseek_global]);
+        assert_eq!(dirs, vec![agents_global, DS_global]);
     }
 
     #[test]
@@ -1072,7 +1072,7 @@ mod tests {
     fn discover_follows_symlinked_skill_directories() {
         let tmpdir = TempDir::new().unwrap();
         let source_root = tmpdir.path().join("claude-skills");
-        let skills_root = tmpdir.path().join(".deepseek").join("skills");
+        let skills_root = tmpdir.path().join(".ds").join("skills");
         write_skill(&source_root, "agent-browser", "browser automation", "body");
         std::fs::create_dir_all(&skills_root).unwrap();
         let link_path = skills_root.join("agent-browser");

@@ -313,7 +313,7 @@ impl ModalView for FilePickerView {
         let title = Line::from(vec![Span::styled(
             " File Picker ",
             Style::default()
-                .fg(palette::DEEPSEEK_BLUE)
+                .fg(palette::DS_BLUE)
                 .add_modifier(Modifier::BOLD),
         )]);
         let footer_text = format!(
@@ -329,7 +329,7 @@ impl ModalView for FilePickerView {
             )))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(palette::BORDER_COLOR))
-            .style(Style::default().bg(palette::DEEPSEEK_INK))
+            .style(Style::default().bg(palette::DS_INK))
             .padding(Padding::uniform(1));
 
         let inner = block.inner(popup_area);
@@ -338,13 +338,13 @@ impl ModalView for FilePickerView {
         let mut lines: Vec<Line<'static>> = Vec::new();
         // Query line.
         lines.push(Line::from(vec![
-            Span::styled("> ", Style::default().fg(palette::DEEPSEEK_SKY).bold()),
+            Span::styled("> ", Style::default().fg(palette::DS_SKY).bold()),
             Span::raw(self.query.clone()),
             Span::styled(
                 " ",
                 Style::default()
-                    .fg(palette::DEEPSEEK_INK)
-                    .bg(palette::DEEPSEEK_SKY),
+                    .fg(palette::DS_INK)
+                    .bg(palette::DS_SKY),
             ),
         ]));
         lines.push(Line::from(""));

@@ -2,7 +2,7 @@
 
 Docker support is currently a local-build/devcontainer path, not a supported
 release channel. The release workflow may try an experimental GHCR publish, but
-no public `ghcr.io/hmbown/deepseek-tui` image should be treated as available
+no public `ghcr.io/hmbown/DS-Code` image should be treated as available
 until this page says so.
 
 ## Local quick start
@@ -10,16 +10,16 @@ until this page says so.
 Build the image locally from a checkout:
 
 ```bash
-docker build -t deepseek-tui .
+docker build -t DS-Code .
 ```
 
 Then run it with your existing config directory mounted:
 
 ```bash
 docker run --rm -it \
-  -e DEEPSEEK_API_KEY="$DEEPSEEK_API_KEY" \
-  -v ~/.deepseek:/home/deepseek/.deepseek \
-  deepseek-tui
+  -e DS_API_KEY="$DS_API_KEY" \
+  -v ~/.ds:/home/deepseek/.ds \
+  DS-Code
 ```
 
 Docker Hub publishing is not configured.
@@ -28,17 +28,17 @@ Docker Hub publishing is not configured.
 
 | Variable              | Required | Description                                      |
 |-----------------------|----------|--------------------------------------------------|
-| `DEEPSEEK_API_KEY`    | yes      | DeepSeek API key                                 |
-| `DEEPSEEK_BASE_URL`   | no       | Custom API base URL (e.g. `https://api.deepseek.com`) |
-| `DEEPSEEK_NO_COLOR`   | no       | Set to `1` to disable terminal colour output     |
+| `DS_API_KEY`    | yes      | DeepSeek API key                                 |
+| `DS_BASE_URL`   | no       | Custom API base URL (e.g. `https://api.deepseek.com`) |
+| `DS_NO_COLOR`   | no       | Set to `1` to disable terminal colour output     |
 
 ## Volumes
 
-Mount `~/.deepseek` to persist sessions, config, skills, memory, and the offline queue
+Mount `~/.ds` to persist sessions, config, skills, memory, and the offline queue
 across container restarts:
 
 ```bash
--v ~/.deepseek:/home/deepseek/.deepseek
+-v ~/.ds:/home/deepseek/.ds
 ```
 
 Without this mount the container starts fresh each time.
@@ -50,18 +50,18 @@ When stdin is not a TTY, `deepseek` drops to the dispatcher's one-shot mode
 
 ```bash
 echo "Explain the Cargo.toml in structured English." | \
-  docker run --rm -i -e DEEPSEEK_API_KEY deepseek-tui
+  docker run --rm -i -e DS_API_KEY DS-Code
 ```
 
 ## Building locally
 
 ```bash
 # Single platform (your host architecture)
-docker build -t deepseek-tui .
+docker build -t DS-Code .
 
 # Multi-platform (requires a builder with emulation)
 docker buildx create --use
-docker buildx build --platform linux/amd64,linux/arm64 -t deepseek-tui .
+docker buildx build --platform linux/amd64,linux/arm64 -t DS-Code .
 ```
 
 ## Devcontainer

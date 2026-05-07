@@ -1,6 +1,6 @@
 # v0.8.6 Takeover Prompt — Fresh DeepSeek V4 Session
 
-You are taking over the v0.8.6 sprint for `github.com/Hmbown/DeepSeek-TUI`.
+You are taking over the v0.8.6 sprint for `github.com/Hmbown/DS-Code`.
 A previous DeepSeek session kept getting interrupted because the parent session
 grew too large during long-running work. The user has now pruned local saved
 sessions, but that is only temporary relief. Your job is to stabilize the branch

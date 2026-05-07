@@ -12,16 +12,16 @@ If you just want the short version, see the
 
 ## 1. Supported platforms
 
-`deepseek-tui` ships prebuilt binaries for these
+`DS-Code` ships prebuilt binaries for these
 platform/architecture combinations from v0.8.8 onward:
 
 | Platform     | Architecture | npm install | `cargo install` | GitHub release asset                                  |
 | ------------ | ------------ | :---------: | :-------------: | ----------------------------------------------------- |
-| Linux        | x64 (x86_64) |     ✅      |       ✅        | `deepseek-linux-x64`, `deepseek-tui-linux-x64`        |
-| Linux        | arm64        |     ✅      |       ✅        | `deepseek-linux-arm64`, `deepseek-tui-linux-arm64`    |
-| macOS        | x64          |     ✅      |       ✅        | `deepseek-macos-x64`, `deepseek-tui-macos-x64`        |
-| macOS        | arm64 (M-series) | ✅      |       ✅        | `deepseek-macos-arm64`, `deepseek-tui-macos-arm64`    |
-| Windows      | x64          |     ✅      |       ✅        | `deepseek-windows-x64.exe`, `deepseek-tui-windows-x64.exe` |
+| Linux        | x64 (x86_64) |     ✅      |       ✅        | `deepseek-linux-x64`, `DS-Code-linux-x64`        |
+| Linux        | arm64        |     ✅      |       ✅        | `deepseek-linux-arm64`, `DS-Code-linux-arm64`    |
+| macOS        | x64          |     ✅      |       ✅        | `deepseek-macos-x64`, `DS-Code-macos-x64`        |
+| macOS        | arm64 (M-series) | ✅      |       ✅        | `deepseek-macos-arm64`, `DS-Code-macos-arm64`    |
+| Windows      | x64          |     ✅      |       ✅        | `deepseek-windows-x64.exe`, `DS-Code-windows-x64.exe` |
 | Other Linux (musl, riscv64, …) | — |   ❌¹    |       ✅²       | build from source                                     |
 | FreeBSD / OpenBSD              | — |   ❌      |       ✅²       | build from source                                     |
 
@@ -32,8 +32,8 @@ platform/architecture combinations from v0.8.8 onward:
 > **Linux ARM64 note (v0.8.7 and earlier).** v0.8.7 and earlier do **not**
 > publish a Linux ARM64 prebuilt; users on HarmonyOS thin-and-light, Asahi
 > Linux, Raspberry Pi, AWS Graviton, etc. saw `Unsupported architecture: arm64`
-> from `npm i -g deepseek-tui`. v0.8.8 publishes both `deepseek-linux-arm64`
-> and `deepseek-tui-linux-arm64`, so a plain `npm i -g deepseek-tui` works
+> from `npm i -g DS-Code`. v0.8.8 publishes both `deepseek-linux-arm64`
+> and `DS-Code-linux-arm64`, so a plain `npm i -g DS-Code` works
 > on any glibc-based ARM64 Linux. If you're stuck on v0.8.7, jump to
 > [Build from source](#5-build-from-source) — `cargo install` works fine.
 
@@ -42,30 +42,30 @@ platform/architecture combinations from v0.8.8 onward:
 ## 2. Install via npm (recommended)
 
 ```bash
-npm install -g deepseek-tui
+npm install -g DS-Code
 deepseek
 ```
 
 `postinstall` downloads the right pair of binaries from the matching GitHub
 release, verifies a SHA-256 manifest, and exposes both `deepseek` and
-`deepseek-tui` on your `PATH`.
+`DS-Code` on your `PATH`.
 
 Useful environment variables:
 
 | Variable                            | Purpose                                                                                |
 | ----------------------------------- | -------------------------------------------------------------------------------------- |
-| `DEEPSEEK_TUI_VERSION`              | Pin which release the wrapper downloads (defaults to `deepseekBinaryVersion`)          |
-| `DEEPSEEK_TUI_GITHUB_REPO`          | Point the downloader at a fork (`owner/repo`)                                          |
-| `DEEPSEEK_TUI_RELEASE_BASE_URL`     | Override the download root (e.g. an internal mirror or release-asset proxy)            |
-| `DEEPSEEK_TUI_FORCE_DOWNLOAD=1`     | Re-download even if a cached binary marker matches                                     |
-| `DEEPSEEK_TUI_DISABLE_INSTALL=1`    | Skip the `postinstall` download entirely (CI smoke, vendored binaries)                 |
-| `DEEPSEEK_TUI_OPTIONAL_INSTALL=1`   | Don't fail `npm install` on download/extract errors — useful in CI matrices            |
+| `DS_TUI_VERSION`              | Pin which release the wrapper downloads (defaults to `deepseekBinaryVersion`)          |
+| `DS_TUI_GITHUB_REPO`          | Point the downloader at a fork (`owner/repo`)                                          |
+| `DS_TUI_RELEASE_BASE_URL`     | Override the download root (e.g. an internal mirror or release-asset proxy)            |
+| `DS_TUI_FORCE_DOWNLOAD=1`     | Re-download even if a cached binary marker matches                                     |
+| `DS_TUI_DISABLE_INSTALL=1`    | Skip the `postinstall` download entirely (CI smoke, vendored binaries)                 |
+| `DS_TUI_OPTIONAL_INSTALL=1`   | Don't fail `npm install` on download/extract errors — useful in CI matrices            |
 
 > **Slow npm download from mainland China?** If `npm install` itself is slow
 > (not just the postinstall binary download), use an npm registry mirror:
 > ```bash
 > npm config set registry https://registry.npmmirror.com
-> npm install -g deepseek-tui
+> npm install -g DS-Code
 > ```
 > See also [Section 3](#3-install-via-cargo-any-tier-1-rust-target) if you
 > prefer Cargo over npm.
@@ -80,8 +80,8 @@ delegates to the TUI runtime at runtime.
 
 ```bash
 # Requires Rust 1.88+ (https://rustup.rs)
-cargo install deepseek-tui-cli --locked   # provides `deepseek`
-cargo install deepseek-tui     --locked   # provides `deepseek-tui`
+cargo install DS-Code-cli --locked   # provides `deepseek`
+cargo install DS-Code     --locked   # provides `DS-Code`
 deepseek --version
 ```
 
@@ -132,17 +132,17 @@ is fastest from your network.
 ## 4. Manual download from GitHub Releases
 
 Grab the matching pair of binaries for your platform from the
-[Releases page](https://github.com/Hmbown/DeepSeek-TUI/releases) and drop them
+[Releases page](https://github.com/Hmbown/DS-Code/releases) and drop them
 side by side into a directory on your `PATH` (e.g. `~/.local/bin`):
 
 ```bash
 # Linux ARM64 example
 mkdir -p ~/.local/bin
 curl -L -o ~/.local/bin/deepseek      \
-    https://github.com/Hmbown/DeepSeek-TUI/releases/latest/download/deepseek-linux-arm64
-curl -L -o ~/.local/bin/deepseek-tui  \
-    https://github.com/Hmbown/DeepSeek-TUI/releases/latest/download/deepseek-tui-linux-arm64
-chmod +x ~/.local/bin/deepseek ~/.local/bin/deepseek-tui
+    https://github.com/Hmbown/DS-Code/releases/latest/download/deepseek-linux-arm64
+curl -L -o ~/.local/bin/DS-Code  \
+    https://github.com/Hmbown/DS-Code/releases/latest/download/DS-Code-linux-arm64
+chmod +x ~/.local/bin/deepseek ~/.local/bin/DS-Code
 deepseek --version
 ```
 
@@ -150,7 +150,7 @@ Verify integrity against the per-release SHA-256 manifest:
 
 ```bash
 curl -L -o /tmp/deepseek-artifacts-sha256.txt \
-    https://github.com/Hmbown/DeepSeek-TUI/releases/latest/download/deepseek-artifacts-sha256.txt
+    https://github.com/Hmbown/DS-Code/releases/latest/download/deepseek-artifacts-sha256.txt
 ( cd ~/.local/bin && sha256sum -c /tmp/deepseek-artifacts-sha256.txt --ignore-missing )
 ```
 
@@ -162,7 +162,7 @@ DeepSeek TUI is listed in Scoop's main bucket:
 
 ```powershell
 scoop update
-scoop install deepseek-tui
+scoop install DS-Code
 deepseek --version
 ```
 
@@ -191,11 +191,11 @@ LoongArch, FreeBSD, and pre-2024 ARM64 distros.
 ### Build and install
 
 ```bash
-git clone https://github.com/Hmbown/DeepSeek-TUI.git
-cd DeepSeek-TUI
+git clone https://github.com/Hmbown/DS-Code.git
+cd DS-Code
 
 cargo install --path crates/cli --locked   # provides `deepseek`
-cargo install --path crates/tui --locked   # provides `deepseek-tui`
+cargo install --path crates/tui --locked   # provides `DS-Code`
 
 deepseek --version
 ```
@@ -216,13 +216,13 @@ rustup target add aarch64-unknown-linux-gnu
 cargo install cross --locked
 
 # Per build
-cross build --release --target aarch64-unknown-linux-gnu -p deepseek-tui-cli
-cross build --release --target aarch64-unknown-linux-gnu -p deepseek-tui
+cross build --release --target aarch64-unknown-linux-gnu -p DS-Code-cli
+cross build --release --target aarch64-unknown-linux-gnu -p DS-Code
 ```
 
 The resulting binaries land in
 `target/aarch64-unknown-linux-gnu/release/deepseek` and
-`target/aarch64-unknown-linux-gnu/release/deepseek-tui`. Copy the matched pair
+`target/aarch64-unknown-linux-gnu/release/DS-Code`. Copy the matched pair
 to the ARM64 host (e.g. via `scp`) and `chmod +x` them.
 
 If you don't have Docker available, install the cross-linker directly and let
@@ -237,8 +237,8 @@ cat >> ~/.cargo/config.toml <<'EOF'
 linker = "aarch64-linux-gnu-gcc"
 EOF
 
-cargo build --release --target aarch64-unknown-linux-gnu -p deepseek-tui-cli
-cargo build --release --target aarch64-unknown-linux-gnu -p deepseek-tui
+cargo build --release --target aarch64-unknown-linux-gnu -p DS-Code-cli
+cargo build --release --target aarch64-unknown-linux-gnu -p DS-Code
 ```
 
 The same recipe works for `aarch64-unknown-linux-musl` if your distro is
@@ -294,14 +294,14 @@ that session and run `cargo build` from the project root.
 **Build**
 
 ```bash
-git clone https://github.com/Hmbown/DeepSeek-TUI.git
-cd DeepSeek-TUI
+git clone https://github.com/Hmbown/DS-Code.git
+cd DS-Code
 set CARGO_HTTP_CHECK_REVOKE=false   # may be needed behind some Chinese ISPs
 cargo build --release
 ```
 
 Both binaries appear in `target\release\deepseek.exe` and
-`target\release\deepseek-tui.exe`.
+`target\release\DS-Code.exe`.
 
 > **Prefer `npm install -g` on Windows unless you need to modify source.**
 > The npm package pulls prebuilt binaries and avoids the C toolchain
@@ -314,35 +314,35 @@ Both binaries appear in `target\release\deepseek.exe` and
 ### `Unsupported architecture: arm64 on platform linux`
 
 You're on a release earlier than v0.8.8 that doesn't publish Linux ARM64
-binaries. Either upgrade (`npm i -g deepseek-tui@latest`) or use
+binaries. Either upgrade (`npm i -g DS-Code@latest`) or use
 `cargo install` per [Section 3](#3-install-via-cargo-any-tier-1-rust-target).
 
 ### `MISSING_COMPANION_BINARY` at runtime
 
-The dispatcher (`deepseek`) requires the TUI runtime (`deepseek-tui`) to be on
+The dispatcher (`deepseek`) requires the TUI runtime (`DS-Code`) to be on
 the same `PATH`. If you installed only one crate via `cargo install`, install
 both:
 
 ```bash
-cargo install deepseek-tui-cli --locked
-cargo install deepseek-tui     --locked
+cargo install DS-Code-cli --locked
+cargo install DS-Code     --locked
 ```
 
 ### `deepseek update` reports `no asset found for platform deepseek-linux-aarch64`
 
-This is [#503](https://github.com/Hmbown/DeepSeek-TUI/issues/503) in v0.8.7 —
+This is [#503](https://github.com/Hmbown/DS-Code/issues/503) in v0.8.7 —
 the self-updater used Rust's `aarch64`/`x86_64` arch names instead of the
 release artifact's `arm64`/`x64`. Workaround until v0.8.8:
 
 ```bash
-npm i -g deepseek-tui@latest
+npm i -g DS-Code@latest
 # or
-cargo install deepseek-tui-cli --locked
+cargo install DS-Code-cli --locked
 ```
 
 ### npm download is slow or times out from mainland China
 
-Set `DEEPSEEK_TUI_RELEASE_BASE_URL` to a mirrored release-asset directory
+Set `DS_TUI_RELEASE_BASE_URL` to a mirrored release-asset directory
 (rsproxy, TUNA, Tencent COS, Aliyun OSS), or skip npm entirely and use the
 Cargo mirror setup in [Section 3](#3-install-via-cargo-any-tier-1-rust-target).
 
@@ -401,10 +401,10 @@ path-agnostic — moving `target-dir` does not help.
 
 1. **Add the project's `target/` directory to your AV exclusions list.**
 2. **Close the antivirus software temporarily** during `cargo build`.
-3. **Use `npm install -g deepseek-tui` instead** — the npm package ships
+3. **Use `npm install -g DS-Code` instead** — the npm package ships
    prebuilt binaries and skips the Cargo build entirely
    ([Section 2](#2-install-via-npm-recommended)).
-4. **Use `cargo install deepseek-tui-cli --locked`** from crates.io — this
+4. **Use `cargo install DS-Code-cli --locked`** from crates.io — this
    changes the binary path, which some AV tools treat differently.
 
 To verify that the build-script binary itself is valid (not corrupted), locate

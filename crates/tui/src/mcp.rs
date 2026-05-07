@@ -659,7 +659,7 @@ impl McpConnection {
             "params": {
                 "protocolVersion": "2024-11-05",
                 "clientInfo": {
-                    "name": "deepseek-tui",
+                    "name": "DS-Code",
                     "version": env!("CARGO_PKG_VERSION")
                 },
                 "capabilities": {

@@ -20,10 +20,10 @@
     }
   },
   "remoteEnv": {
-    "DEEPSEEK_API_KEY": "${localEnv:DEEPSEEK_API_KEY}"
+    "DS_API_KEY": "${localEnv:DS_API_KEY}"
   },
   "mounts": [
-    "source=${localEnv:HOME}/.deepseek,target=/home/deepseek/.deepseek,type=bind,consistency=cached"
+    "source=${localEnv:HOME}/.ds,target=/home/deepseek/.ds,type=bind,consistency=cached"
   ],
   "features": {
     "ghcr.io/devcontainers/features/rust:1": {},

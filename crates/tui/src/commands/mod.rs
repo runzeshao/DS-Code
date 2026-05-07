@@ -513,7 +513,7 @@ pub fn execute(cmd: &str, app: &mut App) -> CommandResult {
         "stash" | "park" => stash::stash(app, arg),
         "hooks" | "hook" => hooks::hooks(app, arg),
         "subagents" | "agents" => core::subagents(app),
-        "links" | "dashboard" | "api" => core::deepseek_links(app),
+        "links" | "dashboard" | "api" => core::ds_links(app),
         "home" | "stats" | "overview" => core::home_dashboard(app),
         "note" => note::note(app, arg),
         "memory" => memory::memory(app, arg),
@@ -593,8 +593,8 @@ pub fn execute(cmd: &str, app: &mut App) -> CommandResult {
             "The /set command was retired. Use /config to edit settings and /settings to inspect current values.",
         ),
         "normal" => config::normal_mode(app),
-        "deepseek" => CommandResult::error(
-            "The /deepseek command was renamed. Use /links (aliases: /dashboard, /api).",
+        "ds" => CommandResult::error(
+            "The /ds command was renamed. Use /links (aliases: /dashboard, /api).",
         ),
 
         _ => {
@@ -627,7 +627,7 @@ pub fn set_config_value(app: &mut App, key: &str, value: &str, persist: bool) ->
     config::set_config_value(app, key, value, persist)
 }
 
-/// Persist the user's chosen footer items to `~/.deepseek/config.toml` under
+/// Persist the user's chosen footer items to `~/.ds/config.toml` under
 /// `tui.status_items`. See [`config::persist_status_items`] for details.
 pub fn persist_status_items(
     items: &[crate::config::StatusItem],
@@ -856,7 +856,7 @@ mod tests {
     }
 
     #[test]
-    fn command_registry_contains_config_and_links_but_not_set_or_deepseek() {
+    fn command_registry_contains_config_and_links_but_not_set_or_ds() {
         assert!(COMMANDS.iter().any(|cmd| cmd.name == "config"));
         assert!(COMMANDS.iter().any(|cmd| cmd.name == "links"));
         assert!(COMMANDS.iter().any(|cmd| cmd.name == "memory"));
@@ -934,7 +934,7 @@ mod tests {
     }
 
     #[test]
-    fn removed_set_and_deepseek_commands_show_migration_hints() {
+    fn removed_set_and_DS_commands_show_migration_hints() {
         let mut app = create_test_app();
         let set_result = execute("/set model deepseek-v4-pro", &mut app);
         let set_msg = set_result
@@ -945,15 +945,15 @@ mod tests {
         assert!(set_msg.contains("/settings"));
         assert!(set_result.action.is_none());
 
-        let deepseek_result = execute("/deepseek", &mut app);
-        let deepseek_msg = deepseek_result
+        let result = execute("/ds", &mut app);
+        let msg = result
             .message
             .expect("legacy command should return an error message");
-        assert!(deepseek_msg.contains("The /deepseek command was renamed"));
-        assert!(deepseek_msg.contains("/links"));
-        assert!(deepseek_msg.contains("/dashboard"));
-        assert!(deepseek_msg.contains("/api"));
-        assert!(deepseek_result.action.is_none());
+        assert!(msg.contains("The /ds command was renamed."));
+        assert!(msg.contains("/links"));
+        assert!(msg.contains("/dashboard"));
+        assert!(msg.contains("/api"));
+        assert!(result.action.is_none());
     }
 
     /// Build an App scoped to an isolated tempdir so dispatch-side-effects

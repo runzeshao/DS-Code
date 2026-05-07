@@ -11,7 +11,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
         Line::from(Span::styled(
             "Connect your DeepSeek API key",
             Style::default()
-                .fg(palette::DEEPSEEK_SKY)
+                .fg(palette::DS_SKY)
                 .add_modifier(Modifier::BOLD),
         )),
         Line::from(""),
@@ -25,7 +25,7 @@ pub fn lines(app: &App) -> Vec<Line<'static>> {
         )),
         Line::from(""),
         Line::from(Span::styled(
-            "Saved to ~/.deepseek/config.toml so it works from any folder.",
+            "Saved to ~/.ds/config.toml so it works from any folder.",
             Style::default().fg(palette::TEXT_MUTED),
         )),
         Line::from(Span::styled(

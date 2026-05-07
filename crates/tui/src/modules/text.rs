@@ -1,4 +1,4 @@
-//! Text chat workflows for `DeepSeek` and DeepSeek-compatible APIs.
+//! Text chat workflows for `ds` and DeepSeek-compatible APIs.
 
 use std::collections::HashMap;
 use std::io::{self, Write};
@@ -45,7 +45,7 @@ pub struct TextChatOptions {
 
 // === Public API ===
 
-pub async fn run_deepseek_chat(client: &DeepSeekClient, options: TextChatOptions) -> Result<()> {
+pub async fn run_DS_chat(client: &DeepSeekClient, options: TextChatOptions) -> Result<()> {
     let mut messages: Vec<Message> = Vec::new();
     let mut stats = SessionStats::new();
 
@@ -57,7 +57,7 @@ pub async fn run_deepseek_chat(client: &DeepSeekClient, options: TextChatOptions
     );
 
     if let Some(prompt) = options.prompt.as_deref() {
-        process_deepseek_turn(client, &options, &mut messages, prompt, &mut stats).await?;
+        process_DS_turn(client, &options, &mut messages, prompt, &mut stats).await?;
     } else {
         let mut rl = create_editor()?;
         while let Some(line) = read_prompt(&mut rl)? {
@@ -148,7 +148,7 @@ pub fn parse_tool_choice(choice: Option<&str>) -> Result<Option<Value>> {
 }
 
 #[allow(clippy::too_many_lines)]
-async fn process_deepseek_turn(
+async fn process_DS_turn(
     client: &DeepSeekClient,
     options: &TextChatOptions,
     messages: &mut Vec<Message>,
@@ -575,17 +575,17 @@ fn print_stats(stats: &SessionStats) {
 }
 
 fn ds_blue(text: &str) -> ColoredString {
-    let (r, g, b) = palette::DEEPSEEK_BLUE_RGB;
+    let (r, g, b) = palette::DS_BLUE_RGB;
     text.truecolor(r, g, b)
 }
 
 fn ds_sky(text: &str) -> ColoredString {
-    let (r, g, b) = palette::DEEPSEEK_SKY_RGB;
+    let (r, g, b) = palette::DS_SKY_RGB;
     text.truecolor(r, g, b)
 }
 
 fn ds_red(text: &str) -> ColoredString {
-    let (r, g, b) = palette::DEEPSEEK_RED_RGB;
+    let (r, g, b) = palette::DS_RED_RGB;
     text.truecolor(r, g, b)
 }
 
@@ -702,7 +702,7 @@ fn read_prompt(editor: &mut Editor<CommandCompleter, DefaultHistory>) -> Result<
 
 fn history_path() -> Option<std::path::PathBuf> {
     dirs::home_dir().map(|home| {
-        let dir = home.join(".deepseek");
+        let dir = home.join(".ds");
         let _ = std::fs::create_dir_all(&dir);
         dir.join("history")
     })
@@ -725,7 +725,7 @@ async fn handle_line_deepseek(
     if handle_command_deepseek(input, messages, Some(options), stats) {
         return Ok(false);
     }
-    if let Err(error) = process_deepseek_turn(client, options, messages, input, stats).await {
+    if let Err(error) = process_DS_turn(client, options, messages, input, stats).await {
         eprintln!("{} {}", ds_red("Error:").bold(), error);
     }
     Ok(false)

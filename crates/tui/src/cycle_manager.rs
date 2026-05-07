@@ -459,11 +459,11 @@ pub struct CycleArchiveHeader {
     pub message_count: usize,
 }
 
-/// Resolve the on-disk archive directory: `~/.deepseek/sessions/<id>/cycles`.
+/// Resolve the on-disk archive directory: `~/.ds/sessions/<id>/cycles`.
 fn archive_dir_for(session_id: &str) -> Result<PathBuf> {
     let home = dirs::home_dir().context("Could not resolve home directory for cycle archive")?;
     Ok(home
-        .join(".deepseek")
+        .join(".ds")
         .join("sessions")
         .join(session_id)
         .join("cycles"))

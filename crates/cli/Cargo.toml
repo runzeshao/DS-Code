@@ -1,5 +1,5 @@
 [package]
-name = "deepseek-tui-cli"
+name = "ds-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -7,20 +7,20 @@ repository.workspace = true
 description = "Codex-style CLI facade for DeepSeek workspace architecture"
 
 [[bin]]
-name = "deepseek"
+name = "ds"
 path = "src/main.rs"
 
 [dependencies]
 anyhow.workspace = true
 clap.workspace = true
 clap_complete.workspace = true
-deepseek-agent = { path = "../agent", version = "0.8.17" }
-deepseek-app-server = { path = "../app-server", version = "0.8.17" }
-deepseek-config = { path = "../config", version = "0.8.17" }
-deepseek-execpolicy = { path = "../execpolicy", version = "0.8.17" }
-deepseek-mcp = { path = "../mcp", version = "0.8.17" }
-deepseek-secrets = { path = "../secrets", version = "0.8.17" }
-deepseek-state = { path = "../state", version = "0.8.17" }
+ds-agent = { path = "../agent", version = "0.8.17" }
+ds-app-server = { path = "../app-server", version = "0.8.17" }
+ds-config = { path = "../config", version = "0.8.17" }
+ds-execpolicy = { path = "../execpolicy", version = "0.8.17" }
+ds-mcp = { path = "../mcp", version = "0.8.17" }
+ds-secrets = { path = "../secrets", version = "0.8.17" }
+ds-state = { path = "../state", version = "0.8.17" }
 chrono.workspace = true
 dirs.workspace = true
 serde.workspace = true

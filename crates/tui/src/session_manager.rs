@@ -150,7 +150,7 @@ impl SessionManager {
         Ok(Self { sessions_dir })
     }
 
-    /// Create a `SessionManager` using the default location (~/.deepseek/sessions)
+    /// Create a `SessionManager` using the default location (~/.ds/sessions)
     pub fn default_location() -> std::io::Result<Self> {
         Self::new(default_sessions_dir()?)
     }
@@ -409,7 +409,7 @@ impl SessionManager {
     ///
     /// `max_age` is checked against the metadata's `updated_at`
     /// timestamp embedded in the JSON, not the filesystem mtime — the
-    /// user may have rsynced their `~/.deepseek` between machines and
+    /// user may have rsynced their `~/.ds` between machines and
     /// fs mtimes can lie.
     pub fn prune_sessions_older_than(
         &self,
@@ -500,12 +500,12 @@ fn find_git_root(path: &Path) -> Option<PathBuf> {
     }
 }
 
-/// Resolve the default session directory path (`~/.deepseek/sessions`).
+/// Resolve the default session directory path (`~/.ds/sessions`).
 pub fn default_sessions_dir() -> std::io::Result<PathBuf> {
     let home = dirs::home_dir().ok_or_else(|| {
         std::io::Error::new(std::io::ErrorKind::NotFound, "Home directory not found")
     })?;
-    Ok(home.join(".deepseek").join("sessions"))
+    Ok(home.join(".ds").join("sessions"))
 }
 
 /// Prune snapshots older than `max_age` for `workspace`.

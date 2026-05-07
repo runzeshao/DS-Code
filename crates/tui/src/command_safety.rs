@@ -258,7 +258,7 @@ pub static COMMAND_ARITY: &[(&str, u8)] = &[
 /// # Examples
 ///
 /// ```
-/// # use deepseek_tui::command_safety::classify_command;
+/// # use ds_tui::command_safety::classify_command;
 /// assert_eq!(classify_command(&["git", "status", "-s"]),            "git status");
 /// assert_eq!(classify_command(&["git", "push", "origin"]),          "git push");
 /// assert_eq!(classify_command(&["cargo", "check", "--workspace"]),  "cargo check");
@@ -319,7 +319,7 @@ pub fn classify_command(tokens: &[&str]) -> String {
 /// # Examples
 ///
 /// ```
-/// # use deepseek_tui::command_safety::prefix_allow_matches;
+/// # use ds_tui::command_safety::prefix_allow_matches;
 /// assert!( prefix_allow_matches("git status",    "git status --porcelain"));
 /// assert!(!prefix_allow_matches("git status",    "git push origin main"));
 /// assert!( prefix_allow_matches("cargo check",   "cargo check --workspace"));
@@ -974,7 +974,7 @@ mod tests {
         // contain the substring "eval" but are not eval invocations.
         // Guard against the naive `command.contains("eval")` regression
         // — these should stay safe / workspace-safe, never Dangerous.
-        let evaluate_safe = analyze_command("cargo run --bin deepseek -- eval").level;
+        let evaluate_safe = analyze_command("cargo run --bin ds -- eval").level;
         assert_ne!(
             evaluate_safe,
             SafetyLevel::Dangerous,

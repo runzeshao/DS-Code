@@ -1,4 +1,4 @@
-//! CLI entry point for the `DeepSeek` client.
+//! CLI entry point for the `ds` client.
 
 use std::io::{self, IsTerminal, Read, Write};
 use std::path::{Path, PathBuf};
@@ -27,7 +27,7 @@ mod config_ui;
 mod core;
 mod cost_status;
 mod cycle_manager;
-mod deepseek_theme;
+mod ds_theme;
 mod error_taxonomy;
 mod eval;
 mod execpolicy;
@@ -97,8 +97,8 @@ fn configure_windows_console_utf8() {}
 #[command(
     name = "deepseek",
     author,
-    version = env!("DEEPSEEK_BUILD_VERSION"),
-    about = "DeepSeek TUI/CLI for DeepSeek models",
+    version = env!("DS_BUILD_VERSION"),
+    about = "DS Code/CLI for DeepSeek models",
     long_about = "Terminal-native TUI and CLI for DeepSeek models.\n\nRun 'deepseek' to start.\n\nNot affiliated with DeepSeek Inc."
 )]
 struct Cli {
@@ -166,7 +166,7 @@ struct Cli {
     #[arg(long = "fresh")]
     fresh: bool,
 
-    /// Skip loading project-level config from $WORKSPACE/.deepseek/config.toml
+    /// Skip loading project-level config from $WORKSPACE/.ds/config.toml
     #[arg(long = "no-project-config")]
     no_project_config: bool,
 }
@@ -418,12 +418,12 @@ struct ServeArgs {
     workers: usize,
     /// Additional CORS origin to allow (repeatable). Stacks on top of the
     /// built-in defaults (localhost:3000, localhost:1420, tauri://localhost).
-    /// Also reads `DEEPSEEK_CORS_ORIGINS` (comma-separated) and
+    /// Also reads `DS_CORS_ORIGINS` (comma-separated) and
     /// `[runtime_api] cors_origins` from `config.toml`. Whalescale#255.
     #[arg(long = "cors-origin", value_name = "URL")]
     cors_origin: Vec<String>,
     /// Require this bearer token for `/v1/*` runtime API routes. Also reads
-    /// `DEEPSEEK_RUNTIME_TOKEN` when omitted.
+    /// `DS_RUNTIME_TOKEN` when omitted.
     #[arg(long = "auth-token", value_name = "TOKEN")]
     auth_token: Option<String>,
 }
@@ -487,7 +487,7 @@ enum McpCommand {
     /// For the HTTP/SSE runtime API, use `deepseek serve --http` directly instead.
     #[command(
         name = "add-self",
-        long_about = "Register this DeepSeek binary as a local MCP stdio server.\n\nAdds a config entry to ~/.deepseek/mcp.json that launches `deepseek serve --mcp`\nvia the stdio transport. Other DeepSeek sessions (or any MCP client) can then\ndiscover and call tools exposed by this server.\n\nUse `deepseek serve --http` instead if you need the HTTP/SSE runtime API."
+        long_about = "Register this DeepSeek binary as a local MCP stdio server.\n\nAdds a config entry to ~/.ds/mcp.json that launches `deepseek serve --mcp`\nvia the stdio transport. Other DeepSeek sessions (or any MCP client) can then\ndiscover and call tools exposed by this server.\n\nUse `deepseek serve --http` instead if you need the HTTP/SSE runtime API."
     )]
     AddSelf {
         /// Server name in mcp.json (default: "deepseek")
@@ -565,7 +565,7 @@ async fn main() -> Result<()> {
     configure_windows_console_utf8();
 
     // Set up process panic hook before anything else — writes crash dumps
-    // to ~/.deepseek/crashes/ even if the panic happens before tokio is up,
+    // to ~/.ds/crashes/ even if the panic happens before tokio is up,
     // and restores the terminal so a panicked TUI doesn't leave the user's
     // shell stuck in alt-screen mode.
     let orig_hook = std::panic::take_hook();
@@ -600,7 +600,7 @@ async fn main() -> Result<()> {
         tracing::error!(target: "panic", "Process panicked at {location}: {msg}");
         // Write crash dump best-effort
         if let Some(home) = dirs::home_dir() {
-            let crash_dir = home.join(".deepseek").join("crashes");
+            let crash_dir = home.join(".ds").join("crashes");
             let _ = std::fs::create_dir_all(&crash_dir);
             use chrono::Utc;
             let ts = Utc::now().format("%Y%m%dT%H%M%S%.3fZ");
@@ -959,7 +959,7 @@ fn init_skills_dir(skills_dir: &Path, force: bool) -> Result<(PathBuf, WriteStat
 fn tools_readme_template() -> &'static str {
     "# Local tools\n\n\
      Drop self-describing scripts here so they can be discovered by\n\
-     `deepseek-tui setup --status` and surfaced in `deepseek-tui doctor`.\n\n\
+     `DS-Code setup --status` and surfaced in `DS-Code doctor`.\n\n\
      Each script should start with a frontmatter-style header so the\n\
      description is visible without executing the file:\n\n\
      ```\n\
@@ -977,7 +977,7 @@ fn tools_example_script() -> &'static str {
      # name: example\n\
      # description: Print a confirmation that local tool discovery works\n\
      # usage: example [name]\n\
-     printf 'deepseek-tui local tool ok: %s\\n' \"${1:-world}\"\n"
+     printf 'DS-Code local tool ok: %s\\n' \"${1:-world}\"\n"
 }
 
 fn init_tools_dir(tools_dir: &Path, force: bool) -> Result<(PathBuf, WriteStatus, WriteStatus)> {
@@ -998,7 +998,7 @@ fn plugins_readme_template() -> &'static str {
      Plugins are richer than tools: each one lives in its own subdirectory\n\
      with a `PLUGIN.md` describing what it does and how to enable it. The\n\
      directory is created so users have a documented place to drop\n\
-     experiments without touching `~/.deepseek/skills/`.\n\n\
+     experiments without touching `~/.ds/skills/`.\n\n\
      A plugin layout looks like:\n\n\
      ```\n\
      plugins/\n\
@@ -1042,7 +1042,7 @@ fn init_plugins_dir(
 ///
 /// Sources, in priority order (later sources extend earlier ones):
 /// 1. `--cors-origin URL` flags (repeatable)
-/// 2. `DEEPSEEK_CORS_ORIGINS` env var (comma-separated)
+/// 2. `DS_CORS_ORIGINS` env var (comma-separated)
 /// 3. `[runtime_api] cors_origins = [...]` in `config.toml`
 ///
 /// The runtime API always allows the built-in dev defaults
@@ -1063,7 +1063,7 @@ fn resolve_cors_origins(config: &Config, flag_origins: &[String]) -> Vec<String>
     for o in flag_origins {
         push(o);
     }
-    if let Ok(env_value) = std::env::var("DEEPSEEK_CORS_ORIGINS") {
+    if let Ok(env_value) = std::env::var("DS_CORS_ORIGINS") {
         for piece in env_value.split(',') {
             push(piece);
         }
@@ -1078,23 +1078,23 @@ fn resolve_cors_origins(config: &Config, flag_origins: &[String]) -> Vec<String>
     out
 }
 
-fn deepseek_home_dir() -> PathBuf {
-    dirs::home_dir().map_or_else(|| PathBuf::from(".deepseek"), |h| h.join(".deepseek"))
+fn ds_home_dir() -> PathBuf {
+    dirs::home_dir().map_or_else(|| PathBuf::from(".ds"), |h| h.join(".ds"))
 }
 
 /// Resolve the default tools directory. Mirrors `default_skills_dir` shape.
 fn default_tools_dir() -> PathBuf {
-    deepseek_home_dir().join("tools")
+    ds_home_dir().join("tools")
 }
 
 /// Resolve the default plugins directory.
 fn default_plugins_dir() -> PathBuf {
-    deepseek_home_dir().join("plugins")
+    ds_home_dir().join("plugins")
 }
 
 /// Default location for crash/offline-queue checkpoints managed by the TUI.
 fn default_checkpoints_dir() -> PathBuf {
-    deepseek_home_dir().join("sessions").join("checkpoints")
+    ds_home_dir().join("sessions").join("checkpoints")
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1133,8 +1133,8 @@ fn run_setup(config: &Config, workspace: &Path, args: SetupArgs) -> Result<()> {
     use crate::palette;
     use colored::Colorize;
 
-    let (aqua_r, aqua_g, aqua_b) = palette::DEEPSEEK_SKY_RGB;
-    let (sky_r, sky_g, sky_b) = palette::DEEPSEEK_SKY_RGB;
+    let (aqua_r, aqua_g, aqua_b) = palette::DS_SKY_RGB;
+    let (sky_r, sky_g, sky_b) = palette::DS_SKY_RGB;
 
     let any_explicit = args.mcp || args.skills || args.tools || args.plugins;
     let run_mcp = args.mcp || args.all || !any_explicit;
@@ -1257,12 +1257,12 @@ enum ApiKeySource {
 }
 
 fn resolve_api_key_source(config: &Config) -> ApiKeySource {
-    if std::env::var("DEEPSEEK_API_KEY")
+    if std::env::var("DS_API_KEY")
         .ok()
         .filter(|k| !k.trim().is_empty())
         .is_some()
     {
-        match std::env::var("DEEPSEEK_API_KEY_SOURCE").ok().as_deref() {
+        match std::env::var("DS_API_KEY_SOURCE").ok().as_deref() {
             Some("config") => return ApiKeySource::Config,
             Some("keyring") => return ApiKeySource::Keyring,
             _ => {}
@@ -1279,7 +1279,7 @@ fn resolve_api_key_source(config: &Config) -> ApiKeySource {
             .is_some_and(|k| !k.trim().is_empty())
     {
         ApiKeySource::Config
-    } else if std::env::var("DEEPSEEK_API_KEY")
+    } else if std::env::var("DS_API_KEY")
         .ok()
         .filter(|k| !k.trim().is_empty())
         .is_some()
@@ -1307,9 +1307,9 @@ fn run_setup_status(config: &Config, workspace: &Path) -> Result<()> {
     use crate::palette;
     use colored::Colorize;
 
-    let (aqua_r, aqua_g, aqua_b) = palette::DEEPSEEK_SKY_RGB;
-    let (sky_r, sky_g, sky_b) = palette::DEEPSEEK_SKY_RGB;
-    let (red_r, red_g, red_b) = palette::DEEPSEEK_RED_RGB;
+    let (aqua_r, aqua_g, aqua_b) = palette::DS_SKY_RGB;
+    let (sky_r, sky_g, sky_b) = palette::DS_SKY_RGB;
+    let (red_r, red_g, red_b) = palette::DS_RED_RGB;
 
     println!(
         "{}",
@@ -1320,7 +1320,7 @@ fn run_setup_status(config: &Config, workspace: &Path) -> Result<()> {
 
     match resolve_api_key_source(config) {
         ApiKeySource::Env => println!(
-            "  {} api_key: set via DEEPSEEK_API_KEY",
+            "  {} api_key: set via DS_API_KEY",
             "✓".truecolor(aqua_r, aqua_g, aqua_b)
         ),
         ApiKeySource::Keyring => println!(
@@ -1365,11 +1365,11 @@ fn run_setup_status(config: &Config, workspace: &Path) -> Result<()> {
                     ("OLLAMA_API_KEY", "deepseek auth set --provider ollama")
                 }
                 crate::config::ApiProvider::Deepseek | crate::config::ApiProvider::DeepseekCN => {
-                    ("DEEPSEEK_API_KEY", "deepseek auth set --provider deepseek")
+                    ("DS_API_KEY", "deepseek auth set --provider deepseek")
                 }
             };
             println!(
-                "  {} api_key: missing  (set {env_var} or `[providers.{}].api_key` in ~/.deepseek/config.toml; or run `{login_hint}`)",
+                "  {} api_key: missing  (set {env_var} or `[providers.{}].api_key` in ~/.ds/config.toml; or run `{login_hint}`)",
                 "✗".truecolor(red_r, red_g, red_b),
                 match config.api_provider() {
                     crate::config::ApiProvider::NvidiaNim => "nvidia_nim",
@@ -1386,7 +1386,7 @@ fn run_setup_status(config: &Config, workspace: &Path) -> Result<()> {
             );
         }
     }
-    println!("  · base_url: {}", config.deepseek_base_url());
+    println!("  · base_url: {}", config.ds_base_url());
     let model = config
         .default_text_model
         .clone()
@@ -1458,7 +1458,7 @@ fn run_setup_status(config: &Config, workspace: &Path) -> Result<()> {
     println!("  {} {}", "·".dimmed(), dotenv_status_line(workspace));
 
     println!();
-    println!("Run `deepseek doctor --json` for a machine-readable check.");
+    println!("Run `ds doctor --json` for a machine-readable check.");
     Ok(())
 }
 
@@ -1519,14 +1519,14 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
     use crate::palette;
     use colored::Colorize;
 
-    let (blue_r, blue_g, blue_b) = palette::DEEPSEEK_BLUE_RGB;
-    let (sky_r, sky_g, sky_b) = palette::DEEPSEEK_SKY_RGB;
-    let (aqua_r, aqua_g, aqua_b) = palette::DEEPSEEK_SKY_RGB;
-    let (red_r, red_g, red_b) = palette::DEEPSEEK_RED_RGB;
+    let (blue_r, blue_g, blue_b) = palette::DS_BLUE_RGB;
+    let (sky_r, sky_g, sky_b) = palette::DS_SKY_RGB;
+    let (aqua_r, aqua_g, aqua_b) = palette::DS_SKY_RGB;
+    let (red_r, red_g, red_b) = palette::DS_RED_RGB;
 
     println!(
         "{}",
-        "DeepSeek TUI Doctor"
+        "DS Code Doctor"
             .truecolor(blue_r, blue_g, blue_b)
             .bold()
     );
@@ -1535,18 +1535,18 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
 
     // Version info
     println!("{}", "Version Information:".bold());
-    println!("  deepseek-tui: {}", env!("DEEPSEEK_BUILD_VERSION"));
+    println!("  DS-Code: {}", env!("DS_BUILD_VERSION"));
     println!("  rust: {}", rustc_version());
     println!();
 
     // Configuration summary
     println!("{}", "Configuration:".bold());
     let default_config_dir =
-        dirs::home_dir().map_or_else(|| PathBuf::from(".deepseek"), |h| h.join(".deepseek"));
+        dirs::home_dir().map_or_else(|| PathBuf::from(".ds"), |h| h.join(".ds"));
     let config_path = config_path_override
         .map(PathBuf::from)
         .or_else(|| {
-            std::env::var("DEEPSEEK_CONFIG_PATH")
+            std::env::var("DS_CONFIG_PATH")
                 .ok()
                 .map(PathBuf::from)
         })
@@ -1573,12 +1573,12 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
 
     // Per-provider state: env + config file only (no values printed).
     // Keep doctor/status prompt-free even for unsigned rebuilt binaries.
-    let dispatcher_api_key_source = std::env::var("DEEPSEEK_API_KEY_SOURCE").ok();
+    let dispatcher_api_key_source = std::env::var("DS_API_KEY_SOURCE").ok();
     for (provider, slot, env_names) in [
         (
             crate::config::ApiProvider::Deepseek,
             "deepseek",
-            &["DEEPSEEK_API_KEY"][..],
+            &["DS_API_KEY"][..],
         ),
         (
             crate::config::ApiProvider::NvidiaNim,
@@ -1648,10 +1648,10 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
             if in_config { "yes" } else { "no" }
         );
     }
-    println!("  · credential precedence: ~/.deepseek/config.toml, OS keyring, then env");
+    println!("  · credential precedence: ~/.ds/config.toml, OS keyring, then env");
 
     let api_key_source = resolve_api_key_source(config);
-    let has_api_key = if config.deepseek_api_key().is_ok() {
+    let has_api_key = if config.ds_api_key().is_ok() {
         let source_label = match api_key_source {
             ApiKeySource::Config => "config.toml",
             ApiKeySource::Keyring => "OS keyring",
@@ -1679,7 +1679,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
             "✗".truecolor(red_r, red_g, red_b)
         );
         println!(
-            "    Run 'deepseek auth set --provider <name>' to save a key to ~/.deepseek/config.toml."
+            "    Run 'deepseek auth set --provider <name>' to save a key to ~/.ds/config.toml."
         );
         false
     };
@@ -1732,7 +1732,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
                 );
                 if error_msg.contains("401") || error_msg.contains("Unauthorized") {
                     println!(
-                        "    Invalid API key. Check `deepseek auth status`, DEEPSEEK_API_KEY, or config.toml"
+                        "    Invalid API key. Check `deepseek auth status`, DS_API_KEY, or config.toml"
                     );
                     if matches!(api_key_source, ApiKeySource::Keyring) {
                         println!(
@@ -1743,7 +1743,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
                         );
                     } else if matches!(api_key_source, ApiKeySource::Env) {
                         println!(
-                            "    The rejected key came from DEEPSEEK_API_KEY; no saved config key is present."
+                            "    The rejected key came from DS_API_KEY; no saved config key is present."
                         );
                         println!(
                             "    Run `deepseek auth set --provider deepseek` to save a config key that overrides stale env."
@@ -2048,7 +2048,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
             );
         }
     }
-    let stash_path = dirs::home_dir().map(|h| h.join(".deepseek").join("composer_stash.jsonl"));
+    let stash_path = dirs::home_dir().map(|h| h.join(".ds").join("composer_stash.jsonl"));
     if let Some(stash_path) = stash_path {
         let stash_count = crate::composer_stash::load_stash().len();
         if stash_path.exists() {
@@ -2106,11 +2106,11 @@ fn run_doctor_json(
     use serde_json::json;
 
     let default_config_dir =
-        dirs::home_dir().map_or_else(|| PathBuf::from(".deepseek"), |h| h.join(".deepseek"));
+        dirs::home_dir().map_or_else(|| PathBuf::from(".ds"), |h| h.join(".ds"));
     let config_path = config_path_override
         .map(PathBuf::from)
         .or_else(|| {
-            std::env::var("DEEPSEEK_CONFIG_PATH")
+            std::env::var("DS_CONFIG_PATH")
                 .ok()
                 .map(PathBuf::from)
         })
@@ -2210,7 +2210,7 @@ fn run_doctor_json(
     // until the two PRs land and it can be replaced with a single
     // method call.)
     let memory_path = config.memory_path();
-    let memory_enabled_env = std::env::var("DEEPSEEK_MEMORY")
+    let memory_enabled_env = std::env::var("DS_MEMORY")
         .ok()
         .map(|raw| {
             matches!(
@@ -2301,10 +2301,10 @@ fn run_doctor_json(
             },
             "stash": {
                 "path": dirs::home_dir()
-                    .map(|h| h.join(".deepseek").join("composer_stash.jsonl").display().to_string())
+                    .map(|h| h.join(".ds").join("composer_stash.jsonl").display().to_string())
                     .unwrap_or_default(),
                 "present": dirs::home_dir()
-                    .map(|h| h.join(".deepseek").join("composer_stash.jsonl"))
+                    .map(|h| h.join(".ds").join("composer_stash.jsonl"))
                     .is_some_and(|p| p.exists()),
                 "count": crate::composer_stash::load_stash().len(),
             },
@@ -2319,7 +2319,7 @@ fn run_doctor_json(
         },
         "api_connectivity": {
             "checked": false,
-            "note": "Skipped in --json mode; run `deepseek doctor` for a live check.",
+            "note": "Skipped in --json mode; run `ds doctor` for a live check.",
         },
         "capability": provider_capability_report(config),
     });
@@ -2373,7 +2373,7 @@ fn doctor_api_target(config: &Config) -> DoctorApiTarget {
     let provider = config.api_provider();
     DoctorApiTarget {
         provider: provider.as_str(),
-        base_url: config.deepseek_base_url(),
+        base_url: config.ds_base_url(),
         model: config.default_model(),
     }
 }
@@ -2390,7 +2390,7 @@ fn doctor_strict_tool_mode_status(config: &Config) -> DoctorStrictToolModeStatus
     }
 
     let target = doctor_api_target(config);
-    match known_deepseek_base_url_kind(&target.base_url) {
+    match known_ds_base_url_kind(&target.base_url) {
         Some(DeepSeekBaseUrlKind::Beta) => DoctorStrictToolModeStatus {
             enabled: true,
             status: "ready",
@@ -2426,21 +2426,21 @@ enum DeepSeekBaseUrlKind {
     NonBeta,
 }
 
-fn known_deepseek_base_url_kind(base_url: &str) -> Option<DeepSeekBaseUrlKind> {
+fn known_ds_base_url_kind(base_url: &str) -> Option<DeepSeekBaseUrlKind> {
     match base_url.trim_end_matches('/').to_ascii_lowercase().as_str() {
-        "https://api.deepseek.com/beta" | "https://api.deepseeki.com/beta" => {
+        "https://api.deepseek.com/beta" | "https://api.dsi.com/beta" => {
             Some(DeepSeekBaseUrlKind::Beta)
         }
         "https://api.deepseek.com"
         | "https://api.deepseek.com/v1"
-        | "https://api.deepseeki.com"
-        | "https://api.deepseeki.com/v1" => Some(DeepSeekBaseUrlKind::NonBeta),
+        | "https://api.dsi.com"
+        | "https://api.dsi.com/v1" => Some(DeepSeekBaseUrlKind::NonBeta),
         _ => None,
     }
 }
 
 fn recommended_strict_base_url(_config: &Config, _base_url: &str) -> &'static str {
-    crate::config::DEFAULT_DEEPSEEK_BASE_URL
+    crate::config::DEFAULT_DS_BASE_URL
 }
 
 fn doctor_timeout_recovery_lines(config: &Config) -> Vec<String> {
@@ -2453,10 +2453,10 @@ fn doctor_timeout_recovery_lines(config: &Config) -> Vec<String> {
     match config.api_provider() {
         crate::config::ApiProvider::Deepseek
             if target.base_url.contains("api.deepseek.com")
-                && !target.base_url.contains("api.deepseeki.com") =>
+                && !target.base_url.contains("api.dsi.com") =>
         {
             lines.push(
-                "If you are in mainland China, set `provider = \"deepseek-cn\"` or `base_url = \"https://api.deepseek.com\"` in ~/.deepseek/config.toml, then rerun `deepseek doctor`."
+                "If you are in mainland China, set `provider = \"deepseek-cn\"` or `base_url = \"https://api.deepseek.com\"` in ~/.ds/config.toml, then rerun `ds doctor`."
                     .to_string(),
             );
         }
@@ -2475,7 +2475,7 @@ fn doctor_timeout_recovery_lines(config: &Config) -> Vec<String> {
     }
 
     lines.push(
-        "Run `deepseek doctor --json` and include `base_url`, `default_text_model`, and `api_connectivity` when filing an issue."
+        "Run `ds doctor --json` and include `base_url`, `default_text_model`, and `api_connectivity` when filing an issue."
             .to_string(),
     );
     lines
@@ -2583,9 +2583,9 @@ fn list_sessions(limit: usize, search: Option<String>) -> Result<()> {
     use colored::Colorize;
     use session_manager::{SessionManager, format_session_line};
 
-    let (blue_r, blue_g, blue_b) = palette::DEEPSEEK_BLUE_RGB;
-    let (sky_r, sky_g, sky_b) = palette::DEEPSEEK_SKY_RGB;
-    let (aqua_r, aqua_g, aqua_b) = palette::DEEPSEEK_SKY_RGB;
+    let (blue_r, blue_g, blue_b) = palette::DS_BLUE_RGB;
+    let (sky_r, sky_g, sky_b) = palette::DS_SKY_RGB;
+    let (aqua_r, aqua_g, aqua_b) = palette::DS_SKY_RGB;
 
     let manager = SessionManager::default_location()?;
 
@@ -2632,12 +2632,12 @@ fn list_sessions(limit: usize, search: Option<String>) -> Result<()> {
     println!();
     println!(
         "Resume with: {} {}",
-        "deepseek --resume".truecolor(blue_r, blue_g, blue_b),
+        "ds --resume".truecolor(blue_r, blue_g, blue_b),
         "<session-id>".dimmed()
     );
     println!(
         "Continue latest in this workspace: {}",
-        "deepseek --continue".truecolor(blue_r, blue_g, blue_b)
+        "ds --continue".truecolor(blue_r, blue_g, blue_b)
     );
 
     Ok(())
@@ -2649,9 +2649,9 @@ fn init_project() -> Result<()> {
     use colored::Colorize;
     use project_context::create_default_agents_md;
 
-    let (sky_r, sky_g, sky_b) = palette::DEEPSEEK_SKY_RGB;
-    let (aqua_r, aqua_g, aqua_b) = palette::DEEPSEEK_SKY_RGB;
-    let (red_r, red_g, red_b) = palette::DEEPSEEK_RED_RGB;
+    let (sky_r, sky_g, sky_b) = palette::DS_SKY_RGB;
+    let (aqua_r, aqua_g, aqua_b) = palette::DS_SKY_RGB;
+    let (red_r, red_g, red_b) = palette::DS_RED_RGB;
 
     let workspace = std::env::current_dir()?;
     let agents_path = workspace.join("AGENTS.md");
@@ -2698,7 +2698,7 @@ fn load_config_from_cli(cli: &Cli) -> Result<Config> {
     let profile = cli
         .profile
         .clone()
-        .or_else(|| std::env::var("DEEPSEEK_PROFILE").ok());
+        .or_else(|| std::env::var("DS_PROFILE").ok());
     let mut config = Config::load(cli.config.clone(), profile.as_deref())?;
     cli.feature_toggles.apply(&mut config)?;
     Ok(config)
@@ -3672,7 +3672,7 @@ fn should_use_mouse_capture_with(
 /// in the input stream — visible to users as garbled characters in the
 /// composer when they move the mouse over the TUI (#878, #898). The user
 /// can still opt back in with `[tui] mouse_capture = true` in
-/// `~/.deepseek/config.toml` or `--mouse-capture`.
+/// `~/.ds/config.toml` or `--mouse-capture`.
 fn default_mouse_capture_enabled(terminal_emulator: Option<&str>) -> bool {
     if cfg!(windows) {
         return false;
@@ -3706,7 +3706,7 @@ fn try_recover_checkpoint(launch_workspace: &Path) -> Option<String> {
     // Verify the checkpoint file is recent (within 24 hours).
     let home = dirs::home_dir()?;
     let checkpoint_path = home
-        .join(".deepseek")
+        .join(".ds")
         .join("sessions")
         .join("checkpoints")
         .join("latest.json");
@@ -3771,12 +3771,12 @@ fn try_recover_checkpoint(launch_workspace: &Path) -> Option<String> {
     Some(session_id)
 }
 
-/// Load project-level config from `$WORKSPACE/.deepseek/config.toml` and
+/// Load project-level config from `$WORKSPACE/.ds/config.toml` and
 /// apply its fields as overrides on top of the global config (#485).
 /// Only explicitly set fields in the project file are applied; everything
 /// else falls back to the global value.
 fn merge_project_config(config: &mut Config, workspace: &Path) {
-    let path = workspace.join(".deepseek").join("config.toml");
+    let path = workspace.join(".ds").join("config.toml");
     let raw = match std::fs::read_to_string(&path) {
         Ok(r) => r,
         Err(_) => return,
@@ -3791,7 +3791,7 @@ fn merge_project_config(config: &mut Config, workspace: &Path) {
     };
 
     // #417: dangerous keys are denied at project scope. A malicious
-    // `<workspace>/.deepseek/config.toml` could otherwise:
+    // `<workspace>/.ds/config.toml` could otherwise:
     // * `api_key` / `base_url` / `provider` — exfiltrate prompts to a
     //   look-alike endpoint by swapping the user's credentials and
     //   target host with project-controlled values.
@@ -3808,7 +3808,7 @@ fn merge_project_config(config: &mut Config, workspace: &Path) {
         if table.contains_key(*key) {
             eprintln!(
                 "warning: project-scope config key `{key}` is ignored — \
-                 set it in `~/.deepseek/config.toml` instead. \
+                 set it in `~/.ds/config.toml` instead. \
                  (See #417 for the deny-list rationale.)"
             );
         }
@@ -3887,7 +3887,7 @@ async fn run_interactive(
         .clone()
         .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
 
-    // Merge project-level config from $WORKSPACE/.deepseek/config.toml
+    // Merge project-level config from $WORKSPACE/.ds/config.toml
     // unless --no-project-config was passed (#485).
     let mut merged_config = config.clone();
     if !cli.no_project_config {
@@ -4371,12 +4371,12 @@ mod doctor_endpoint_tests {
         let target = doctor_api_target(&config);
 
         assert_eq!(target.provider, "deepseek");
-        assert_eq!(target.base_url, crate::config::DEFAULT_DEEPSEEK_BASE_URL);
+        assert_eq!(target.base_url, crate::config::DEFAULT_DS_BASE_URL);
         assert_eq!(target.model, crate::config::DEFAULT_TEXT_MODEL);
     }
 
     #[test]
-    fn doctor_api_target_reports_deepseek_cn_endpoint() {
+    fn doctor_api_target_reports_ds_cn_endpoint() {
         let config = Config {
             provider: Some("deepseek-cn".to_string()),
             ..Default::default()
@@ -4418,7 +4418,7 @@ mod doctor_endpoint_tests {
     }
 
     #[test]
-    fn strict_tool_mode_doctor_warns_for_non_beta_deepseek_endpoint() {
+    fn strict_tool_mode_doctor_warns_for_non_beta_DS_endpoint() {
         let config = Config {
             strict_tool_mode: Some(true),
             base_url: Some("https://api.deepseek.com".to_string()),
@@ -4431,12 +4431,12 @@ mod doctor_endpoint_tests {
         assert!(!status.function_strict_sent);
         assert_eq!(
             status.recommended_base_url.as_deref(),
-            Some(crate::config::DEFAULT_DEEPSEEK_BASE_URL)
+            Some(crate::config::DEFAULT_DS_BASE_URL)
         );
     }
 
     #[test]
-    fn strict_tool_mode_doctor_warns_for_deepseek_cn_default_endpoint() {
+    fn strict_tool_mode_doctor_warns_for_ds_cn_default_endpoint() {
         let config = Config {
             provider: Some("deepseek-cn".to_string()),
             strict_tool_mode: Some(true),
@@ -4449,7 +4449,7 @@ mod doctor_endpoint_tests {
         assert!(!status.function_strict_sent);
         assert_eq!(
             status.recommended_base_url.as_deref(),
-            Some(crate::config::DEFAULT_DEEPSEEK_BASE_URL)
+            Some(crate::config::DEFAULT_DS_BASE_URL)
         );
     }
 
@@ -4469,7 +4469,7 @@ mod doctor_endpoint_tests {
     }
 
     #[test]
-    fn provider_capability_report_exposes_alias_deprecation_for_deepseek_chat() {
+    fn provider_capability_report_exposes_alias_deprecation_for_DS_chat() {
         let config = Config {
             default_text_model: Some("deepseek-chat".to_string()),
             ..Default::default()
@@ -4504,14 +4504,14 @@ mod doctor_endpoint_tests {
     }
 
     #[test]
-    fn timeout_recovery_points_global_deepseek_users_to_cn_endpoint() {
+    fn timeout_recovery_points_global_DS_users_to_cn_endpoint() {
         let config = Config::default();
 
         let text = doctor_timeout_recovery_lines(&config).join("\n");
 
         assert!(text.contains("api.deepseek.com"));
         assert!(text.contains("provider = \"deepseek-cn\""));
-        assert!(text.contains("deepseek doctor --json"));
+        assert!(text.contains("ds doctor --json"));
     }
 
     #[test]
@@ -4525,7 +4525,7 @@ mod doctor_endpoint_tests {
 
         assert!(text.contains("/v1/models"));
         assert!(text.contains("/v1/chat/completions"));
-        assert!(!text.contains("api.deepseeki.com"));
+        assert!(!text.contains("api.dsi.com"));
     }
 }
 
@@ -4728,12 +4728,12 @@ mod project_config_tests {
     use std::fs;
     use tempfile::tempdir;
 
-    /// Write a `<workspace>/.deepseek/config.toml` and return the workspace
+    /// Write a `<workspace>/.ds/config.toml` and return the workspace
     /// root so the merge function can find it.
     fn workspace_with_project_config(body: &str) -> tempfile::TempDir {
         let tmp = tempdir().expect("tempdir");
-        let project_dir = tmp.path().join(".deepseek");
-        fs::create_dir_all(&project_dir).expect("mkdir .deepseek");
+        let project_dir = tmp.path().join(".ds");
+        fs::create_dir_all(&project_dir).expect("mkdir .ds");
         fs::write(project_dir.join("config.toml"), body).expect("write project config");
         tmp
     }
@@ -5136,7 +5136,7 @@ mod setup_helper_tests {
     use tempfile::TempDir;
 
     // Serialize tests that mutate process-global env vars. Without this,
-    // `cargo test` runs them in parallel and they race on `DEEPSEEK_API_KEY`,
+    // `cargo test` runs them in parallel and they race on `DS_API_KEY`,
     // causing intermittent CI failures (one test reads while another's set
     // is still active). `unwrap_or_else` recovers from poisoning so a panic
     // in one test doesn't cascade through the whole module.
@@ -5276,14 +5276,14 @@ mod setup_helper_tests {
     #[test]
     fn dotenv_status_points_to_example_when_present() {
         let tmp = TempDir::new().unwrap();
-        std::fs::write(tmp.path().join(".env.example"), "DEEPSEEK_API_KEY=\n").unwrap();
+        std::fs::write(tmp.path().join(".env.example"), "DS_API_KEY=\n").unwrap();
 
         assert_eq!(
             dotenv_status_line(tmp.path()),
             ".env not present in workspace (run `cp .env.example .env` and edit)"
         );
 
-        std::fs::write(tmp.path().join(".env"), "DEEPSEEK_API_KEY=test\n").unwrap();
+        std::fs::write(tmp.path().join(".env"), "DS_API_KEY=test\n").unwrap();
         assert!(dotenv_status_line(tmp.path()).contains(".env present at"));
     }
 
@@ -5297,14 +5297,14 @@ mod setup_helper_tests {
 
         let keys = documented_env_keys(&env_example);
         for required in [
-            "DEEPSEEK_API_KEY",
-            "DEEPSEEK_BASE_URL",
-            "DEEPSEEK_MODEL",
+            "DS_API_KEY",
+            "DS_BASE_URL",
+            "DS_MODEL",
             "NVIDIA_API_KEY",
             "NIM_BASE_URL",
             "RUST_LOG",
-            "DEEPSEEK_APPROVAL_POLICY",
-            "DEEPSEEK_SANDBOX_MODE",
+            "DS_APPROVAL_POLICY",
+            "DS_SANDBOX_MODE",
         ] {
             assert!(
                 keys.contains(required),
@@ -5351,21 +5351,21 @@ mod setup_helper_tests {
     #[test]
     fn resolve_api_key_source_reports_env_when_set() {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|p| p.into_inner());
-        let prev = std::env::var("DEEPSEEK_API_KEY").ok();
-        let prev_source = std::env::var("DEEPSEEK_API_KEY_SOURCE").ok();
+        let prev = std::env::var("DS_API_KEY").ok();
+        let prev_source = std::env::var("DS_API_KEY_SOURCE").ok();
         unsafe {
-            std::env::set_var("DEEPSEEK_API_KEY", "test-helper-value");
-            std::env::remove_var("DEEPSEEK_API_KEY_SOURCE");
+            std::env::set_var("DS_API_KEY", "test-helper-value");
+            std::env::remove_var("DS_API_KEY_SOURCE");
         }
         let cfg = Config::default();
         let source = resolve_api_key_source(&cfg);
         match prev {
-            Some(value) => unsafe { std::env::set_var("DEEPSEEK_API_KEY", value) },
-            None => unsafe { std::env::remove_var("DEEPSEEK_API_KEY") },
+            Some(value) => unsafe { std::env::set_var("DS_API_KEY", value) },
+            None => unsafe { std::env::remove_var("DS_API_KEY") },
         }
         match prev_source {
-            Some(value) => unsafe { std::env::set_var("DEEPSEEK_API_KEY_SOURCE", value) },
-            None => unsafe { std::env::remove_var("DEEPSEEK_API_KEY_SOURCE") },
+            Some(value) => unsafe { std::env::set_var("DS_API_KEY_SOURCE", value) },
+            None => unsafe { std::env::remove_var("DS_API_KEY_SOURCE") },
         }
         assert_eq!(source, ApiKeySource::Env);
     }
@@ -5373,21 +5373,21 @@ mod setup_helper_tests {
     #[test]
     fn resolve_api_key_source_reports_dispatcher_keyring() {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|p| p.into_inner());
-        let prev = std::env::var("DEEPSEEK_API_KEY").ok();
-        let prev_source = std::env::var("DEEPSEEK_API_KEY_SOURCE").ok();
+        let prev = std::env::var("DS_API_KEY").ok();
+        let prev_source = std::env::var("DS_API_KEY_SOURCE").ok();
         unsafe {
-            std::env::set_var("DEEPSEEK_API_KEY", "test-helper-value");
-            std::env::set_var("DEEPSEEK_API_KEY_SOURCE", "keyring");
+            std::env::set_var("DS_API_KEY", "test-helper-value");
+            std::env::set_var("DS_API_KEY_SOURCE", "keyring");
         }
         let cfg = Config::default();
         let source = resolve_api_key_source(&cfg);
         match prev {
-            Some(value) => unsafe { std::env::set_var("DEEPSEEK_API_KEY", value) },
-            None => unsafe { std::env::remove_var("DEEPSEEK_API_KEY") },
+            Some(value) => unsafe { std::env::set_var("DS_API_KEY", value) },
+            None => unsafe { std::env::remove_var("DS_API_KEY") },
         }
         match prev_source {
-            Some(value) => unsafe { std::env::set_var("DEEPSEEK_API_KEY_SOURCE", value) },
-            None => unsafe { std::env::remove_var("DEEPSEEK_API_KEY_SOURCE") },
+            Some(value) => unsafe { std::env::set_var("DS_API_KEY_SOURCE", value) },
+            None => unsafe { std::env::remove_var("DS_API_KEY_SOURCE") },
         }
         assert_eq!(source, ApiKeySource::Keyring);
     }
@@ -5395,11 +5395,11 @@ mod setup_helper_tests {
     #[test]
     fn resolve_api_key_source_prefers_config_over_env() {
         let _guard = ENV_LOCK.lock().unwrap_or_else(|p| p.into_inner());
-        let prev = std::env::var("DEEPSEEK_API_KEY").ok();
-        let prev_source = std::env::var("DEEPSEEK_API_KEY_SOURCE").ok();
+        let prev = std::env::var("DS_API_KEY").ok();
+        let prev_source = std::env::var("DS_API_KEY_SOURCE").ok();
         unsafe {
-            std::env::set_var("DEEPSEEK_API_KEY", "stale-env-key");
-            std::env::remove_var("DEEPSEEK_API_KEY_SOURCE");
+            std::env::set_var("DS_API_KEY", "stale-env-key");
+            std::env::remove_var("DS_API_KEY_SOURCE");
         }
         let cfg = Config {
             api_key: Some("fresh-config-key".to_string()),
@@ -5407,12 +5407,12 @@ mod setup_helper_tests {
         };
         let source = resolve_api_key_source(&cfg);
         match prev {
-            Some(value) => unsafe { std::env::set_var("DEEPSEEK_API_KEY", value) },
-            None => unsafe { std::env::remove_var("DEEPSEEK_API_KEY") },
+            Some(value) => unsafe { std::env::set_var("DS_API_KEY", value) },
+            None => unsafe { std::env::remove_var("DS_API_KEY") },
         }
         match prev_source {
-            Some(value) => unsafe { std::env::set_var("DEEPSEEK_API_KEY_SOURCE", value) },
-            None => unsafe { std::env::remove_var("DEEPSEEK_API_KEY_SOURCE") },
+            Some(value) => unsafe { std::env::set_var("DS_API_KEY_SOURCE", value) },
+            None => unsafe { std::env::remove_var("DS_API_KEY_SOURCE") },
         }
         assert_eq!(source, ApiKeySource::Config);
     }
@@ -5510,7 +5510,7 @@ mod pr_prompt_tests {
         // A deliberately-implausible name to confirm the negative
         // branch — `--version` on this would exec(3) → ENOENT.
         assert!(
-            !is_command_available("this-command-cannot-exist-deepseek-tui-test-ENOENT-marker"),
+            !is_command_available("this-command-cannot-exist-DS-Code-test-ENOENT-marker"),
             "missing command should return false, not panic"
         );
     }

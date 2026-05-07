@@ -14,8 +14,8 @@ Thank you for your interest in contributing to DeepSeek TUI! This document provi
 
 1. Fork and clone the repository:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/DeepSeek-TUI.git
-   cd DeepSeek-TUI
+   git clone https://github.com/YOUR_USERNAME/DS-Code.git
+   cd DS-Code
    ```
 
 2. Build the project:
@@ -72,7 +72,7 @@ crates provide shared abstractions that are being extracted incrementally.
 
 ```
 crates/
-├── tui/           deepseek-tui binary (interactive TUI + runtime API)
+├── tui/           DS-Code binary (interactive TUI + runtime API)
 ├── cli/           deepseek binary (dispatcher facade)
 ├── app-server/    HTTP/SSE + JSON-RPC transport
 ├── core/          Agent loop / session / turn management

@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::config::{COMMON_DEEPSEEK_MODELS, normalize_model_name};
+use crate::config::{COMMON_DS_MODELS, normalize_model_name};
 use crate::localization::{MessageId, tr};
 use crate::tui::app::{App, AppAction, AppMode, ReasoningEffort};
 use crate::tui::views::{HelpView, ModalKind, SubAgentsView, subagent_view_agents};
@@ -122,7 +122,7 @@ pub fn model(app: &mut App, model_name: Option<&str>) -> CommandResult {
         let Some(model_id) = normalize_model_name(name) else {
             return CommandResult::error(format!(
                 "Invalid model '{name}'. Expected auto or a DeepSeek model ID. Common models: {}",
-                COMMON_DEEPSEEK_MODELS.join(", ")
+                COMMON_DS_MODELS.join(", ")
             ));
         };
         let old_model = app.model_display_label();
@@ -169,7 +169,7 @@ pub fn profile_switch(_app: &mut App, arg: Option<&str>) -> CommandResult {
         Some(name) if !name.trim().is_empty() => name.trim().to_string(),
         _ => {
             return CommandResult::error(
-                "Usage: /profile <name>\n\nSwitch to a named config profile. Profiles are defined in ~/.deepseek/config.toml under [profiles] sections.",
+                "Usage: /profile <name>\n\nSwitch to a named config profile. Profiles are defined in ~/.ds/config.toml under [profiles] sections.",
             );
         }
     };
@@ -181,8 +181,8 @@ pub fn profile_switch(_app: &mut App, arg: Option<&str>) -> CommandResult {
     )
 }
 
-/// Show `DeepSeek` dashboard and docs links
-pub fn deepseek_links(app: &mut App) -> CommandResult {
+/// Show `ds` dashboard and docs links
+pub fn ds_links(app: &mut App) -> CommandResult {
     let locale = app.ui_locale;
     CommandResult::message(format!(
         "{}\n\
@@ -380,7 +380,7 @@ mod tests {
         let result = help(&mut app, Some("links"));
         let msg = result.message.expect("help topic should return message");
         assert!(msg.contains("links"));
-        assert!(msg.contains("Show DeepSeek dashboard and docs links"));
+        assert!(msg.contains("Show DS Code Dashboard and docs links"));
         assert!(msg.contains("Usage: /links"));
         assert!(msg.contains("Aliases: dashboard, api"));
     }
@@ -547,7 +547,7 @@ mod tests {
     }
 
     #[test]
-    fn test_model_change_accepts_future_deepseek_model() {
+    fn test_model_change_accepts_future_DS_model() {
         let mut app = create_test_app();
         let result = model(&mut app, Some("deepseek-v4"));
         assert!(result.message.is_some());
@@ -603,9 +603,9 @@ mod tests {
     }
 
     #[test]
-    fn test_deepseek_links() {
+    fn test_DS_links() {
         let mut app = create_test_app();
-        let result = deepseek_links(&mut app);
+        let result = ds_links(&mut app);
         assert!(result.message.is_some());
         let msg = result.message.unwrap();
         assert!(msg.contains("DeepSeek Links"));
@@ -620,7 +620,7 @@ mod tests {
         let result = home_dashboard(&mut app);
         assert!(result.message.is_some());
         let msg = result.message.unwrap();
-        assert!(msg.contains("DeepSeek TUI Home Dashboard"));
+        assert!(msg.contains("DS Code Home Dashboard"));
         assert!(msg.contains("Model:"));
         assert!(msg.contains("Mode:"));
         assert!(msg.contains("Workspace:"));
@@ -669,7 +669,7 @@ mod tests {
             !msg.lines()
                 .any(|line| line.trim_start().starts_with("/set "))
         );
-        assert!(!msg.contains("/deepseek"));
+        assert!(!msg.contains("/ds"));
     }
 
     #[test]

@@ -23,7 +23,7 @@ fn modal_block(title: &str) -> Block<'static> {
         .title(Line::from(vec![Span::styled(
             title.to_string(),
             Style::default()
-                .fg(palette::DEEPSEEK_BLUE)
+                .fg(palette::DS_BLUE)
                 .add_modifier(Modifier::BOLD),
         )]))
         .borders(Borders::ALL)
@@ -425,7 +425,7 @@ fn build_list_lines(
     } else if let Some(status) = status {
         lines.push(Line::from(Span::styled(
             truncate(status, width),
-            Style::default().fg(palette::DEEPSEEK_SKY),
+            Style::default().fg(palette::DS_SKY),
         )));
     }
 

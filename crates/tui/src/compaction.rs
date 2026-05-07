@@ -954,7 +954,7 @@ fn read_workspace_anchors(workspace: Option<&Path>) -> Vec<String> {
         return Vec::new();
     };
 
-    let anchors_path = ws.join(".deepseek").join("anchors.md");
+    let anchors_path = ws.join(".ds").join("anchors.md");
     let Ok(content) = std::fs::read_to_string(anchors_path) else {
         return Vec::new();
     };
@@ -1088,7 +1088,7 @@ async fn create_summary(
     // adding UI surface. The event is emitted with
     // `target = "compaction"`, so the filter is
     // `RUST_LOG=compaction=debug` (the module-path form
-    // `deepseek_tui::compaction=debug` does NOT match — `EnvFilter`
+    // `DS_tui::compaction=debug` does NOT match — `EnvFilter`
     // matches the explicit target string when one is set).
     log_summary_cache_telemetry(used_cache_aligned, &response.usage);
 
@@ -1506,10 +1506,10 @@ mod tests {
     #[test]
     fn anchor_summary_section_parses_anchor_file_into_bullets() {
         let tmpdir = tempfile::TempDir::new().unwrap();
-        let deepseek_dir = tmpdir.path().join(".deepseek");
-        std::fs::create_dir_all(&deepseek_dir).unwrap();
+        let ds_dir = tmpdir.path().join(".ds");
+        std::fs::create_dir_all(&ds_dir).unwrap();
         std::fs::write(
-            deepseek_dir.join("anchors.md"),
+            ds_dir.join("anchors.md"),
             "\n---\nDo not touch .ssh\n---\nStatus field is unreliable\n",
         )
         .unwrap();

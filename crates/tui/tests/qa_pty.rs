@@ -1,6 +1,6 @@
 //! End-to-end TUI scenarios driven through a real pseudo-terminal.
 //!
-//! Each scenario boots `deepseek-tui` in a sealed workspace + sealed `$HOME`,
+//! Each scenario boots `DS-Code` in a sealed workspace + sealed `$HOME`,
 //! sends scripted input through the PTY, and asserts on the parsed terminal
 //! frame and on the workspace filesystem. See `support/qa_harness/README.md`
 //! for design + how-to.
@@ -23,16 +23,16 @@ const KEY_TIMEOUT: Duration = Duration::from_secs(5);
 
 fn boot_minimal() -> anyhow::Result<(qa_harness::harness::SealedWorkspace, Harness)> {
     let ws = make_sealed_workspace()?;
-    let h = Harness::builder(Harness::cargo_bin("deepseek-tui"))
+    let h = Harness::builder(Harness::cargo_bin("DS-Code"))
         .cwd(ws.workspace())
         .seal_home(ws.home())
         // Provide a stub key so the onboarding screen is bypassed and the TUI
         // boots straight into the composer. The harness never makes a live
         // request — we just need the binary to think a key exists.
-        .env("DEEPSEEK_API_KEY", "ci-test-key-not-real")
+        .env("DS_API_KEY", "ci-test-key-not-real")
         // Force a known base URL so the doctor / model probe never escapes
         // the box. 127.0.0.1:1 will refuse instantly.
-        .env("DEEPSEEK_BASE_URL", "http://127.0.0.1:1")
+        .env("DS_BASE_URL", "http://127.0.0.1:1")
         .env("RUST_LOG", "warn")
         .args([
             "--workspace",
@@ -104,11 +104,11 @@ fn skills_menu_shows_local_and_global_skills() -> anyhow::Result<()> {
         "Workspace beta skill",
     )?;
 
-    let mut h = Harness::builder(Harness::cargo_bin("deepseek-tui"))
+    let mut h = Harness::builder(Harness::cargo_bin("DS-Code"))
         .cwd(ws.workspace())
         .seal_home(ws.home())
-        .env("DEEPSEEK_API_KEY", "ci-test-key-not-real")
-        .env("DEEPSEEK_BASE_URL", "http://127.0.0.1:1")
+        .env("DS_API_KEY", "ci-test-key-not-real")
+        .env("DS_BASE_URL", "http://127.0.0.1:1")
         .env("RUST_LOG", "warn")
         .args([
             "--workspace",

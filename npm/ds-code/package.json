@@ -1,17 +1,17 @@
 {
-  "name": "deepseek-tui",
+  "name": "DS-Code",
   "version": "0.8.17",
-  "deepseekBinaryVersion": "0.8.17",
-  "description": "Install and run deepseek and deepseek-tui binaries from GitHub release artifacts.",
+  "dsBinaryVersion": "0.8.17",
+  "description": "Install and run deepseek and DS-Code binaries from GitHub release artifacts.",
   "author": "Hmbown",
   "license": "MIT",
-  "homepage": "https://github.com/Hmbown/DeepSeek-TUI",
+  "homepage": "https://github.com/Hmbown/DS-Code",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Hmbown/DeepSeek-TUI.git"
+    "url": "git+https://github.com/Hmbown/DS-Code.git"
   },
   "bugs": {
-    "url": "https://github.com/Hmbown/DeepSeek-TUI/issues"
+    "url": "https://github.com/Hmbown/DS-Code/issues"
   },
   "keywords": [
     "deepseek",
@@ -23,8 +23,8 @@
   ],
   "type": "commonjs",
   "bin": {
-    "deepseek": "bin/deepseek.js",
-    "deepseek-tui": "bin/deepseek-tui.js"
+    "ds": "bin/ds.js",
+    "DS-Code": "bin/DS-Code.js"
   },
   "scripts": {
     "release:check": "node scripts/verify-release-assets.js",

@@ -36,7 +36,7 @@ const SUMMARY_LIMIT: usize = 280;
 /// Bumped to 2 for v0.6.6 — see issue #124. The persisted thread/turn/item
 /// records didn't change shape, but the live engine semantics did: cycle
 /// boundaries advance the `Session.cycle_count` and produce archived JSONL
-/// files at `~/.deepseek/sessions/<id>/cycles/<n>.jsonl`. A v1 reader on a
+/// files at `~/.ds/sessions/<id>/cycles/<n>.jsonl`. A v1 reader on a
 /// session written by v2 wouldn't know about the cycle archive directory and
 /// might misinterpret message counts; bumping is the safe choice.
 const CURRENT_RUNTIME_SCHEMA_VERSION: u32 = 2;
@@ -492,7 +492,7 @@ pub struct RuntimeThreadManagerConfig {
 impl RuntimeThreadManagerConfig {
     #[must_use]
     pub fn from_task_data_dir(task_data_dir: PathBuf) -> Self {
-        let data_dir = if let Ok(override_dir) = std::env::var("DEEPSEEK_RUNTIME_DIR") {
+        let data_dir = if let Ok(override_dir) = std::env::var("DS_RUNTIME_DIR") {
             if override_dir.trim().is_empty() {
                 task_data_dir.join("runtime")
             } else {

@@ -7,7 +7,7 @@
 ## Install
 
 `deepseek` is distributed as Rust binaries: the dispatcher command
-(`deepseek`) and the companion TUI runtime (`deepseek-tui`). Pick whichever
+(`deepseek`) and the companion TUI runtime (`DS-Code`). Pick whichever
 install path you already use; they all put the same commands on your `PATH`.
 The npm package is an installer/wrapper for the release binaries, not the
 agent runtime itself.
@@ -15,18 +15,18 @@ agent runtime itself.
 ```bash
 # 1. npm — easiest if you already use Node. The package downloads the
 #    matching prebuilt Rust binaries from GitHub Releases.
-npm install -g deepseek-tui
+npm install -g DS-Code
 
 # 2. Cargo — no Node needed.
-cargo install deepseek-tui-cli --locked   # `deepseek` (entry point)
-cargo install deepseek-tui     --locked   # `deepseek-tui` (TUI binary)
+cargo install DS-Code-cli --locked   # `deepseek` (entry point)
+cargo install DS-Code     --locked   # `DS-Code` (TUI binary)
 
 # 3. Homebrew — macOS package manager.
-brew tap Hmbown/deepseek-tui
-brew install deepseek-tui
+brew tap Hmbown/DS-Code
+brew install DS-Code
 
 # 4. Direct download — no package manager or toolchain.
-#    https://github.com/Hmbown/DeepSeek-TUI/releases
+#    https://github.com/Hmbown/DS-Code/releases
 #    Prebuilt for Linux x64/ARM64, macOS x64/ARM64, Windows x64.
 ```
 
@@ -34,10 +34,10 @@ brew install deepseek-tui
 > `--registry=https://registry.npmmirror.com`, or use the
 > [Cargo mirror](#china--mirror-friendly-installation) below.
 
-[![CI](https://github.com/Hmbown/DeepSeek-TUI/actions/workflows/ci.yml/badge.svg)](https://github.com/Hmbown/DeepSeek-TUI/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/deepseek-tui)](https://www.npmjs.com/package/deepseek-tui)
-[![crates.io](https://img.shields.io/crates/v/deepseek-tui-cli?label=crates.io)](https://crates.io/crates/deepseek-tui-cli)
-[DeepWiki project index](https://deepwiki.com/Hmbown/DeepSeek-TUI)
+[![CI](https://github.com/Hmbown/DS-Code/actions/workflows/ci.yml/badge.svg)](https://github.com/Hmbown/DS-Code/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/DS-Code)](https://www.npmjs.com/package/DS-Code)
+[![crates.io](https://img.shields.io/crates/v/DS-Code-cli?label=crates.io)](https://crates.io/crates/DS-Code-cli)
+[DeepWiki project index](https://deepwiki.com/Hmbown/DS-Code)
 
 ![DeepSeek TUI screenshot](assets/screenshot.png)
 
@@ -73,7 +73,7 @@ It is built around DeepSeek V4 (`deepseek-v4-pro` / `deepseek-v4-flash`), includ
 
 ## How It's Wired
 
-`deepseek` (dispatcher CLI) → `deepseek-tui` (companion binary) → ratatui interface ↔ async engine ↔ OpenAI-compatible streaming client. Tool calls route through a typed registry (shell, file ops, git, web, sub-agents, MCP, RLM) and results stream back into the transcript. The engine manages session state, turn tracking, the durable task queue, and an LSP subsystem that feeds post-edit diagnostics into the model's context before the next reasoning step.
+`deepseek` (dispatcher CLI) → `DS-Code` (companion binary) → ratatui interface ↔ async engine ↔ OpenAI-compatible streaming client. Tool calls route through a typed registry (shell, file ops, git, web, sub-agents, MCP, RLM) and results stream back into the transcript. The engine manages session state, turn tracking, the durable task queue, and an LSP subsystem that feeds post-edit diagnostics into the model's context before the next reasoning step.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full walkthrough.
 
@@ -82,28 +82,28 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full walkthrough.
 ## Quickstart
 
 ```bash
-npm install -g deepseek-tui
+npm install -g DS-Code
 deepseek --version
 deepseek --model auto
 ```
 
 Prebuilt binaries are published for **Linux x64**, **Linux ARM64** (v0.8.8+), **macOS x64**, **macOS ARM64**, and **Windows x64**. For other targets (musl, riscv64, FreeBSD, etc.), see [Install from source](#install-from-source) or [docs/INSTALL.md](docs/INSTALL.md).
 
-On first launch you'll be prompted for your [DeepSeek API key](https://platform.deepseek.com/api_keys). The key is saved to `~/.deepseek/config.toml` so it works from any directory without OS credential prompts.
+On first launch you'll be prompted for your [DeepSeek API key](https://platform.ds.com/api_keys). The key is saved to `~/.ds/config.toml` so it works from any directory without OS credential prompts.
 
 You can also set it ahead of time:
 
 ```bash
-deepseek auth set --provider deepseek   # saves to ~/.deepseek/config.toml
+deepseek auth set --provider deepseek   # saves to ~/.ds/config.toml
 deepseek auth status                    # shows the active credential source
 
-export DEEPSEEK_API_KEY="YOUR_KEY"      # env var alternative; use ~/.zshenv for non-interactive shells
+export DS_API_KEY="YOUR_KEY"      # env var alternative; use ~/.zshenv for non-interactive shells
 deepseek
 
 deepseek doctor                         # verify setup
 ```
 
-If `deepseek doctor` says the rejected key came from `DEEPSEEK_API_KEY`, remove
+If `deepseek doctor` says the rejected key came from `DS_API_KEY`, remove
 the stale export from your shell startup file, open a fresh shell, or run
 `deepseek auth set --provider deepseek`. Use `deepseek auth status` to see the
 config, keyring, and env-var source state without printing the key. Saved config
@@ -128,7 +128,7 @@ Use a fixed model or fixed thinking level when you want repeatable benchmarking,
 
 ### Linux ARM64 (Raspberry Pi, Asahi, Graviton, HarmonyOS PC)
 
-`npm i -g deepseek-tui` works on glibc-based ARM64 Linux from v0.8.8 onward. You can also download prebuilt binaries from the [Releases page](https://github.com/Hmbown/DeepSeek-TUI/releases) and place them side by side on your `PATH`.
+`npm i -g DS-Code` works on glibc-based ARM64 Linux from v0.8.8 onward. You can also download prebuilt binaries from the [Releases page](https://github.com/Hmbown/DS-Code/releases) and place them side by side on your `PATH`.
 
 ### China / Mirror-friendly Installation
 
@@ -146,12 +146,12 @@ registry = "sparse+https://mirrors.tuna.tsinghua.edu.cn/crates.io-index/"
 Then install both binaries (the dispatcher delegates to the TUI at runtime):
 
 ```bash
-cargo install deepseek-tui-cli --locked   # provides `deepseek`
-cargo install deepseek-tui     --locked   # provides `deepseek-tui`
+cargo install DS-Code-cli --locked   # provides `deepseek`
+cargo install DS-Code     --locked   # provides `DS-Code`
 deepseek --version
 ```
 
-Prebuilt binaries can also be downloaded from [GitHub Releases](https://github.com/Hmbown/DeepSeek-TUI/releases). Use `DEEPSEEK_TUI_RELEASE_BASE_URL` for mirrored release assets.
+Prebuilt binaries can also be downloaded from [GitHub Releases](https://github.com/Hmbown/DS-Code/releases). Use `DS_TUI_RELEASE_BASE_URL` for mirrored release assets.
 
 ### Windows (Scoop)
 
@@ -162,7 +162,7 @@ version with `deepseek --version`:
 
 ```bash
 scoop update
-scoop install deepseek-tui
+scoop install DS-Code
 deepseek --version
 ```
 
@@ -180,11 +180,11 @@ Works on any Tier-1 Rust target — including musl, riscv64, FreeBSD, and older 
 #   sudo apt-get install -y build-essential pkg-config libdbus-1-dev
 #   sudo dnf install -y gcc make pkgconf-pkg-config dbus-devel
 
-git clone https://github.com/Hmbown/DeepSeek-TUI.git
-cd DeepSeek-TUI
+git clone https://github.com/Hmbown/DS-Code.git
+cd DS-Code
 
 cargo install --path crates/cli --locked   # requires Rust 1.88+; provides `deepseek`
-cargo install --path crates/tui --locked   # provides `deepseek-tui`
+cargo install --path crates/tui --locked   # provides `DS-Code`
 ```
 
 Both binaries are required. Cross-compilation and platform-specific notes: [docs/INSTALL.md](docs/INSTALL.md).
@@ -324,20 +324,20 @@ Full shortcut catalog: [docs/KEYBINDINGS.md](docs/KEYBINDINGS.md).
 
 ## Configuration
 
-User config: `~/.deepseek/config.toml`. Project overlay: `<workspace>/.deepseek/config.toml` (denied: `api_key`, `base_url`, `provider`, `mcp_config_path`). [config.example.toml](config.example.toml) has every option.
+User config: `~/.ds/config.toml`. Project overlay: `<workspace>/.ds/config.toml` (denied: `api_key`, `base_url`, `provider`, `mcp_config_path`). [config.example.toml](config.example.toml) has every option.
 
 Key environment variables:
 
 | Variable | Purpose |
 |---|---|
-| `DEEPSEEK_API_KEY` | API key |
-| `DEEPSEEK_BASE_URL` | API base URL |
-| `DEEPSEEK_HTTP_HEADERS` | Optional custom model request headers, e.g. `X-Model-Provider-Id=your-model-provider` |
-| `DEEPSEEK_MODEL` | Default model |
-| `DEEPSEEK_STREAM_IDLE_TIMEOUT_SECS` | Stream idle timeout in seconds, default `300`, clamped to `1..=3600` |
-| `DEEPSEEK_PROVIDER` | `deepseek` (default), `deepseek-cn`, `nvidia-nim`, `openai`, `openrouter`, `novita`, `fireworks`, `sglang`, `vllm`, `ollama` |
-| `DEEPSEEK_PROFILE` | Config profile name |
-| `DEEPSEEK_MEMORY` | Set to `on` to enable user memory |
+| `DS_API_KEY` | API key |
+| `DS_BASE_URL` | API base URL |
+| `DS_HTTP_HEADERS` | Optional custom model request headers, e.g. `X-Model-Provider-Id=your-model-provider` |
+| `DS_MODEL` | Default model |
+| `DS_STREAM_IDLE_TIMEOUT_SECS` | Stream idle timeout in seconds, default `300`, clamped to `1..=3600` |
+| `DS_PROVIDER` | `deepseek` (default), `deepseek-cn`, `nvidia-nim`, `openai`, `openrouter`, `novita`, `fireworks`, `sglang`, `vllm`, `ollama` |
+| `DS_PROFILE` | Config profile name |
+| `DS_MEMORY` | Set to `on` to enable user memory |
 | `NVIDIA_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` / `NOVITA_API_KEY` / `FIREWORKS_API_KEY` / `SGLANG_API_KEY` / `VLLM_API_KEY` / `OLLAMA_API_KEY` | Provider auth |
 | `OPENAI_BASE_URL` / `OPENAI_MODEL` | Generic OpenAI-compatible endpoint and model ID |
 | `SGLANG_BASE_URL` | Self-hosted SGLang endpoint |
@@ -365,13 +365,13 @@ Legacy aliases `deepseek-chat` / `deepseek-reasoner` map to `deepseek-v4-flash` 
 *DeepSeek Pro rates currently reflect a limited-time 75% discount, which remains valid until 15:59 UTC on 31 May 2026. After that time, the TUI cost estimator will revert to the base Pro rates.*
 
 > [!Note]
-> For the latest DeepSeek-V4-Pro pricing, including the current 75% discount valid until 15:59 UTC on 31 May 2026, please consult the official [DeepSeek pricing page](https://api-docs.deepseek.com/zh-cn/quick_start/pricing). All rates listed in the README correspond to the officially published values.
+> For the latest DeepSeek-V4-Pro pricing, including the current 75% discount valid until 15:59 UTC on 31 May 2026, please consult the official [DeepSeek pricing page](https://api-docs.ds.com/zh-cn/quick_start/pricing). All rates listed in the README correspond to the officially published values.
 
 ---
 
 ## Publishing Your Own Skill
 
-DeepSeek TUI discovers skills from workspace directories (`.agents/skills` → `skills` → `.opencode/skills` → `.claude/skills` → `.cursor/skills`) and global directories (`~/.agents/skills` → `~/.claude/skills` → `~/.deepseek/skills`). Each skill is a directory with a `SKILL.md` file:
+DeepSeek TUI discovers skills from workspace directories (`.agents/skills` → `skills` → `.opencode/skills` → `.claude/skills` → `.cursor/skills`) and global directories (`~/.agents/skills` → `~/.claude/skills` → `~/.ds/skills`). Each skill is a directory with a `SKILL.md` file:
 
 ```text
 ~/.agents/skills/my-skill/
@@ -458,7 +458,7 @@ This project ships with help from a growing community of contributors:
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Pull requests welcome — check the [open issues](https://github.com/Hmbown/DeepSeek-TUI/issues) for good first contributions.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Pull requests welcome — check the [open issues](https://github.com/Hmbown/DS-Code/issues) for good first contributions.
 
 Support: [Buy me a coffee](https://www.buymeacoffee.com/hmbown).
 
@@ -471,4 +471,4 @@ Support: [Buy me a coffee](https://www.buymeacoffee.com/hmbown).
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/chart?repos=Hmbown/DeepSeek-TUI&type=date&legend=top-left)](https://www.star-history.com/?repos=Hmbown%2FDeepSeek-TUI&type=date&logscale=&legend=top-left)
+[![Star History Chart](https://api.star-history.com/chart?repos=Hmbown/DS-Code&type=date&legend=top-left)](https://www.star-history.com/?repos=Hmbown%2FDS-Code&type=date&logscale=&legend=top-left)

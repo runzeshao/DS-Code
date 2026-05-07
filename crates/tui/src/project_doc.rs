@@ -1,7 +1,7 @@
 //! Project document discovery and loading
 //!
 //! Supports auto-discovery of project instructions like Claude Code.
-//! Priority: AGENTS.md > .claude/instructions.md > CLAUDE.md > .deepseek/instructions.md
+//! Priority: AGENTS.md > .claude/instructions.md > CLAUDE.md > .ds/instructions.md
 
 use std::path::{Path, PathBuf};
 
@@ -10,7 +10,7 @@ pub const DOC_FILENAMES: &[&str] = &[
     "AGENTS.md",
     ".claude/instructions.md",
     "CLAUDE.md",
-    ".deepseek/instructions.md",
+    ".ds/instructions.md",
 ];
 
 /// Maximum bytes to read from project docs (default: 32KB)

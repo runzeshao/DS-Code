@@ -7,7 +7,7 @@
 //!
 //! ## On-disk format
 //!
-//! `~/.deepseek/composer_stash.jsonl` — one JSON object per line:
+//! `~/.ds/composer_stash.jsonl` — one JSON object per line:
 //!
 //! ```jsonl
 //! {"ts":"2026-05-04T01:23:45Z","text":"draft here"}
@@ -52,7 +52,7 @@ pub struct StashedDraft {
 }
 
 fn default_stash_path() -> Option<PathBuf> {
-    dirs::home_dir().map(|home| home.join(".deepseek").join(STASH_FILE_NAME))
+    dirs::home_dir().map(|home| home.join(".ds").join(STASH_FILE_NAME))
 }
 
 /// Load every stashed draft from disk in the order they were

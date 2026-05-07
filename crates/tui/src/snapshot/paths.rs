@@ -1,6 +1,6 @@
 //! Path resolution for the per-workspace snapshot side-repos.
 //!
-//! Snapshots live in `~/.deepseek/snapshots/<project_hash>/<worktree_hash>/`.
+//! Snapshots live in `~/.ds/snapshots/<project_hash>/<worktree_hash>/`.
 //! The two-level hash split lets us snapshot multiple worktrees of the same
 //! project independently — `git worktree list` users won't get cross-talk
 //! between feature branches.
@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 /// Compute the snapshot directory for a given workspace path.
 ///
-/// Returns `~/.deepseek/snapshots/<project_hash>/<worktree_hash>/`. The
+/// Returns `~/.ds/snapshots/<project_hash>/<worktree_hash>/`. The
 /// caller is responsible for creating it on disk; we purposefully don't
 /// touch the filesystem here so this is cheap to call repeatedly.
 ///
@@ -24,7 +24,7 @@ pub fn snapshot_dir_for(workspace: &Path) -> PathBuf {
 }
 
 /// Same as [`snapshot_dir_for`] but with an injectable home directory.
-/// Used by tests so we never touch the user's real `~/.deepseek/`.
+/// Used by tests so we never touch the user's real `~/.ds/`.
 pub fn snapshot_dir_with_home(workspace: &Path, home: Option<PathBuf>) -> PathBuf {
     let home = home.unwrap_or_else(|| PathBuf::from("."));
     let canonical = workspace
@@ -33,7 +33,7 @@ pub fn snapshot_dir_with_home(workspace: &Path, home: Option<PathBuf>) -> PathBu
     let project_root = strip_worktree_suffix(&canonical);
     let project_hash = stable_hex(&project_root);
     let worktree_hash = stable_hex(&canonical);
-    home.join(".deepseek")
+    home.join(".ds")
         .join("snapshots")
         .join(project_hash)
         .join(worktree_hash)
@@ -91,7 +91,7 @@ mod tests {
         let tmp = tempdir().expect("tempdir");
         let dir = snapshot_dir_with_home(tmp.path(), Some(tmp.path().to_path_buf()));
         let mut iter = dir.strip_prefix(tmp.path()).unwrap().components();
-        assert_eq!(iter.next().unwrap().as_os_str(), ".deepseek");
+        assert_eq!(iter.next().unwrap().as_os_str(), ".ds");
         assert_eq!(iter.next().unwrap().as_os_str(), "snapshots");
         assert!(iter.next().is_some()); // project_hash
         assert!(iter.next().is_some()); // worktree_hash

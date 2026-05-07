@@ -531,7 +531,7 @@ async fn run_rlm_turn_impl(
 // ---------------------------------------------------------------------------
 
 fn write_context_file(prompt: &str) -> std::io::Result<PathBuf> {
-    let dir = std::env::temp_dir().join("deepseek_rlm_ctx");
+    let dir = std::env::temp_dir().join("DS_rlm_ctx");
     std::fs::create_dir_all(&dir)?;
     let path = dir.join(format!(
         "ctx_{}_{}.txt",

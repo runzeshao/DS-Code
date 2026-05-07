@@ -5,7 +5,7 @@ use std::time::Duration;
 
 use super::CommandResult;
 use crate::client::DeepSeekClient;
-use crate::config::{COMMON_DEEPSEEK_MODELS, clear_api_key, normalize_model_name};
+use crate::config::{COMMON_DS_MODELS, clear_api_key, normalize_model_name};
 use crate::config_ui::{ConfigUiMode, parse_mode};
 use crate::llm_client::LlmClient;
 use crate::localization::resolve_locale;
@@ -180,7 +180,7 @@ pub fn status_line(_app: &mut App) -> CommandResult {
     CommandResult::action(AppAction::OpenStatusPicker)
 }
 
-/// Persist `tui.status_items` to `~/.deepseek/config.toml` without disturbing
+/// Persist `tui.status_items` to `~/.ds/config.toml` without disturbing
 /// the rest of the file. We round-trip through `toml::Value` so any keys we
 /// don't know about (provider blocks, MCP, etc.) survive the write
 /// untouched.
@@ -254,19 +254,19 @@ pub fn persist_root_string_key(key: &str, value: &str) -> anyhow::Result<PathBuf
     Ok(path)
 }
 
-/// Resolve the path to `~/.deepseek/config.toml` (or
-/// `$DEEPSEEK_CONFIG_PATH`). Mirrors what `Config::load` accepts so we
+/// Resolve the path to `~/.ds/config.toml` (or
+/// `$DS_CONFIG_PATH`). Mirrors what `Config::load` accepts so we
 /// never write to a different file than the one we read.
 pub(super) fn config_toml_path() -> anyhow::Result<PathBuf> {
     use anyhow::Context;
-    if let Ok(env) = std::env::var("DEEPSEEK_CONFIG_PATH") {
+    if let Ok(env) = std::env::var("DS_CONFIG_PATH") {
         let trimmed = env.trim();
         if !trimmed.is_empty() {
             return Ok(PathBuf::from(trimmed));
         }
     }
     let home = dirs::home_dir().context("failed to resolve home directory for config.toml path")?;
-    Ok(home.join(".deepseek").join("config.toml"))
+    Ok(home.join(".ds").join("config.toml"))
 }
 
 /// Modify a setting at runtime
@@ -296,7 +296,7 @@ pub fn set_config_value(app: &mut App, key: &str, value: &str, persist: bool) ->
             let Some(model) = normalize_model_name(value) else {
                 return CommandResult::error(format!(
                     "Invalid model '{value}'. Expected a DeepSeek model ID. Common models: {}",
-                    COMMON_DEEPSEEK_MODELS.join(", ")
+                    COMMON_DS_MODELS.join(", ")
                 ));
             };
             app.model = model.clone();
@@ -738,7 +738,7 @@ pub struct AutoRouteSelection {
 }
 
 pub const AUTO_MODEL_ROUTER_SYSTEM_PROMPT: &str = "\
-You are the DeepSeek TUI auto-routing classifier. Return only compact JSON: \
+You are the DS Code auto-routing classifier. Return only compact JSON: \
 {\"model\":\"deepseek-v4-flash|deepseek-v4-pro\",\"thinking\":\"off|high|max\"}. \
 Use deepseek-v4-flash for trivial, conversational, status, or single-step work. \
 Use deepseek-v4-pro for coding, debugging, release work, multi-step tasks, high-risk decisions, \
@@ -1004,29 +1004,29 @@ mod tests {
     struct EnvGuard {
         home: Option<OsString>,
         userprofile: Option<OsString>,
-        deepseek_config_path: Option<OsString>,
+        ds_config_path: Option<OsString>,
     }
 
     impl EnvGuard {
         fn new(home: &Path) -> Self {
             let home_str = OsString::from(home.as_os_str());
-            let config_path = home.join(".deepseek").join("config.toml");
+            let config_path = home.join(".ds").join("config.toml");
             let config_str = OsString::from(config_path.as_os_str());
             let home_prev = env::var_os("HOME");
             let userprofile_prev = env::var_os("USERPROFILE");
-            let deepseek_config_prev = env::var_os("DEEPSEEK_CONFIG_PATH");
+            let ds_config_prev = env::var_os("DS_CONFIG_PATH");
 
             // Safety: test-only environment mutation guarded by a global mutex.
             unsafe {
                 env::set_var("HOME", &home_str);
                 env::set_var("USERPROFILE", &home_str);
-                env::set_var("DEEPSEEK_CONFIG_PATH", &config_str);
+                env::set_var("DS_CONFIG_PATH", &config_str);
             }
 
             Self {
                 home: home_prev,
                 userprofile: userprofile_prev,
-                deepseek_config_path: deepseek_config_prev,
+                ds_config_path: ds_config_prev,
             }
         }
     }
@@ -1057,15 +1057,15 @@ mod tests {
                 }
             }
 
-            if let Some(value) = self.deepseek_config_path.take() {
+            if let Some(value) = self.ds_config_path.take() {
                 // Safety: test-only environment mutation guarded by a global mutex.
                 unsafe {
-                    env::set_var("DEEPSEEK_CONFIG_PATH", value);
+                    env::set_var("DS_CONFIG_PATH", value);
                 }
             } else {
                 // Safety: test-only environment mutation guarded by a global mutex.
                 unsafe {
-                    env::remove_var("DEEPSEEK_CONFIG_PATH");
+                    env::remove_var("DS_CONFIG_PATH");
                 }
             }
         }
@@ -1185,7 +1185,7 @@ mod tests {
     }
 
     #[test]
-    fn test_set_model_accepts_future_deepseek_model_id() {
+    fn test_set_model_accepts_future_DS_model_id() {
         let mut app = create_test_app();
         let result = set_config(&mut app, Some("model deepseek-v4"));
         assert!(result.message.is_some());
@@ -1250,7 +1250,7 @@ mod tests {
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-default-mode-test-{}-{}",
+            "DS-Code-default-mode-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -1276,7 +1276,7 @@ mod tests {
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-cost-currency-test-{}-{}",
+            "DS-Code-cost-currency-test-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -1380,14 +1380,14 @@ mod tests {
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-tui-logout-test-{}-{}",
+            "DS-Code-logout-test-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root).unwrap();
         let _guard = EnvGuard::new(&temp_root);
 
-        let config_path = temp_root.join(".deepseek").join("config.toml");
+        let config_path = temp_root.join(".ds").join("config.toml");
         fs::create_dir_all(config_path.parent().unwrap()).unwrap();
         fs::write(&config_path, "api_key = \"test-key\"\n").unwrap();
 
@@ -1430,7 +1430,7 @@ mod tests {
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-statusline-persist-{}-{}",
+            "ds-statusline-persist-{}-{}",
             std::process::id(),
             nanos
         ));
@@ -1462,14 +1462,14 @@ mod tests {
             .unwrap()
             .as_nanos();
         let temp_root = env::temp_dir().join(format!(
-            "deepseek-statusline-preserve-{}-{}",
+            "ds-statusline-preserve-{}-{}",
             std::process::id(),
             nanos
         ));
         fs::create_dir_all(&temp_root).unwrap();
         let _guard = EnvGuard::new(&temp_root);
 
-        let path = temp_root.join(".deepseek").join("config.toml");
+        let path = temp_root.join(".ds").join("config.toml");
         fs::create_dir_all(path.parent().unwrap()).unwrap();
         // Seed the config with a sentinel key the picker MUST NOT clobber.
         fs::write(

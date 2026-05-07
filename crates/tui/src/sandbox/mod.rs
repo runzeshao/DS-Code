@@ -383,7 +383,7 @@ impl SandboxManager {
 
         // Add sandbox indicator to environment
         let mut env = spec.env.clone();
-        env.insert("DEEPSEEK_SANDBOX".to_string(), "seatbelt".to_string());
+        env.insert("DS_SANDBOX".to_string(), "seatbelt".to_string());
 
         ExecEnv {
             command,
@@ -408,7 +408,7 @@ impl SandboxManager {
 
         // Add sandbox indicator to environment
         let mut env = spec.env.clone();
-        env.insert("DEEPSEEK_SANDBOX".to_string(), "landlock".to_string());
+        env.insert("DS_SANDBOX".to_string(), "landlock".to_string());
 
         // Note: Full Landlock implementation would use a helper binary that:
         // 1. Sets up the Landlock ruleset based on policy
@@ -438,10 +438,10 @@ impl SandboxManager {
 
         let mut env = spec.env.clone();
         let kind = windows::select_best_kind(&spec.sandbox_policy, &spec.cwd);
-        env.insert("DEEPSEEK_SANDBOX".to_string(), format!("windows:{kind}"));
+        env.insert("DS_SANDBOX".to_string(), format!("windows:{kind}"));
         if !spec.sandbox_policy.has_network_access() {
             env.insert(
-                "DEEPSEEK_SANDBOX_BLOCK_NETWORK".to_string(),
+                "DS_SANDBOX_BLOCK_NETWORK".to_string(),
                 "1".to_string(),
             );
         }

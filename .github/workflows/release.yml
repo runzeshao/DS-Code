@@ -42,11 +42,11 @@ jobs:
       - name: Workspace tests
         run: cargo test --workspace --all-features --locked
       - name: TUI snapshot parity
-        run: cargo test -p deepseek-tui-core --test snapshot --locked
+        run: cargo test -p DS-Code-core --test snapshot --locked
       - name: Protocol schema parity
-        run: cargo test -p deepseek-protocol --test parity_protocol --locked
+        run: cargo test -p ds-protocol --test parity_protocol --locked
       - name: State persistence parity
-        run: cargo test -p deepseek-state --test parity_state --locked
+        run: cargo test -p ds-state --test parity_state --locked
       - name: Lockfile drift guard
         run: git diff --exit-code -- Cargo.lock
 
@@ -65,44 +65,44 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             binary: deepseek
-            artifact_name: deepseek-linux-x64
+            artifact_name: ds-linux-x64
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             binary: deepseek
-            artifact_name: deepseek-linux-arm64
+            artifact_name: ds-linux-arm64
           - os: macos-latest
             target: x86_64-apple-darwin
             binary: deepseek
-            artifact_name: deepseek-macos-x64
+            artifact_name: ds-macos-x64
           - os: macos-latest
             target: aarch64-apple-darwin
             binary: deepseek
-            artifact_name: deepseek-macos-arm64
+            artifact_name: ds-macos-arm64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             binary: deepseek.exe
-            artifact_name: deepseek-windows-x64.exe
-          # --- deepseek-tui (TUI) ---
+            artifact_name: ds-windows-x64.exe
+          # --- DS-Code (TUI) ---
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            binary: deepseek-tui
-            artifact_name: deepseek-tui-linux-x64
+            binary: DS-Code
+            artifact_name: DS-Code-linux-x64
           - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
-            binary: deepseek-tui
-            artifact_name: deepseek-tui-linux-arm64
+            binary: DS-Code
+            artifact_name: DS-Code-linux-arm64
           - os: macos-latest
             target: x86_64-apple-darwin
-            binary: deepseek-tui
-            artifact_name: deepseek-tui-macos-x64
+            binary: DS-Code
+            artifact_name: DS-Code-macos-x64
           - os: macos-latest
             target: aarch64-apple-darwin
-            binary: deepseek-tui
-            artifact_name: deepseek-tui-macos-arm64
+            binary: DS-Code
+            artifact_name: DS-Code-macos-arm64
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            binary: deepseek-tui.exe
-            artifact_name: deepseek-tui-windows-x64.exe
+            binary: DS-Code.exe
+            artifact_name: DS-Code-windows-x64.exe
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -197,7 +197,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p artifacts/checksums
-          manifest="artifacts/checksums/deepseek-artifacts-sha256.txt"
+          manifest="artifacts/checksums/ds-artifacts-sha256.txt"
           : > "${manifest}"
           while IFS= read -r -d '' file; do
             hash="$(sha256sum "${file}" | awk '{print $1}')"
@@ -215,7 +215,7 @@ jobs:
             ### Recommended — npm (one command, both binaries)
 
             ```bash
-            npm install -g deepseek-tui
+            npm install -g DS-Code
             ```
 
             The wrapper downloads both binaries from this Release and places them in the same directory.
@@ -223,10 +223,10 @@ jobs:
             ### Cargo (Linux / macOS)
 
             ```bash
-            cargo install deepseek-tui-cli deepseek-tui --locked
+            cargo install DS-Code-cli DS-Code --locked
             ```
 
-            Both crates are required — `deepseek-tui-cli` produces the `deepseek` dispatcher and `deepseek-tui` produces the interactive runtime that the dispatcher delegates to. Installing only one binary will fail at runtime with a `MISSING_COMPANION_BINARY` error.
+            Both crates are required — `DS-Code-cli` produces the `deepseek` dispatcher and `DS-Code` produces the interactive runtime that the dispatcher delegates to. Installing only one binary will fail at runtime with a `MISSING_COMPANION_BINARY` error.
 
             ### Manual download
 
@@ -234,29 +234,29 @@ jobs:
 
             | Platform | Dispatcher | TUI runtime |
             |---|---|---|
-            | Linux x64 | `deepseek-linux-x64` | `deepseek-tui-linux-x64` |
-            | Linux ARM64 | `deepseek-linux-arm64` | `deepseek-tui-linux-arm64` |
-            | macOS x64 | `deepseek-macos-x64` | `deepseek-tui-macos-x64` |
-            | macOS ARM | `deepseek-macos-arm64` | `deepseek-tui-macos-arm64` |
-            | Windows x64 | `deepseek-windows-x64.exe` | `deepseek-tui-windows-x64.exe` |
+            | Linux x64 | `ds-linux-x64` | `DS-Code-linux-x64` |
+            | Linux ARM64 | `ds-linux-arm64` | `DS-Code-linux-arm64` |
+            | macOS x64 | `ds-macos-x64` | `DS-Code-macos-x64` |
+            | macOS ARM | `ds-macos-arm64` | `DS-Code-macos-arm64` |
+            | Windows x64 | `ds-windows-x64.exe` | `DS-Code-windows-x64.exe` |
 
             Then `chmod +x` both (Unix) and run `./deepseek`.
 
             ### Verify (recommended)
 
-            Download `deepseek-artifacts-sha256.txt` from this Release and verify:
+            Download `ds-artifacts-sha256.txt` from this Release and verify:
 
             ```bash
             # Linux
-            sha256sum -c deepseek-artifacts-sha256.txt
+            sha256sum -c ds-artifacts-sha256.txt
 
             # macOS
-            shasum -a 256 -c deepseek-artifacts-sha256.txt
+            shasum -a 256 -c ds-artifacts-sha256.txt
             ```
 
             ## Changelog
 
-            See [CHANGELOG.md](https://github.com/Hmbown/DeepSeek-TUI/blob/main/CHANGELOG.md) for the full notes for this release.
+            See [CHANGELOG.md](https://github.com/runzeshao/DS-Code/blob/main/CHANGELOG.md) for the full notes for this release.
 
 # npm publish is intentionally not automated. The npm account requires 2FA OTP
 # on every publish, and a granular automation token that bypasses 2FA has not

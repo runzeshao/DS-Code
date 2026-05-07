@@ -3,12 +3,12 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use deepseek_app_server::{AppServerOptions, run};
+use ds_app_server::{AppServerOptions, run};
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "deepseek-app-server",
-    about = "Run the DeepSeek app-server transport"
+    name = "ds-app-server",
+    about = "Run the DS Code app-server transport"
 )]
 struct Cli {
     #[arg(long, default_value = "127.0.0.1")]

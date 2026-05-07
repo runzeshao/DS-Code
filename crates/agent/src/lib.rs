@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use deepseek_config::ProviderKind;
+use ds_config::ProviderKind;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -317,7 +317,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn deepseek_v4_pro_alias_stays_deepseek_by_default() {
+    fn DS_v4_pro_alias_stays_DS_by_default() {
         let registry = ModelRegistry::default();
         let resolved = registry.resolve(Some("deepseek-v4-pro"), None);
 
@@ -326,7 +326,7 @@ mod tests {
     }
 
     #[test]
-    fn deepseek_v4_pro_alias_resolves_to_nvidia_nim_when_provider_hinted() {
+    fn DS_v4_pro_alias_resolves_to_nvidia_nim_when_provider_hinted() {
         let registry = ModelRegistry::default();
         let resolved = registry.resolve(Some("deepseek-v4-pro"), Some(ProviderKind::NvidiaNim));
 
@@ -344,7 +344,7 @@ mod tests {
     }
 
     #[test]
-    fn deepseek_v4_flash_alias_resolves_to_nvidia_nim_when_provider_hinted() {
+    fn DS_v4_flash_alias_resolves_to_nvidia_nim_when_provider_hinted() {
         let registry = ModelRegistry::default();
         let resolved = registry.resolve(Some("deepseek-v4-flash"), Some(ProviderKind::NvidiaNim));
 
@@ -392,7 +392,7 @@ mod tests {
     }
 
     #[test]
-    fn deepseek_v4_flash_alias_resolves_to_openrouter_when_provider_hinted() {
+    fn DS_v4_flash_alias_resolves_to_openrouter_when_provider_hinted() {
         let registry = ModelRegistry::default();
         let resolved = registry.resolve(Some("deepseek-v4-flash"), Some(ProviderKind::Openrouter));
 
@@ -401,7 +401,7 @@ mod tests {
     }
 
     #[test]
-    fn deepseek_v4_flash_alias_resolves_to_novita_when_provider_hinted() {
+    fn DS_v4_flash_alias_resolves_to_novita_when_provider_hinted() {
         let registry = ModelRegistry::default();
         let resolved = registry.resolve(Some("deepseek-v4-flash"), Some(ProviderKind::Novita));
 
@@ -410,7 +410,7 @@ mod tests {
     }
 
     #[test]
-    fn deepseek_v4_flash_alias_resolves_to_sglang_when_provider_hinted() {
+    fn DS_v4_flash_alias_resolves_to_sglang_when_provider_hinted() {
         let registry = ModelRegistry::default();
         let resolved = registry.resolve(Some("deepseek-v4-flash"), Some(ProviderKind::Sglang));
 
@@ -448,7 +448,7 @@ mod tests {
     }
 
     #[test]
-    fn deepseek_v4_flash_alias_resolves_to_vllm_when_provider_hinted() {
+    fn DS_v4_flash_alias_resolves_to_vllm_when_provider_hinted() {
         let registry = ModelRegistry::default();
         let resolved = registry.resolve(Some("deepseek-v4-flash"), Some(ProviderKind::Vllm));
 

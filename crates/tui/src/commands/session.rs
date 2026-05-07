@@ -218,7 +218,7 @@ pub fn sessions(app: &mut App, arg: Option<&str>) -> CommandResult {
 }
 
 /// Prune persisted sessions older than `<days>` from
-/// `~/.deepseek/sessions/`. Wraps
+/// `~/.ds/sessions/`. Wraps
 /// [`crate::session_manager::SessionManager::prune_sessions_older_than`]
 /// so users can run a safe cleanup without leaving the TUI. Skips
 /// the checkpoint subdirectory (the helper guarantees that already).

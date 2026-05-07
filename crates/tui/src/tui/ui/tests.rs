@@ -2260,11 +2260,11 @@ fn file_mention_completion_finds_unique_match() {
     let tmpdir = TempDir::new().expect("tempdir");
     std::fs::write(tmpdir.path().join("README.md"), "readme").unwrap();
     std::fs::create_dir_all(tmpdir.path().join("docs")).unwrap();
-    std::fs::write(tmpdir.path().join("docs/deepseek_v4.pdf"), b"%PDF-").unwrap();
+    std::fs::write(tmpdir.path().join("docs/DS_v4.pdf"), b"%PDF-").unwrap();
 
     let ws = Workspace::with_cwd(tmpdir.path().to_path_buf(), None);
     let matches = find_file_mention_completions(&ws, "docs/de", 16);
-    assert_eq!(matches, vec!["docs/deepseek_v4.pdf".to_string()]);
+    assert_eq!(matches, vec!["docs/DS_v4.pdf".to_string()]);
 }
 
 #[test]
@@ -2284,7 +2284,7 @@ fn file_mention_completion_ranks_prefix_before_substring() {
 fn try_autocomplete_file_mention_unique_replaces_partial() {
     let tmpdir = TempDir::new().expect("tempdir");
     std::fs::create_dir_all(tmpdir.path().join("docs")).unwrap();
-    std::fs::write(tmpdir.path().join("docs/deepseek_v4.pdf"), b"%PDF-").unwrap();
+    std::fs::write(tmpdir.path().join("docs/DS_v4.pdf"), b"%PDF-").unwrap();
 
     let mut app = create_test_app();
     app.workspace = tmpdir.path().to_path_buf();
@@ -2292,7 +2292,7 @@ fn try_autocomplete_file_mention_unique_replaces_partial() {
     app.cursor_position = app.input.chars().count();
 
     assert!(try_autocomplete_file_mention(&mut app));
-    assert_eq!(app.input, "summarize @docs/deepseek_v4.pdf");
+    assert_eq!(app.input, "summarize @docs/DS_v4.pdf");
     assert_eq!(app.cursor_position, app.input.chars().count());
 }
 
@@ -2366,7 +2366,7 @@ fn mention_popup_is_empty_when_cursor_is_not_in_a_mention() {
 fn mention_popup_lists_workspace_matches_for_cursor_partial() {
     let tmpdir = TempDir::new().expect("tempdir");
     std::fs::create_dir_all(tmpdir.path().join("docs")).unwrap();
-    std::fs::write(tmpdir.path().join("docs/deepseek_v4.pdf"), b"%PDF-").unwrap();
+    std::fs::write(tmpdir.path().join("docs/DS_v4.pdf"), b"%PDF-").unwrap();
     std::fs::write(tmpdir.path().join("docs/MCP.md"), "x").unwrap();
     std::fs::write(tmpdir.path().join("README.md"), "x").unwrap();
 
@@ -3352,7 +3352,7 @@ fn env_only_auth_failure_reopens_api_key_onboarding() {
         .as_deref()
         .expect("auth recovery should explain the env key source");
     assert!(
-        status.contains("DEEPSEEK_API_KEY"),
+        status.contains("DS_API_KEY"),
         "expected env-specific recovery hint, got {status:?}"
     );
 }

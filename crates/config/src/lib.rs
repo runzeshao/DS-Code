@@ -6,19 +6,19 @@ use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
 use anyhow::{Context, Result, bail};
-use deepseek_secrets::SecretSource;
-pub use deepseek_secrets::Secrets;
+use ds_secrets::SecretSource;
+pub use ds_secrets::Secrets;
 use serde::{Deserialize, Serialize};
 
 #[cfg(unix)]
 use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 
 pub const CONFIG_FILE_NAME: &str = "config.toml";
-const DEFAULT_DEEPSEEK_MODEL: &str = "deepseek-v4-pro";
+const DEFAULT_DS_MODEL: &str = "deepseek-v4-pro";
 const DEFAULT_NVIDIA_NIM_MODEL: &str = "deepseek-ai/deepseek-v4-pro";
 const DEFAULT_NVIDIA_NIM_FLASH_MODEL: &str = "deepseek-ai/deepseek-v4-flash";
 const DEFAULT_OPENAI_MODEL: &str = "gpt-4.1";
-const DEFAULT_DEEPSEEK_BASE_URL: &str = "https://api.deepseek.com/beta";
+const DEFAULT_DS_BASE_URL: &str = "https://api.deepseek.com/beta";
 const DEFAULT_NVIDIA_NIM_BASE_URL: &str = "https://integrate.api.nvidia.com/v1";
 const DEFAULT_OPENAI_BASE_URL: &str = "https://api.openai.com/v1";
 const DEFAULT_OPENROUTER_MODEL: &str = "deepseek/deepseek-v4-pro";
@@ -150,8 +150,8 @@ impl ProvidersToml {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ConfigToml {
-    /// TUI-compatible DeepSeek API key. Kept at the root so both `deepseek`
-    /// and `deepseek-tui` can share a single config file.
+    /// TUI-compatible DeepSeek API key. Kept at the root so both `ds`
+    /// and `DS-Code` can share a single config file.
     pub api_key: Option<String>,
     /// TUI-compatible DeepSeek base URL.
     pub base_url: Option<String>,
@@ -179,7 +179,7 @@ pub struct ConfigToml {
     pub network: Option<NetworkPolicyToml>,
     /// Community skill installer settings (#140). Mirrors
     /// [`SkillsToml`] from the TUI side; the dispatcher consults
-    /// `registry_url` when running `deepseek skill install`.
+    /// `registry_url` when running `ds skill install`.
     #[serde(default)]
     pub skills: Option<SkillsToml>,
     /// Workspace side-git snapshots (#137). The live TUI defaults this to
@@ -292,7 +292,7 @@ pub struct LspConfigToml {
 }
 
 impl ConfigToml {
-    /// Merge project-level overrides from `$WORKSPACE/.deepseek/config.toml`.
+    /// Merge project-level overrides from `$WORKSPACE/.ds/config.toml`.
     /// Only populated fields in `project` are applied; everything else
     /// keeps its global value. Provider-specific sub-tables are merged
     /// field-by-field so a project can set just `providers.deepseek.model`
@@ -823,7 +823,7 @@ impl ConfigToml {
     #[must_use]
     pub fn resolve_runtime_options(&self, cli: &CliRuntimeOverrides) -> ResolvedRuntimeOptions {
         let no_keyring = Secrets::new(std::sync::Arc::new(
-            deepseek_secrets::InMemoryKeyringStore::new(),
+            ds_secrets::InMemoryKeyringStore::new(),
         ));
         self.resolve_runtime_options_with_secrets(cli, &no_keyring)
     }
@@ -841,21 +841,21 @@ impl ConfigToml {
         let provider = cli.provider.or(env.provider).unwrap_or(self.provider);
 
         let provider_cfg = self.providers.for_provider(provider);
-        let root_deepseek_api_key = (provider == ProviderKind::Deepseek)
+        let root_ds_api_key = (provider == ProviderKind::Deepseek)
             .then(|| self.api_key.clone())
             .flatten();
-        let root_deepseek_base_url = (provider == ProviderKind::Deepseek)
+        let root_ds_base_url = (provider == ProviderKind::Deepseek)
             .then(|| self.base_url.clone())
             .flatten();
-        let root_deepseek_model = (provider == ProviderKind::Deepseek)
+        let root_ds_model = (provider == ProviderKind::Deepseek)
             .then(|| self.default_text_model.clone())
             .flatten();
         // CLI flag wins outright. Otherwise: config-file → injected secrets/env.
-        // This makes `deepseek auth set` a reliable fix even when the user's
+        // This makes `ds auth set` a reliable fix even when the user's
         // shell still exports an old key. When the file is empty, the injected
         // secrets façade recovers older OS-keyring credentials before falling
         // back to ambient env.
-        let from_file = provider_cfg.api_key.clone().or(root_deepseek_api_key);
+        let from_file = provider_cfg.api_key.clone().or(root_ds_api_key);
         let (api_key, api_key_source) = if let Some(value) = cli.api_key.clone() {
             (Some(value), Some(RuntimeApiKeySource::Cli))
         } else if let Some(value) = from_file.clone().filter(|v| !v.trim().is_empty()) {
@@ -875,9 +875,9 @@ impl ConfigToml {
             .clone()
             .or_else(|| env.base_url_for(provider))
             .or_else(|| provider_cfg.base_url.clone())
-            .or(root_deepseek_base_url)
+            .or(root_ds_base_url)
             .unwrap_or_else(|| match provider {
-                ProviderKind::Deepseek => DEFAULT_DEEPSEEK_BASE_URL.to_string(),
+                ProviderKind::Deepseek => DEFAULT_DS_BASE_URL.to_string(),
                 ProviderKind::NvidiaNim => DEFAULT_NVIDIA_NIM_BASE_URL.to_string(),
                 ProviderKind::Openai => DEFAULT_OPENAI_BASE_URL.to_string(),
                 ProviderKind::Openrouter => DEFAULT_OPENROUTER_BASE_URL.to_string(),
@@ -891,14 +891,14 @@ impl ConfigToml {
         let explicit_model = cli.model.is_some()
             || env.model.is_some()
             || provider_cfg.model.is_some()
-            || root_deepseek_model.is_some()
+            || root_ds_model.is_some()
             || self.model.is_some();
         let model = cli
             .model
             .clone()
             .or_else(|| env.model.clone())
             .or_else(|| provider_cfg.model.clone())
-            .or(root_deepseek_model)
+            .or(root_ds_model)
             .or_else(|| self.model.clone())
             .unwrap_or_else(|| default_model_for_provider(provider).to_string());
         let model =
@@ -978,10 +978,10 @@ fn merge_provider_config(target: &mut ProviderConfigToml, source: &ProviderConfi
     }
 }
 
-/// Load a project-level config from `$WORKSPACE/.deepseek/config.toml`.
+/// Load a project-level config from `$WORKSPACE/.ds/config.toml`.
 /// Returns `None` if the file doesn't exist or can't be parsed.
 pub fn load_project_config(workspace: &Path) -> Option<ConfigToml> {
-    let path = workspace.join(".deepseek").join(CONFIG_FILE_NAME);
+    let path = workspace.join(".ds").join(CONFIG_FILE_NAME);
     if !path.exists() {
         return None;
     }
@@ -1045,7 +1045,7 @@ fn normalize_model_for_provider(provider: ProviderKind, model: &str) -> String {
 
 fn default_model_for_provider(provider: ProviderKind) -> &'static str {
     match provider {
-        ProviderKind::Deepseek => DEFAULT_DEEPSEEK_MODEL,
+        ProviderKind::Deepseek => DEFAULT_DS_MODEL,
         ProviderKind::NvidiaNim => DEFAULT_NVIDIA_NIM_MODEL,
         ProviderKind::Openai => DEFAULT_OPENAI_MODEL,
         ProviderKind::Openrouter => DEFAULT_OPENROUTER_MODEL,
@@ -1059,7 +1059,7 @@ fn default_model_for_provider(provider: ProviderKind) -> &'static str {
 
 fn default_base_url_for_provider(provider: ProviderKind) -> &'static str {
     match provider {
-        ProviderKind::Deepseek => DEFAULT_DEEPSEEK_BASE_URL,
+        ProviderKind::Deepseek => DEFAULT_DS_BASE_URL,
         ProviderKind::NvidiaNim => DEFAULT_NVIDIA_NIM_BASE_URL,
         ProviderKind::Openai => DEFAULT_OPENAI_BASE_URL,
         ProviderKind::Openrouter => DEFAULT_OPENROUTER_BASE_URL,
@@ -1201,7 +1201,7 @@ impl ConfigStore {
 
 /// Process-wide default [`Secrets`] façade. The first caller wins; the
 /// lock is exposed so test or CLI code can install an explicit
-/// backend (e.g. an [`deepseek_secrets::InMemoryKeyringStore`]) before
+/// backend (e.g. an [`ds_secrets::InMemoryKeyringStore`]) before
 /// any resolver runs.
 pub fn default_secrets() -> &'static Secrets {
     static SECRETS: OnceLock<Secrets> = OnceLock::new();
@@ -1213,7 +1213,7 @@ pub fn default_secrets() -> &'static Secrets {
         #[cfg(test)]
         {
             Secrets::new(std::sync::Arc::new(
-                deepseek_secrets::InMemoryKeyringStore::new(),
+                ds_secrets::InMemoryKeyringStore::new(),
             ))
         }
         #[cfg(not(test))]
@@ -1227,7 +1227,7 @@ pub fn resolve_config_path(explicit: Option<PathBuf>) -> Result<PathBuf> {
     if let Some(path) = explicit {
         return Ok(path);
     }
-    if let Ok(path) = std::env::var("DEEPSEEK_CONFIG_PATH") {
+    if let Ok(path) = std::env::var("DS_CONFIG_PATH") {
         let trimmed = path.trim();
         if !trimmed.is_empty() {
             return Ok(PathBuf::from(trimmed));
@@ -1238,7 +1238,7 @@ pub fn resolve_config_path(explicit: Option<PathBuf>) -> Result<PathBuf> {
 
 pub fn default_config_path() -> Result<PathBuf> {
     let home = dirs::home_dir().context("failed to resolve home directory for config path")?;
-    Ok(home.join(".deepseek").join(CONFIG_FILE_NAME))
+    Ok(home.join(".ds").join(CONFIG_FILE_NAME))
 }
 
 fn parse_bool(raw: &str) -> Result<bool> {
@@ -1313,7 +1313,7 @@ struct EnvRuntimeOverrides {
     approval_policy: Option<String>,
     sandbox_mode: Option<String>,
     http_headers: Option<BTreeMap<String, String>>,
-    deepseek_base_url: Option<String>,
+    ds_base_url: Option<String>,
     nvidia_base_url: Option<String>,
     openai_base_url: Option<String>,
     openrouter_base_url: Option<String>,
@@ -1327,23 +1327,23 @@ struct EnvRuntimeOverrides {
 impl EnvRuntimeOverrides {
     fn load() -> Self {
         Self {
-            provider: std::env::var("DEEPSEEK_PROVIDER")
+            provider: std::env::var("DS_PROVIDER")
                 .ok()
                 .and_then(|v| ProviderKind::parse(&v)),
-            model: std::env::var("DEEPSEEK_MODEL").ok(),
-            output_mode: std::env::var("DEEPSEEK_OUTPUT_MODE").ok(),
-            auth_mode: std::env::var("DEEPSEEK_AUTH_MODE").ok(),
-            log_level: std::env::var("DEEPSEEK_LOG_LEVEL").ok(),
-            telemetry: std::env::var("DEEPSEEK_TELEMETRY")
+            model: std::env::var("DS_MODEL").ok(),
+            output_mode: std::env::var("DS_OUTPUT_MODE").ok(),
+            auth_mode: std::env::var("DS_AUTH_MODE").ok(),
+            log_level: std::env::var("DS_LOG_LEVEL").ok(),
+            telemetry: std::env::var("DS_TELEMETRY")
                 .ok()
                 .and_then(|v| parse_bool(&v).ok()),
-            approval_policy: std::env::var("DEEPSEEK_APPROVAL_POLICY").ok(),
-            sandbox_mode: std::env::var("DEEPSEEK_SANDBOX_MODE").ok(),
-            http_headers: std::env::var("DEEPSEEK_HTTP_HEADERS")
+            approval_policy: std::env::var("DS_APPROVAL_POLICY").ok(),
+            sandbox_mode: std::env::var("DS_SANDBOX_MODE").ok(),
+            http_headers: std::env::var("DS_HTTP_HEADERS")
                 .ok()
                 .and_then(|value| parse_http_headers(&value).ok())
                 .filter(|headers| !headers.is_empty()),
-            deepseek_base_url: std::env::var("DEEPSEEK_BASE_URL")
+            ds_base_url: std::env::var("DS_BASE_URL")
                 .ok()
                 .filter(|v| !v.trim().is_empty()),
             nvidia_base_url: std::env::var("NVIDIA_NIM_BASE_URL")
@@ -1379,7 +1379,7 @@ impl EnvRuntimeOverrides {
         // Defaults belong in the resolver's final fallback so config-file
         // values (`providers.<name>.base_url`) still win when env is unset.
         match provider {
-            ProviderKind::Deepseek => self.deepseek_base_url.clone(),
+            ProviderKind::Deepseek => self.ds_base_url.clone(),
             ProviderKind::NvidiaNim => self.nvidia_base_url.clone(),
             ProviderKind::Openai => self.openai_base_url.clone(),
             ProviderKind::Openrouter => self.openrouter_base_url.clone(),
@@ -1405,11 +1405,11 @@ mod tests {
     }
 
     struct EnvGuard {
-        deepseek_api_key: Option<OsString>,
-        deepseek_base_url: Option<OsString>,
-        deepseek_http_headers: Option<OsString>,
-        deepseek_model: Option<OsString>,
-        deepseek_provider: Option<OsString>,
+        DS_api_key: Option<OsString>,
+        ds_base_url: Option<OsString>,
+        DS_http_headers: Option<OsString>,
+        DS_model: Option<OsString>,
+        DS_provider: Option<OsString>,
         nvidia_api_key: Option<OsString>,
         nvidia_nim_api_key: Option<OsString>,
         nim_base_url: Option<OsString>,
@@ -1430,13 +1430,13 @@ mod tests {
     }
 
     impl EnvGuard {
-        fn without_deepseek_runtime_overrides() -> Self {
+        fn without_DS_runtime_overrides() -> Self {
             let guard = Self {
-                deepseek_api_key: env::var_os("DEEPSEEK_API_KEY"),
-                deepseek_base_url: env::var_os("DEEPSEEK_BASE_URL"),
-                deepseek_http_headers: env::var_os("DEEPSEEK_HTTP_HEADERS"),
-                deepseek_model: env::var_os("DEEPSEEK_MODEL"),
-                deepseek_provider: env::var_os("DEEPSEEK_PROVIDER"),
+                DS_api_key: env::var_os("DS_API_KEY"),
+                ds_base_url: env::var_os("DS_BASE_URL"),
+                DS_http_headers: env::var_os("DS_HTTP_HEADERS"),
+                DS_model: env::var_os("DS_MODEL"),
+                DS_provider: env::var_os("DS_PROVIDER"),
                 nvidia_api_key: env::var_os("NVIDIA_API_KEY"),
                 nvidia_nim_api_key: env::var_os("NVIDIA_NIM_API_KEY"),
                 nim_base_url: env::var_os("NIM_BASE_URL"),
@@ -1457,11 +1457,11 @@ mod tests {
             };
             // Safety: test-only environment mutation guarded by a module mutex.
             unsafe {
-                env::remove_var("DEEPSEEK_API_KEY");
-                env::remove_var("DEEPSEEK_BASE_URL");
-                env::remove_var("DEEPSEEK_HTTP_HEADERS");
-                env::remove_var("DEEPSEEK_MODEL");
-                env::remove_var("DEEPSEEK_PROVIDER");
+                env::remove_var("DS_API_KEY");
+                env::remove_var("DS_BASE_URL");
+                env::remove_var("DS_HTTP_HEADERS");
+                env::remove_var("DS_MODEL");
+                env::remove_var("DS_PROVIDER");
                 env::remove_var("NVIDIA_API_KEY");
                 env::remove_var("NVIDIA_NIM_API_KEY");
                 env::remove_var("NIM_BASE_URL");
@@ -1496,11 +1496,11 @@ mod tests {
         fn drop(&mut self) {
             // Safety: test-only environment mutation guarded by a module mutex.
             unsafe {
-                Self::restore_var("DEEPSEEK_API_KEY", self.deepseek_api_key.take());
-                Self::restore_var("DEEPSEEK_BASE_URL", self.deepseek_base_url.take());
-                Self::restore_var("DEEPSEEK_HTTP_HEADERS", self.deepseek_http_headers.take());
-                Self::restore_var("DEEPSEEK_MODEL", self.deepseek_model.take());
-                Self::restore_var("DEEPSEEK_PROVIDER", self.deepseek_provider.take());
+                Self::restore_var("DS_API_KEY", self.ds_api_key.take());
+                Self::restore_var("DS_BASE_URL", self.ds_base_url.take());
+                Self::restore_var("DS_HTTP_HEADERS", self.DS_http_headers.take());
+                Self::restore_var("DS_MODEL", self.DS_model.take());
+                Self::restore_var("DS_PROVIDER", self.DS_provider.take());
                 Self::restore_var("NVIDIA_API_KEY", self.nvidia_api_key.take());
                 Self::restore_var("NVIDIA_NIM_API_KEY", self.nvidia_nim_api_key.take());
                 Self::restore_var("NIM_BASE_URL", self.nim_base_url.take());
@@ -1523,9 +1523,9 @@ mod tests {
     }
 
     #[test]
-    fn root_deepseek_fields_are_runtime_fallbacks() {
+    fn root_DS_fields_are_runtime_fallbacks() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let config = ConfigToml {
             api_key: Some("root-key".to_string()),
             base_url: Some("https://api.deepseek.com".to_string()),
@@ -1542,22 +1542,22 @@ mod tests {
     }
 
     #[test]
-    fn deepseek_runtime_defaults_to_beta_endpoint() {
+    fn DS_runtime_defaults_to_beta_endpoint() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let config = ConfigToml::default();
 
         let resolved = config.resolve_runtime_options(&CliRuntimeOverrides::default());
 
         assert_eq!(resolved.provider, ProviderKind::Deepseek);
-        assert_eq!(resolved.base_url, DEFAULT_DEEPSEEK_BASE_URL);
-        assert_eq!(resolved.model, DEFAULT_DEEPSEEK_MODEL);
+        assert_eq!(resolved.base_url, DEFAULT_DS_BASE_URL);
+        assert_eq!(resolved.model, DEFAULT_DS_MODEL);
     }
 
     #[test]
-    fn provider_specific_deepseek_fields_override_tui_compat_fields() {
+    fn provider_specific_DS_fields_override_tui_compat_fields() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let mut config = ConfigToml {
             api_key: Some("root-key".to_string()),
             base_url: Some("https://api.deepseek.com".to_string()),
@@ -1578,7 +1578,7 @@ mod tests {
     #[test]
     fn provider_http_headers_override_root_headers() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let mut config = ConfigToml {
             api_key: Some("root-key".to_string()),
             base_url: Some("https://api.deepseek.com".to_string()),
@@ -1623,14 +1623,14 @@ mod tests {
     #[test]
     fn http_headers_env_overrides_config() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let mut config = ConfigToml::default();
         config
             .http_headers
             .insert("X-Model-Provider-Id".to_string(), "from-file".to_string());
         // Safety: test-only environment mutation guarded by a module mutex.
         unsafe {
-            env::set_var("DEEPSEEK_HTTP_HEADERS", "X-Model-Provider-Id=from-env");
+            env::set_var("DS_HTTP_HEADERS", "X-Model-Provider-Id=from-env");
         }
 
         let resolved = config.resolve_runtime_options(&CliRuntimeOverrides::default());
@@ -1647,7 +1647,7 @@ mod tests {
     #[test]
     fn nvidia_nim_provider_defaults_to_catalog_endpoint_and_model() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let config = ConfigToml {
             provider: ProviderKind::NvidiaNim,
             ..ConfigToml::default()
@@ -1663,7 +1663,7 @@ mod tests {
     #[test]
     fn nvidia_nim_provider_uses_provider_specific_credentials() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let mut config = ConfigToml {
             provider: ProviderKind::NvidiaNim,
             ..ConfigToml::default()
@@ -1683,7 +1683,7 @@ mod tests {
     #[test]
     fn nvidia_nim_provider_normalizes_flash_aliases() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let cli = CliRuntimeOverrides {
             provider: Some(ProviderKind::NvidiaNim),
             model: Some("deepseek-v4-flash".to_string()),
@@ -1699,10 +1699,10 @@ mod tests {
     #[test]
     fn nvidia_nim_provider_uses_nvidia_env_credentials() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         // Safety: test-only environment mutation guarded by a module mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "nvidia-nim");
+            env::set_var("DS_PROVIDER", "nvidia-nim");
             env::set_var("NVIDIA_API_KEY", "nim-env-key");
             env::set_var("NVIDIA_NIM_BASE_URL", "https://nim-env.example/v1");
         }
@@ -1719,10 +1719,10 @@ mod tests {
     #[test]
     fn nvidia_nim_provider_accepts_short_nim_base_url_alias() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         // Safety: test-only environment mutation guarded by a module mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "nvidia-nim");
+            env::set_var("DS_PROVIDER", "nvidia-nim");
             env::set_var("NVIDIA_API_KEY", "nim-env-key");
             env::set_var("NIM_BASE_URL", "https://short-nim.example/v1");
         }
@@ -1735,13 +1735,13 @@ mod tests {
     }
 
     #[test]
-    fn nvidia_nim_provider_can_fallback_to_deepseek_api_key_env() {
+    fn nvidia_nim_provider_can_fallback_to_DS_api_key_env() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         // Safety: test-only environment mutation guarded by a module mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "nvidia-nim");
-            env::set_var("DEEPSEEK_API_KEY", "deepseek-compat-key");
+            env::set_var("DS_PROVIDER", "nvidia-nim");
+            env::set_var("DS_API_KEY", "deepseek-compat-key");
         }
 
         let config = ConfigToml::default();
@@ -1803,7 +1803,7 @@ mod tests {
             .expect("clock")
             .as_nanos();
         let dir = std::env::temp_dir().join(format!(
-            "deepseek-config-perms-{}-{unique}",
+            "ds-config-perms-{}-{unique}",
             std::process::id()
         ));
         fs::create_dir_all(&dir).expect("mkdir");
@@ -1855,7 +1855,7 @@ mod tests {
     #[test]
     fn openrouter_provider_defaults_to_canonical_endpoint_and_model() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let config = ConfigToml {
             provider: ProviderKind::Openrouter,
             ..ConfigToml::default()
@@ -1871,7 +1871,7 @@ mod tests {
     #[test]
     fn novita_provider_defaults_to_canonical_endpoint_and_model() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let config = ConfigToml {
             provider: ProviderKind::Novita,
             ..ConfigToml::default()
@@ -1887,7 +1887,7 @@ mod tests {
     #[test]
     fn fireworks_provider_defaults_to_canonical_endpoint_and_model() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let config = ConfigToml {
             provider: ProviderKind::Fireworks,
             ..ConfigToml::default()
@@ -1903,7 +1903,7 @@ mod tests {
     #[test]
     fn sglang_provider_defaults_to_local_endpoint_and_model() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let config = ConfigToml {
             provider: ProviderKind::Sglang,
             ..ConfigToml::default()
@@ -1919,7 +1919,7 @@ mod tests {
     #[test]
     fn vllm_provider_defaults_to_local_endpoint_and_model() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let config = ConfigToml {
             provider: ProviderKind::Vllm,
             ..ConfigToml::default()
@@ -1935,7 +1935,7 @@ mod tests {
     #[test]
     fn ollama_provider_defaults_to_local_endpoint_and_small_model() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let config = ConfigToml {
             provider: ProviderKind::Ollama,
             ..ConfigToml::default()
@@ -1952,7 +1952,7 @@ mod tests {
     #[test]
     fn ollama_provider_preserves_model_tags() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let cli = CliRuntimeOverrides {
             provider: Some(ProviderKind::Ollama),
             model: Some("deepseek-coder-v2:16b".to_string()),
@@ -1968,10 +1968,10 @@ mod tests {
     #[test]
     fn ollama_env_overrides_provider_base_url_and_optional_key() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         // Safety: test-only environment mutation guarded by a module mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "ollama-local");
+            env::set_var("DS_PROVIDER", "ollama-local");
             env::set_var("OLLAMA_BASE_URL", "http://ollama.example/v1");
             env::set_var("OLLAMA_API_KEY", "ollama-env-key");
         }
@@ -1987,10 +1987,10 @@ mod tests {
     #[test]
     fn openrouter_env_api_key_falls_back_when_config_missing() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         // Safety: test-only environment mutation guarded by a module mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "openrouter");
+            env::set_var("DS_PROVIDER", "openrouter");
             env::set_var("OPENROUTER_API_KEY", "or-env-key");
         }
 
@@ -2005,10 +2005,10 @@ mod tests {
     #[test]
     fn novita_env_api_key_falls_back_when_config_missing() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         // Safety: test-only environment mutation guarded by a module mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "novita");
+            env::set_var("DS_PROVIDER", "novita");
             env::set_var("NOVITA_API_KEY", "novita-env-key");
         }
 
@@ -2023,10 +2023,10 @@ mod tests {
     #[test]
     fn fireworks_env_api_key_falls_back_when_config_missing() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         // Safety: test-only environment mutation guarded by a module mutex.
         unsafe {
-            env::set_var("DEEPSEEK_PROVIDER", "fireworks");
+            env::set_var("DS_PROVIDER", "fireworks");
             env::set_var("FIREWORKS_API_KEY", "fw-env-key");
         }
 
@@ -2041,7 +2041,7 @@ mod tests {
     #[test]
     fn openrouter_provider_normalizes_flash_aliases() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let cli = CliRuntimeOverrides {
             provider: Some(ProviderKind::Openrouter),
             model: Some("deepseek-v4-flash".to_string()),
@@ -2057,7 +2057,7 @@ mod tests {
     #[test]
     fn novita_provider_normalizes_flash_aliases() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let cli = CliRuntimeOverrides {
             provider: Some(ProviderKind::Novita),
             model: Some("deepseek-v4-flash".to_string()),
@@ -2073,7 +2073,7 @@ mod tests {
     #[test]
     fn sglang_provider_normalizes_flash_aliases() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let cli = CliRuntimeOverrides {
             provider: Some(ProviderKind::Sglang),
             model: Some("deepseek-v4-flash".to_string()),
@@ -2089,7 +2089,7 @@ mod tests {
     #[test]
     fn vllm_provider_normalizes_flash_aliases() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let cli = CliRuntimeOverrides {
             provider: Some(ProviderKind::Vllm),
             model: Some("deepseek-v4-flash".to_string()),
@@ -2105,7 +2105,7 @@ mod tests {
     #[test]
     fn openrouter_provider_specific_config_overrides_env() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let mut config = ConfigToml {
             provider: ProviderKind::Openrouter,
             ..ConfigToml::default()
@@ -2122,7 +2122,7 @@ mod tests {
     #[test]
     fn openrouter_custom_base_url_preserves_provider_model() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         let mut config = ConfigToml {
             provider: ProviderKind::Openrouter,
             ..ConfigToml::default()
@@ -2139,13 +2139,13 @@ mod tests {
 
     #[test]
     fn config_file_resolves_above_env_and_keyring() {
-        use deepseek_secrets::KeyringStore;
+        use ds_secrets::KeyringStore;
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::set_var("DEEPSEEK_API_KEY", "env-key") };
+        unsafe { std::env::set_var("DS_API_KEY", "env-key") };
 
-        let store = std::sync::Arc::new(deepseek_secrets::InMemoryKeyringStore::new());
+        let store = std::sync::Arc::new(ds_secrets::InMemoryKeyringStore::new());
         store.set("deepseek", "ring-key").unwrap();
         let secrets = Secrets::new(store);
 
@@ -2161,18 +2161,18 @@ mod tests {
         );
 
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::remove_var("DEEPSEEK_API_KEY") };
+        unsafe { std::env::remove_var("DS_API_KEY") };
     }
 
     #[test]
     fn env_resolves_when_config_file_and_keyring_empty() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::set_var("DEEPSEEK_API_KEY", "env-key") };
+        unsafe { std::env::set_var("DS_API_KEY", "env-key") };
 
         let secrets = Secrets::new(std::sync::Arc::new(
-            deepseek_secrets::InMemoryKeyringStore::new(),
+            ds_secrets::InMemoryKeyringStore::new(),
         ));
         let config = ConfigToml::default();
 
@@ -2182,16 +2182,16 @@ mod tests {
         assert_eq!(resolved.api_key_source, Some(RuntimeApiKeySource::Env));
 
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::remove_var("DEEPSEEK_API_KEY") };
+        unsafe { std::env::remove_var("DS_API_KEY") };
     }
 
     #[test]
     fn config_file_resolves_when_keyring_and_env_empty() {
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
 
         let secrets = Secrets::new(std::sync::Arc::new(
-            deepseek_secrets::InMemoryKeyringStore::new(),
+            ds_secrets::InMemoryKeyringStore::new(),
         ));
         let mut config = ConfigToml::default();
         config.providers.deepseek.api_key = Some("file-key".to_string());
@@ -2207,13 +2207,13 @@ mod tests {
 
     #[test]
     fn keyring_resolves_when_config_file_empty_even_if_env_is_set() {
-        use deepseek_secrets::KeyringStore;
+        use ds_secrets::KeyringStore;
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::set_var("DEEPSEEK_API_KEY", "stale-env-key") };
+        unsafe { std::env::set_var("DS_API_KEY", "stale-env-key") };
 
-        let store = std::sync::Arc::new(deepseek_secrets::InMemoryKeyringStore::new());
+        let store = std::sync::Arc::new(ds_secrets::InMemoryKeyringStore::new());
         store.set("deepseek", "ring-key").unwrap();
         let secrets = Secrets::new(store);
 
@@ -2223,16 +2223,16 @@ mod tests {
         assert_eq!(resolved.api_key_source, Some(RuntimeApiKeySource::Keyring));
 
         // Safety: env mutation guarded by env_lock().
-        unsafe { std::env::remove_var("DEEPSEEK_API_KEY") };
+        unsafe { std::env::remove_var("DS_API_KEY") };
     }
 
     #[test]
     fn cli_flag_still_overrides_keyring() {
-        use deepseek_secrets::KeyringStore;
+        use ds_secrets::KeyringStore;
         let _lock = env_lock();
-        let _env = EnvGuard::without_deepseek_runtime_overrides();
+        let _env = EnvGuard::without_DS_runtime_overrides();
 
-        let store = std::sync::Arc::new(deepseek_secrets::InMemoryKeyringStore::new());
+        let store = std::sync::Arc::new(ds_secrets::InMemoryKeyringStore::new());
         store.set("deepseek", "ring-key").unwrap();
         let secrets = Secrets::new(store);
 

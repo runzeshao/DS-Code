@@ -18,7 +18,7 @@ next round of TUI fixes can be verified against real terminal behaviour.
   without round-tripping through `/config`. Thanks @MengZ-super.
 - **PTY/frame-capture TUI QA harness** — new
   `crates/tui/tests/support/qa_harness/` lets integration tests spawn
-  `deepseek-tui` in a real pseudo-terminal, send scripted keys / paste /
+  `DS-Code` in a real pseudo-terminal, send scripted keys / paste /
   resize, and assert on the parsed terminal frame plus the workspace
   filesystem. Initial scenarios cover boot smoke and the #1073 paste regression.
   Adding-a-scenario walkthrough lives in `crates/tui/tests/support/qa_harness/README.md`.
@@ -31,8 +31,8 @@ next round of TUI fixes can be verified against real terminal behaviour.
 ### Changed
 - **`deepseek-cn` provider preset now defaults to the official
   `https://api.deepseek.com` host** (#1079, #1084) — matches
-  [api-docs.deepseek.com](https://api-docs.deepseek.com/). The legacy typo
-  host `api.deepseeki.com` is still recognized in URL heuristics and chat-client
+  [api-docs.ds.com](https://api-docs.ds.com/). The legacy typo
+  host `api.dsi.com` is still recognized in URL heuristics and chat-client
   normalization so existing user configs keep working. Thanks @Jefsky.
 - **Plan mode runs shell commands in a read-only sandbox** (#1077) — was
   `WorkspaceWrite` with the workspace as a writable root, which let
@@ -86,7 +86,7 @@ next round of TUI fixes can be verified against real terminal behaviour.
   longer rewritten by provider-specific normalization. Lets OpenAI-compatible
   gateways accept bare IDs like `deepseek/deepseek-v4-pro`,
   `accounts/fireworks/models/...`, or `glm-5`. Thanks @THINKER-ONLY.
-- **Auto-generated `.deepseek/instructions.md` stabilizes the KV prefix
+- **Auto-generated `.ds/instructions.md` stabilizes the KV prefix
   cache** (#1080) — replaces the per-turn filesystem-scan fallback in
   `prompts.rs` with a real on-disk artifact when no context file exists, so
   the system prompt's prefix stays byte-stable across turns and prefix-cache
@@ -104,7 +104,7 @@ next round of TUI fixes can be verified against real terminal behaviour.
   diagnosis.
 - **npm installs explain the release-mirror escape hatch when GitHub Releases
   are blocked** (#1051, #1056) — network/DNS failures now point at the
-  existing `DEEPSEEK_TUI_RELEASE_BASE_URL` override and the required checksum
+  existing `DS_TUI_RELEASE_BASE_URL` override and the required checksum
   manifest / binary layout instead of stopping at a raw `ENOTFOUND github.com`.
   Thanks @axobase001.
 
@@ -194,7 +194,7 @@ display, and recovery paths easier to trust.
 
 ### Fixed
 - **Env-only API key failure recovery** (#892) — runtime auth failures now say
-  when the rejected key came from inherited `DEEPSEEK_API_KEY` and no saved
+  when the rejected key came from inherited `DS_API_KEY` and no saved
   config key is present, matching the clearer `deepseek doctor` guidance.
 - **Windows Unicode output** (#887, closes #872) — TUI startup now best-effort
   switches the Windows console input/output codepages to UTF-8, improving
@@ -326,11 +326,11 @@ out of this release.
   postinstall binary fetch from GitHub Releases now retries on transient
   errors (5 attempts, 1-16 s exponential backoff with jitter), enforces a
   per-attempt timeout (default 5 min, configurable via
-  `DEEPSEEK_TUI_DOWNLOAD_TIMEOUT_MS`) plus a 30 s stall detector, honors
+  `DS_TUI_DOWNLOAD_TIMEOUT_MS`) plus a 30 s stall detector, honors
   `HTTPS_PROXY` / `HTTP_PROXY` / `NO_PROXY` env vars (pure-Node CONNECT
   tunneling, no new dependencies), and prints a download-progress line
   to stderr so users know it isn't hung. Suppressible with
-  `DEEPSEEK_TUI_QUIET_INSTALL=1`. Reported by a community user from China
+  `DS_TUI_QUIET_INSTALL=1`. Reported by a community user from China
   whose install through a CN npm mirror took 18 minutes — the bottleneck
   was the GitHub fetch, which CN npm mirrors do not proxy.
 - **YOLO sandbox dropped to DangerFullAccess** — YOLO mode was still
@@ -386,7 +386,7 @@ resident sub-agents. No breaking changes.
   structure for git, cargo, npm, yarn, pnpm, docker, kubectl, aws, make, and
   others. Legacy flat prefix matching still works for unlisted commands.
 - **Unified slash-command namespace** (#661) — user-defined commands in
-  `~/.deepseek/commands/` support `$1`, `$2`, `$ARGUMENTS` template
+  `~/.ds/commands/` support `$1`, `$2`, `$ARGUMENTS` template
   substitution. User commands override built-in commands.
 - **Skill registry sync** (#654) — `/skills sync` fetches the community skill
   registry and installs/updates all listed skills. Network-gated by the
@@ -395,7 +395,7 @@ resident sub-agents. No breaking changes.
   settings enable modal editing in the message composer with standard Vim
   keybindings.
 - **Separate tui.toml** (#657) — theme colors and keybind overrides can live in
-  `~/.deepseek/tui.toml` alongside the main `config.toml`. *Note: file format
+  `~/.ds/tui.toml` alongside the main `config.toml`. *Note: file format
   is defined but not yet loaded at startup — wiring deferred to v0.8.13.*
 - **Large-tool-output routing** (#658) — tool results exceeding a configurable
   token threshold are routed through a workshop with truncated previews,
@@ -414,7 +414,7 @@ resident sub-agents. No breaking changes.
   a resident lease on the same file simultaneously. Leases are released on
   agent completion.
 - **Context-limit handoff** (#667) — engine-level support for replacing
-  routine compaction with a `.deepseek/handoff.md` file write when context
+  routine compaction with a `.ds/handoff.md` file write when context
   pressure triggers. *Note: config knob removed pending implementation.*
 - **LSP auto-attach diagnostics** (#656) — edit results now include post-edit
   diagnostics via the engine-level LSP hooks path.
@@ -427,7 +427,7 @@ resident sub-agents. No breaking changes.
   it downloads the prebuilt binary, but `deepseek` itself does not depend on
   Node at runtime. zh-CN README mirrored.
 - **Windows Scoop install instructions** (#696) — README and zh-CN README now
-  document `scoop install deepseek-tui` for Windows users. *Thanks to
+  document `scoop install DS-Code` for Windows users. *Thanks to
   [@woyxiang](https://github.com/woyxiang) for this PR.*
 - **DeepSeek Pro discount window extended** (#692) — pricing footnote updated
   from 5 May 2026 to 31 May 2026 to match the platform-side promotion. *Thanks
@@ -460,7 +460,7 @@ resident sub-agents. No breaking changes.
   `crates/tui/src/tui/ui.rs:1603` used `&& let Some(...) = ...` inside an
   `if`-guard, which requires the nightly-only `if_let_guard` feature on Rust
   before 1.94. Reported by an external user whose `cargo install
-  deepseek-tui` failed with E0658. Rewrote as a plain match guard with a
+  DS-Code` failed with E0658. Rewrote as a plain match guard with a
   nested `if let` inside the arm body. The workspace also now declares
   `rust-version = "1.88"` (the actual minimum for `let_chains` in
   `if`/`while`) so users on too-old toolchains see a clear cargo error
@@ -525,14 +525,14 @@ runtime API additions. No breaking changes.
 - **Stacked toast overlay** (#439) — status toasts can queue and render
   together instead of overwriting each other.
 - **File @-mention frecency** (#441) — file mention suggestions learn
-  from recent selections via `~/.deepseek/file-frecency.jsonl`.
+  from recent selections via `~/.ds/file-frecency.jsonl`.
 - **Durable keybinding catalog** (#559) — `docs/KEYBINDINGS.md` is now
   the source-of-truth audit for current shortcuts and the future
   configurable-keymap registry.
 - **Runtime API quartet for whalescale-desktop integration** (#561, #562, #563,
   #564, #567) — addresses whalescale#255/256/260/261:
   - `[runtime_api] cors_origins` config / `--cors-origin URL` flag (repeatable) /
-    `DEEPSEEK_CORS_ORIGINS` env var, all stacking on top of the built-in
+    `DS_CORS_ORIGINS` env var, all stacking on top of the built-in
     dev-origin defaults (#561 / whalescale#255).
   - `PATCH /v1/threads/{id}` extended from `archived`-only to the full
     editable field set: `allow_shell`, `trust_mode`, `auto_approve`, `model`,
@@ -551,7 +551,7 @@ runtime API additions. No breaking changes.
   `zh-Hans` / `pt-BR`) with the native name (日本語, 简体中文, …) plus an
   English label so the target language is reachable without already
   speaking it. Hotkeys 1-5 select; persists immediately to
-  `~/.deepseek/settings.toml`.
+  `~/.ds/settings.toml`.
 - **Windows + China install documentation** (#578) — expanded
   `docs/INSTALL.md` with Windows source-build setup, Visual Studio Build
   Tools / MSVC environment notes, rustup and Cargo mirror guidance, and
@@ -569,7 +569,7 @@ runtime API additions. No breaking changes.
 - **User memory docs + help polish** (#497, #569) — `/memory` is now
   listed in slash-command help, supports `/memory help`, and the README
   / configuration docs now point at the full `docs/MEMORY.md` guide and
-  document both `[memory].enabled` and `DEEPSEEK_MEMORY`. *Thanks to
+  document both `[memory].enabled` and `DS_MEMORY`. *Thanks to
   [@20bytes](https://github.com/20bytes) for this PR.*
 
 ### Fixed
@@ -655,12 +655,12 @@ Welcome — and thank you.
   - `remember` model-callable tool so the agent can capture
     durable preferences itself; auto-approved because writes are
     scoped to the user's own file (#489).
-  - Hierarchy loader pulls `~/.deepseek/memory.md` (path
-    configurable via `memory_path` / `DEEPSEEK_MEMORY_PATH`) and
+  - Hierarchy loader pulls `~/.ds/memory.md` (path
+    configurable via `memory_path` / `DS_MEMORY_PATH`) and
     injects above the volatile-content boundary in the prompt
     (#490).
   - Default off; enable with `[memory] enabled = true` or
-    `DEEPSEEK_MEMORY=on` (#493).
+    `DS_MEMORY=on` (#493).
   - Full feature documentation in `docs/MEMORY.md`.
 - **Inline diff rendering for `edit_file` / `write_file`** (#505) —
   tool results now emit a unified diff at the head of the body,
@@ -677,7 +677,7 @@ Welcome — and thank you.
 - **MCP server health chip** (#502) — colour-coded `MCP M/N` in the
   footer's right-cluster: success / warning / error / muted by
   reachability. Hidden when zero MCP servers are configured.
-- **Per-project config overlay** (#485) — `<workspace>/.deepseek/config.toml`
+- **Per-project config overlay** (#485) — `<workspace>/.ds/config.toml`
   overlays a curated set of fields on top of the user-global config:
   `model`, `reasoning_effort`, `approval_policy`, `sandbox_mode`,
   `notes_path`, `max_subagents`, `allow_shell`, plus the
@@ -686,7 +686,7 @@ Welcome — and thank you.
 - **Project-scope deny-list for credentials/redirects** (#417) —
   `api_key`, `base_url`, `provider`, and `mcp_config_path` are
   refused at project scope. A malicious
-  `<workspace>/.deepseek/config.toml` would otherwise be able to
+  `<workspace>/.ds/config.toml` would otherwise be able to
   exfiltrate prompts to an attacker-controlled endpoint by
   swapping the user's credentials and target host with
   project-controlled values, or redirect the MCP loader at a
@@ -732,7 +732,7 @@ Welcome — and thank you.
   catalogues capability matrix vs OpenCode and Codex CLI.
 - **Session prune helper + `/sessions prune <days>`** (#406 phase-1) —
   drops persisted sessions older than N days from
-  `~/.deepseek/sessions/`. Skips the checkpoint subdirectory and
+  `~/.ds/sessions/`. Skips the checkpoint subdirectory and
   compares against metadata `updated_at` (not fs mtime, which can
   lie after an rsync). 10 total tests cover the helper's contract
   and the slash-command dispatch surface. Phase 2 (boot-prune +
@@ -741,7 +741,7 @@ Welcome — and thank you.
   (`enabled` / `path` / `file_present`) so operators can verify
   memory configuration without booting the TUI.
 - **Tool-output spillover** (#422 + #423 + #500) — tool outputs over
-  100 KiB now spill to `~/.deepseek/tool_outputs/<id>.txt` from the
+  100 KiB now spill to `~/.ds/tool_outputs/<id>.txt` from the
   engine's tool-execution path. The model receives a 32 KiB head plus
   a footer pointing at the spillover file (`Use read_file path=…`),
   the tool cell renders an inline `full output: <path>` annotation in
@@ -814,7 +814,7 @@ Welcome — and thank you.
   pattern) so render stays pure for tests.
 - **`instructions = [...]` config array** (#454) — declare
   additional instruction files (`./AGENTS.md`,
-  `~/.deepseek/global.md`, …) and they're concatenated into the
+  `~/.ds/global.md`, …) and they're concatenated into the
   system prompt in declared order, above the skills block. Each
   file is capped at 100 KiB; missing files log a warning and are
   skipped instead of failing the launch. Project config replaces
@@ -836,7 +836,7 @@ Welcome — and thank you.
   description as a quote block at the head so a single tool
   result is self-contained. Resolves the skills directory with
   the same hierarchy `App::new` uses (`.agents/skills` →
-  `skills` → `~/.deepseek/skills`). Available in Plan and
+  `skills` → `~/.ds/skills`). Available in Plan and
   Agent/Yolo modes.
 - **Kitty keyboard protocol opt-in** (#442) — pushes
   `DISAMBIGUATE_ESCAPE_CODES` at startup so terminals that
@@ -854,7 +854,7 @@ Welcome — and thank you.
   walk every candidate directory in the workspace plus the
   global default: `<workspace>/.agents/skills` →
   `<workspace>/skills` → `<workspace>/.opencode/skills` →
-  `<workspace>/.claude/skills` → `~/.deepseek/skills`. Skills
+  `<workspace>/.claude/skills` → `~/.ds/skills`. Skills
   installed for any AI-tool convention show up in the same
   catalogue. Name conflicts resolve first-match-wins per the
   precedence order so workspace-local skills shadow user/global
@@ -864,12 +864,12 @@ Welcome — and thank you.
 - **`tool.spillover` audit event** (#500 polish) — emit a
   discrete audit-log entry whenever `apply_spillover` writes a
   spillover file, so operators tailing
-  `~/.deepseek/audit.log` can correlate large-output episodes
-  with disk-usage growth in `~/.deepseek/tool_outputs/`. Fires
+  `~/.ds/audit.log` can correlate large-output episodes
+  with disk-usage growth in `~/.ds/tool_outputs/`. Fires
   in both the sequential and parallel tool paths.
 - **Prompt stash** (#440) — Ctrl+S in the composer parks the
   current draft to a JSONL-backed stash at
-  `~/.deepseek/composer_stash.jsonl` (no-op on empty composer).
+  `~/.ds/composer_stash.jsonl` (no-op on empty composer).
   `/stash list` shows parked drafts (oldest first, with one-line
   previews and timestamps); `/stash pop` restores the most
   recently parked draft into the composer (LIFO). Self-healing
@@ -896,7 +896,7 @@ Welcome — and thank you.
   enumerates configured lifecycle hooks grouped by event,
   showing each hook's name, command preview, timeout, and
   condition. Notes the global `[hooks].enabled` flag's state.
-  No more `cat ~/.deepseek/config.toml` to debug "did my hook
+  No more `cat ~/.ds/config.toml` to debug "did my hook
   actually load". The picker / persisted enable-disable
   surface from #460 stays as v0.8.9 follow-up. Available via
   `/hooks` or `/hooks list`; aliased to `/hook`. Localized in
@@ -913,9 +913,9 @@ Welcome — and thank you.
 - **`deepseek doctor` reports storage surfaces** (#422 / #440 /
   #500 follow-up) — new `Storage:` section surfaces the
   tool-output spillover dir
-  (`~/.deepseek/tool_outputs/`) with file count and the
+  (`~/.ds/tool_outputs/`) with file count and the
   composer stash file
-  (`~/.deepseek/composer_stash.jsonl`) with parked-draft
+  (`~/.ds/composer_stash.jsonl`) with parked-draft
   count. Mirrored under `storage.{spillover,stash}` in the
   JSON output so `deepseek doctor --json` keeps a stable
   schema.
@@ -932,7 +932,7 @@ Welcome — and thank you.
   Next step. The richer Progress sub-bullets help long
   resumed sessions distinguish "what's verified done" from
   "what's mid-flight" — useful when the model writes
-  `.deepseek/handoff.md` before a long break. Backwards-
+  `.ds/handoff.md` before a long break. Backwards-
   compat: existing handoff.md files continue to render fine
   because the loader injects them as plain markdown (the
   template only guides what NEW handoffs look like). The
@@ -1002,11 +1002,11 @@ Welcome — and thank you.
   renders only the entries that actually match.
 
 - **Linux ARM64 prebuilt binaries** — the release workflow now publishes
-  `deepseek-linux-arm64` and `deepseek-tui-linux-arm64` (built natively on
+  `deepseek-linux-arm64` and `DS-Code-linux-arm64` (built natively on
   GitHub's `ubuntu-24.04-arm` runner). The npm wrapper picks them up
   automatically on `arm64` Linux hosts, so HarmonyOS thin-and-light,
   openEuler/Kylin, Asahi Linux, Raspberry Pi, AWS Graviton, etc. now work
-  with a plain `npm i -g deepseek-tui`.
+  with a plain `npm i -g DS-Code`.
 - **Interactive TUI hangs on `working.` at 100% CPU (#549)** — the event
   loop's blocking terminal poll starved the tokio runtime, preventing the
   engine task from dispatching the API request. Fixed by yielding to the
@@ -1023,7 +1023,7 @@ Welcome — and thank you.
   the host's `os.platform() / os.arch()` combo, the wrapper now prints the
   full `cargo install` fallback recipe and a link to
   [`docs/INSTALL.md`](docs/INSTALL.md) instead of just the bare error.
-- **`DEEPSEEK_TUI_OPTIONAL_INSTALL=1`** — new env knob that downgrades a
+- **`DS_TUI_OPTIONAL_INSTALL=1`** — new env knob that downgrades a
   postinstall failure to a warning + `exit 0`, so CI matrices that include
   unsupported platforms don't fail the whole `npm install`.
 
@@ -1034,8 +1034,8 @@ Welcome — and thank you.
   covering the common `Unsupported architecture`, `MISSING_COMPANION_BINARY`,
   and self-update mismatch errors.
 - README and `README.zh-CN.md` now have an explicit **Linux ARM64** quickstart
-  pointing ARM64 users at `cargo install deepseek-tui-cli deepseek-tui --locked`
-  for v0.8.7 and at `npm i -g deepseek-tui` for v0.8.8+.
+  pointing ARM64 users at `cargo install DS-Code-cli DS-Code --locked`
+  for v0.8.7 and at `npm i -g DS-Code` for v0.8.8+.
 
 ### Releases
 - npm wrapper publish remains manual (npm 2FA OTP requirement).
@@ -1125,7 +1125,7 @@ Welcome — and thank you.
 - **V4 Pro discount expiry extended** (#267) — DeepSeek extended the V4 Pro 75%
   promotional discount from 2026-05-05 15:59 UTC to 2026-05-31 15:59 UTC. Without
   this update the TUI would have started showing 4× the actual billed cost on
-  May 6 onwards. Verified at https://api-docs.deepseek.com/quick_start/pricing.
+  May 6 onwards. Verified at https://api-docs.ds.com/quick_start/pricing.
 
 ## [0.8.3] - 2026-05-01
 
@@ -1137,10 +1137,10 @@ Welcome — and thank you.
   real path captured at discovery and renders that.
 - **Missing-companion error was hostile to direct GitHub Release downloaders**
   (#258) — replaced "Build workspace default members to install it" wall of
-  text with a concrete three-path checklist: `npm install -g deepseek-tui`,
-  `cargo install deepseek-tui-cli deepseek-tui --locked`, or downloading both
-  `deepseek-<platform>` AND `deepseek-tui-<platform>` from the same Release
-  page. `DEEPSEEK_TUI_BIN` stays as a power-user fallback.
+  text with a concrete three-path checklist: `npm install -g DS-Code`,
+  `cargo install DS-Code-cli DS-Code --locked`, or downloading both
+  `deepseek-<platform>` AND `DS-Code-<platform>` from the same Release
+  page. `DS_TUI_BIN` stays as a power-user fallback.
 
 ### Added
 - **Privacy: `$HOME` contracts to `~` in viewer-visible paths** — the TUI,
@@ -1177,7 +1177,7 @@ Welcome — and thank you.
 - **Windows release build (LNK1104)** — drop the `deepseek` shim binary in
   `crates/tui` that 0.8.1 introduced for the bundled `cargo install`. It
   produced a second `target/release/deepseek.exe` that collided with the
-  `deepseek-tui-cli` artifact during workspace builds; the second linker
+  `DS-Code-cli` artifact during workspace builds; the second linker
   invocation hit `LNK1104: cannot open file deepseek.exe` on Windows. The
   cli crate is now the single source of `deepseek`; workspace default
   members still produce both binaries (one per crate).
@@ -1185,7 +1185,7 @@ Welcome — and thank you.
   re-fetches the GitHub-hosted SHA-256 checksum manifest on every invocation.
   When the binary is already installed and its `.version` marker matches the
   package version, the wrapper trusts the local file. The manifest is fetched
-  lazily on actual download (first install or `DEEPSEEK_TUI_FORCE_DOWNLOAD=1`),
+  lazily on actual download (first install or `DS_TUI_FORCE_DOWNLOAD=1`),
   so GitHub flakes, captive portals, corporate proxies, and offline state no
   longer break every command.
 
@@ -1202,19 +1202,19 @@ Welcome — and thank you.
 
 ### Changed
 - **`cargo install` UX** — to install the canonical `deepseek` command,
-  `cargo install deepseek-tui-cli` (the historical path). The 0.8.1
-  one-command flow (`cargo install deepseek-tui` providing both binaries) is
+  `cargo install DS-Code-cli` (the historical path). The 0.8.1
+  one-command flow (`cargo install DS-Code` providing both binaries) is
   reverted because it broke Windows release builds; install both packages
   separately if you want the TUI binary too.
 
 ## [0.8.1] - 2026-05-01
 
 ### Fixed
-- **One-command Cargo install** — `cargo install deepseek-tui --locked` now
-  provides both the canonical `deepseek` dispatcher and the `deepseek-tui`
-  companion binary from the main `deepseek-tui` package, so dispatcher
+- **One-command Cargo install** — `cargo install DS-Code --locked` now
+  provides both the canonical `deepseek` dispatcher and the `DS-Code`
+  companion binary from the main `DS-Code` package, so dispatcher
   subcommands such as `deepseek doctor --json` work without installing
-  `deepseek-tui-cli` separately.
+  `DS-Code-cli` separately.
 
 ## [0.8.0] - 2026-05-01
 
@@ -1281,7 +1281,7 @@ Welcome — and thank you.
 ### Added
 - **Checklist card rendering** — `checklist_write` / `todo_*` results now render as a purpose-built card with completed/total + percent header, per-item status markers (✅ / `●` / `○`), and a collapsing affordance for long lists. Plumbed through `GenericToolCell` so no new variant threading is needed. (#241)
 - **Context menu for transcript operations** — right-click or `Ctrl+M` opens a context-sensitive menu with Copy, Copy All, and selection-aware actions. (`crates/tui/src/tui/context_menu.rs`)
-- **Windows .exe sibling lookup** — `locate_sibling_tui_binary` in the CLI dispatcher finds `deepseek-tui.exe` on Windows, honours `DEEPSEEK_TUI_BIN` override, and falls back to suffix-less lookup. Tests lock in platform-correct name resolution and env override. (#247)
+- **Windows .exe sibling lookup** — `locate_sibling_tui_binary` in the CLI dispatcher finds `DS-Code.exe` on Windows, honours `DS_TUI_BIN` override, and falls back to suffix-less lookup. Tests lock in platform-correct name resolution and env override. (#247)
 
 ### Changed
 - **Swarm/sub-agent canonical data model** — `SwarmTaskOutcome` and `SwarmOutcome` are now the single source of truth. Every UI surface (sidebar, transcript FanoutCard, footer) reads from `swarm_jobs` rather than maintaining parallel projections. (#236, #238)
@@ -1296,7 +1296,7 @@ Welcome — and thank you.
 - Configuration documentation updated for v0.7.7 settings. (`docs/CONFIGURATION.md`, `docs/MODES.md`)
 
 ### Fixed
-- **Windows npm install path** — the npm-distributed `deepseek` dispatcher now locates the platform-correct `deepseek-tui` binary (`.exe` suffix on Windows), fixing runtime failures for Windows users. (#247)
+- **Windows npm install path** — the npm-distributed `deepseek` dispatcher now locates the platform-correct `DS-Code` binary (`.exe` suffix on Windows), fixing runtime failures for Windows users. (#247)
 - **Sidebar/transcript/footer agreement** — all three surfaces now agree on agent counts and status because they share the canonical `swarm_jobs` store. (#236, #238)
 - **Fanout card clobbering** — overlapping swarms no longer overwrite each other's progress cards. (#238)
 - **Cost display regression** — negative reconciliation events (cache-hit discount applied after provisional count) no longer briefly drop the displayed cost. (#244)
@@ -1438,16 +1438,16 @@ Welcome — and thank you.
 ## [0.5.2] - 2026-04-25
 
 ### Added
-- **`/model` opens a Pro/Flash + thinking-effort picker (#39).** Typing `/model` with no argument now pops a two-pane modal: model on the left (`deepseek-v4-pro` flagship, `deepseek-v4-flash` fast/cheap, plus a "current (custom)" row when the active id isn't one of the listed defaults), and thinking effort on the right. Tab/←/→ swaps panes, ↑/↓ moves within the focused pane, Enter applies both selections, Esc cancels. The effort pane intentionally exposes only **Off / High / Max** because [DeepSeek's Thinking Mode docs](https://api-docs.deepseek.com/guides/reasoning_model) state `low`/`medium` are mapped to `high` server-side and `xhigh` is mapped to `max` — the legacy variants stay valid in `~/.deepseek/settings.toml` for back-compat, the picker just doesn't surface them. Apply path persists `default_model` and `reasoning_effort` to settings, forwards `Op::SetModel` + `Op::SetCompaction` to the running engine so the next turn picks up the change without a restart, and resets the per-turn token gauges (cache, replay) so the footer numbers reflect the new model. `/model <id>` keeps working unchanged for power users.
+- **`/model` opens a Pro/Flash + thinking-effort picker (#39).** Typing `/model` with no argument now pops a two-pane modal: model on the left (`deepseek-v4-pro` flagship, `deepseek-v4-flash` fast/cheap, plus a "current (custom)" row when the active id isn't one of the listed defaults), and thinking effort on the right. Tab/←/→ swaps panes, ↑/↓ moves within the focused pane, Enter applies both selections, Esc cancels. The effort pane intentionally exposes only **Off / High / Max** because [DeepSeek's Thinking Mode docs](https://api-docs.ds.com/guides/reasoning_model) state `low`/`medium` are mapped to `high` server-side and `xhigh` is mapped to `max` — the legacy variants stay valid in `~/.ds/settings.toml` for back-compat, the picker just doesn't surface them. Apply path persists `default_model` and `reasoning_effort` to settings, forwards `Op::SetModel` + `Op::SetCompaction` to the running engine so the next turn picks up the change without a restart, and resets the per-turn token gauges (cache, replay) so the footer numbers reflect the new model. `/model <id>` keeps working unchanged for power users.
 
 ## [0.5.1] - 2026-04-25
 
 ### Added
 - **`fetch_url` tool** for direct HTTP GET on a known URL — complements `web_search` for cases where the link is already known. Supports `format` (`markdown` / `text` / `raw`), `max_bytes` (default 1 MB, hard cap 10 MB), `timeout_ms` (default 15 s, max 60 s), redirect following, and structured `{url, status, content_type, content, truncated}` responses. 4xx/5xx bodies are returned (with `success: false`) so the caller can read JSON error envelopes. (#33)
 - **PDF support in `read_file`.** PDFs are auto-detected by extension or `%PDF-` magic bytes and extracted via `pdftotext -layout` (poppler) when available. New optional `pages` arg (`"5"` or `"1-10"`) reads page slices. Without `pdftotext`, returns a structured `{type: "binary_unavailable", kind: "pdf", reason, hint}` with install commands for macOS/Debian. (#34)
-- **Reasoning-content replay telemetry, end-to-end (#30).** The chat-completions sanitizer now estimates replayed `reasoning_content` tokens (~4 chars/token), threads the value through the streaming `Usage` payload, stores it on the App, and renders an `rsn N.Nk` chip in the footer next to the cache hit-rate. The chip turns warning-coloured when replay tokens exceed 50% of the input budget, so users on long thinking-mode loops can see at a glance how much of their context window is going to V4's "Interleaved Thinking" replay (paper §5.1.1). Logged at `RUST_LOG=deepseek_tui=info` for tail-friendly diagnosis.
+- **Reasoning-content replay telemetry, end-to-end (#30).** The chat-completions sanitizer now estimates replayed `reasoning_content` tokens (~4 chars/token), threads the value through the streaming `Usage` payload, stores it on the App, and renders an `rsn N.Nk` chip in the footer next to the cache hit-rate. The chip turns warning-coloured when replay tokens exceed 50% of the input budget, so users on long thinking-mode loops can see at a glance how much of their context window is going to V4's "Interleaved Thinking" replay (paper §5.1.1). Logged at `RUST_LOG=DS_tui=info` for tail-friendly diagnosis.
 - **`@file` Tab-completion (#28).** Typing `@<partial>` and pressing Tab now resolves the mention against the workspace using the existing `ignore::WalkBuilder`. A unique match is spliced into the input; multiple matches with a longer common prefix extend the partial; remaining ambiguity is surfaced via the status line. The mention-expansion path that ships file contents to the model is unchanged — this is purely a discovery aid for typing the path. Inline-contents and a fuzzy popup picker are queued for v0.5.2.
-- **Per-workspace external trust list (#29).** `~/.deepseek/workspace-trust.json` now records, for each workspace, the absolute paths the user has opted into reading/writing from outside that workspace. The new `/trust` slash command supports `add <path>`, `remove <path>`, `list`, `on`, `off`, and a status read with no args; the engine consults the list when constructing every `ToolContext` so changes apply on the next tool call without restart. `/diagnostics` surfaces the list. The interactive "Allow once / Always allow / Deny" approval prompt is deferred — for now grant access ahead of the turn with `/trust add <path>`.
+- **Per-workspace external trust list (#29).** `~/.ds/workspace-trust.json` now records, for each workspace, the absolute paths the user has opted into reading/writing from outside that workspace. The new `/trust` slash command supports `add <path>`, `remove <path>`, `list`, `on`, `off`, and a status read with no args; the engine consults the list when constructing every `ToolContext` so changes apply on the next tool call without restart. `/diagnostics` surfaces the list. The interactive "Allow once / Always allow / Deny" approval prompt is deferred — for now grant access ahead of the turn with `/trust add <path>`.
 
 ### Fixed
 - **TUI sidebar gutter bleed regression test (#36).** Snapshot tests now lock in that long single-line tool results — including a `todo_write` echo of a multi-kilobyte JSON payload — never write any cells outside `chat_area` at the widths reported in the bug (80, 120, 165, 200 cols). A second test verifies the scrollbar coexists with content along the right edge instead of overdrawing the penultimate column.
@@ -1462,7 +1462,7 @@ Welcome — and thank you.
 - Multi-turn tool calls on thinking-mode models no longer return HTTP 400. Every assistant message in the conversation now carries `reasoning_content` when thinking is enabled — not just tool-call rounds — matching DeepSeek's actual API validation, which rejects any assistant message missing the field even though the docs describe non-tool-call reasoning as "ignored".
 - Added a final-pass wire-payload sanitizer in the chat-completions client that forces a non-empty `reasoning_content` placeholder onto any assistant message still missing one at request time. This is the last line of defense after engine-side and build-side substitution, so sessions restored from older checkpoints, sub-agents that append messages directly, and cached prefix mismatches all produce a valid request.
 - On a `reasoning_content`-related 400, the client now logs the offending message indices to make future regressions diagnosable.
-- Stripped phantom `web.run` references from prompts and the `web_search` tool surface ([#25](https://github.com/Hmbown/DeepSeek-TUI/issues/25)).
+- Stripped phantom `web.run` references from prompts and the `web_search` tool surface ([#25](https://github.com/Hmbown/DS-Code/issues/25)).
 
 ### Changed
 - Header/UI widget refactor in the TUI (`crates/tui/src/tui/ui.rs`, `widgets/header.rs`) — internal cleanup, no user-visible behavior change.
@@ -1520,7 +1520,7 @@ Welcome — and thank you.
 - DeepSeek V4 thinking-mode tool calls now preserve prior assistant `reasoning_content` whenever a tool call is replayed, matching DeepSeek's multi-turn contract and avoiding HTTP 400 rejections on later turns.
 - Raw Chat Completions requests now send DeepSeek's top-level `thinking` parameter instead of the OpenAI SDK-only `extra_body` wrapper.
 - Config, env, and UI model selection now normalize legacy DeepSeek aliases to `deepseek-v4-flash` instead of preserving old model labels.
-- npm wrapper first-run downloads now use process-unique temp files so concurrent `deepseek` / `deepseek-tui` invocations do not race on `*.download` files.
+- npm wrapper first-run downloads now use process-unique temp files so concurrent `deepseek` / `DS-Code` invocations do not race on `*.download` files.
 
 ## [0.3.33] - 2026-04-11
 
@@ -1588,16 +1588,16 @@ Welcome — and thank you.
 ## [0.3.29] - 2026-03-03
 
 ### Added
-- Added npm publish-time release asset verification for the `deepseek-tui` package to fail fast when expected GitHub binaries are missing.
+- Added npm publish-time release asset verification for the `DS-Code` package to fail fast when expected GitHub binaries are missing.
 - Added checksum manifests to GitHub release assets and checksum verification in the npm installer.
-- Added `npm pack` install-and-smoke CI coverage for the `deepseek-tui` wrapper package.
+- Added `npm pack` install-and-smoke CI coverage for the `DS-Code` wrapper package.
 - Added an end-to-end release runbook covering crates.io, GitHub Releases, and npm publication.
 
 ### Changed
 - Updated npm package documentation for clearer install modes, environment overrides, and release integrity behavior.
 - Improved installer support-matrix error messaging for unsupported platform/architecture combinations.
 - Decoupled npm package version from default binary artifact version via `deepseekBinaryVersion`, enabling packaging-only npm releases.
-- Moved the `deepseek-tui` binary target inside `crates/tui` so `cargo publish --dry-run -p deepseek-tui` works from the workspace package layout.
+- Moved the `DS-Code` binary target inside `crates/tui` so `cargo publish --dry-run -p DS-Code` works from the workspace package layout.
 - Replaced the root-level crates publish workflow with an ordered workspace publish flow.
 - Reworked first-run onboarding and README copy around primary workflows instead of shortcut memorization.
 - Relaxed onboarding API-key format heuristics so unusual keys warn instead of blocking setup.
@@ -1610,7 +1610,7 @@ Welcome — and thank you.
 
 ### Changed
 - Added parity CI coverage with protocol/state/snapshot checks.
-- Updated release workflow to build both `deepseek` and `deepseek-tui` binaries.
+- Updated release workflow to build both `deepseek` and `DS-Code` binaries.
 
 ## [0.3.26] - 2026-03-02
 
@@ -1685,11 +1685,11 @@ Welcome — and thank you.
 ## [0.3.17] - 2026-02-16
 
 ### Fixed
-- Config loading now expands `~` in `DEEPSEEK_CONFIG_PATH` and `--config` paths.
-- When `DEEPSEEK_CONFIG_PATH` points to a missing file, config loading now falls back to `~/.deepseek/config.toml` if it exists.
+- Config loading now expands `~` in `DS_CONFIG_PATH` and `--config` paths.
+- When `DS_CONFIG_PATH` points to a missing file, config loading now falls back to `~/.ds/config.toml` if it exists.
 
 ### Changed
-- Removed committed transient runtime artifacts (`session_*.json`, `.deepseek/trusted`) and added ignore rules to prevent re-commit.
+- Removed committed transient runtime artifacts (`session_*.json`, `.ds/trusted`) and added ignore rules to prevent re-commit.
 
 ## [0.3.16] - 2026-02-15
 
@@ -1958,44 +1958,44 @@ Welcome — and thank you.
 - Hooks system and config profiles
 - Example skills and launch assets
 
-[Unreleased]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.8.0...HEAD
-[0.8.0]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.7.9...v0.8.0
-[0.7.9]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.7.8...v0.7.9
-[0.7.8]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.7.7...v0.7.8
-[0.7.7]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.7.6...v0.7.7
-[0.7.6]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.7.5...v0.7.6
-[0.6.1]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.6.0...v0.6.1
-[0.6.0]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.4.9...v0.6.0
-[0.4.9]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.4.8...v0.4.9
-[0.4.8]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.33...v0.4.8
-[0.3.33]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.32...v0.3.33
-[0.3.32]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.31...v0.3.32
-[0.3.31]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.28...v0.3.31
-[0.3.28]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.27...v0.3.28
-[0.3.23]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.22...v0.3.23
-[0.3.22]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.21...v0.3.22
-[0.3.21]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.17...v0.3.21
-[0.3.17]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.16...v0.3.17
-[0.3.16]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.14...v0.3.16
-[0.3.14]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.13...v0.3.14
-[0.3.13]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.12...v0.3.13
-[0.3.12]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.11...v0.3.12
-[0.3.11]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.10...v0.3.11
-[0.3.10]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.6...v0.3.10
-[0.3.6]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.5...v0.3.6
-[0.3.5]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.4...v0.3.5
-[0.3.4]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.3...v0.3.4
-[0.3.3]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.2...v0.3.3
-[0.3.2]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.1...v0.3.2
-[0.3.1]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.2.2...v0.3.0
-[0.2.2]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.2.0...v0.2.2
-[0.2.0]: https://github.com/Hmbown/DeepSeek-TUI/releases/tag/v0.2.0
-[0.0.2]: https://github.com/Hmbown/DeepSeek-TUI/releases/tag/v0.0.2
-[0.0.1]: https://github.com/Hmbown/DeepSeek-TUI/releases/tag/v0.0.1
-[0.1.9]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.1.8...v0.1.9
-[0.1.8]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.1.7...v0.1.8
-[0.1.7]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.1.6...v0.1.7
-[0.1.6]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.1.5...v0.1.6
-[0.1.5]: https://github.com/Hmbown/DeepSeek-TUI/compare/v0.1.0...v0.1.5
-[0.1.0]: https://github.com/Hmbown/DeepSeek-TUI/releases/tag/v0.1.0
+[Unreleased]: https://github.com/Hmbown/DS-Code/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/Hmbown/DS-Code/compare/v0.7.9...v0.8.0
+[0.7.9]: https://github.com/Hmbown/DS-Code/compare/v0.7.8...v0.7.9
+[0.7.8]: https://github.com/Hmbown/DS-Code/compare/v0.7.7...v0.7.8
+[0.7.7]: https://github.com/Hmbown/DS-Code/compare/v0.7.6...v0.7.7
+[0.7.6]: https://github.com/Hmbown/DS-Code/compare/v0.7.5...v0.7.6
+[0.6.1]: https://github.com/Hmbown/DS-Code/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/Hmbown/DS-Code/compare/v0.4.9...v0.6.0
+[0.4.9]: https://github.com/Hmbown/DS-Code/compare/v0.4.8...v0.4.9
+[0.4.8]: https://github.com/Hmbown/DS-Code/compare/v0.3.33...v0.4.8
+[0.3.33]: https://github.com/Hmbown/DS-Code/compare/v0.3.32...v0.3.33
+[0.3.32]: https://github.com/Hmbown/DS-Code/compare/v0.3.31...v0.3.32
+[0.3.31]: https://github.com/Hmbown/DS-Code/compare/v0.3.28...v0.3.31
+[0.3.28]: https://github.com/Hmbown/DS-Code/compare/v0.3.27...v0.3.28
+[0.3.23]: https://github.com/Hmbown/DS-Code/compare/v0.3.22...v0.3.23
+[0.3.22]: https://github.com/Hmbown/DS-Code/compare/v0.3.21...v0.3.22
+[0.3.21]: https://github.com/Hmbown/DS-Code/compare/v0.3.17...v0.3.21
+[0.3.17]: https://github.com/Hmbown/DS-Code/compare/v0.3.16...v0.3.17
+[0.3.16]: https://github.com/Hmbown/DS-Code/compare/v0.3.14...v0.3.16
+[0.3.14]: https://github.com/Hmbown/DS-Code/compare/v0.3.13...v0.3.14
+[0.3.13]: https://github.com/Hmbown/DS-Code/compare/v0.3.12...v0.3.13
+[0.3.12]: https://github.com/Hmbown/DS-Code/compare/v0.3.11...v0.3.12
+[0.3.11]: https://github.com/Hmbown/DS-Code/compare/v0.3.10...v0.3.11
+[0.3.10]: https://github.com/Hmbown/DS-Code/compare/v0.3.6...v0.3.10
+[0.3.6]: https://github.com/Hmbown/DS-Code/compare/v0.3.5...v0.3.6
+[0.3.5]: https://github.com/Hmbown/DS-Code/compare/v0.3.4...v0.3.5
+[0.3.4]: https://github.com/Hmbown/DS-Code/compare/v0.3.3...v0.3.4
+[0.3.3]: https://github.com/Hmbown/DS-Code/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/Hmbown/DS-Code/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/Hmbown/DS-Code/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/Hmbown/DS-Code/compare/v0.2.2...v0.3.0
+[0.2.2]: https://github.com/Hmbown/DS-Code/compare/v0.2.0...v0.2.2
+[0.2.0]: https://github.com/Hmbown/DS-Code/releases/tag/v0.2.0
+[0.0.2]: https://github.com/Hmbown/DS-Code/releases/tag/v0.0.2
+[0.0.1]: https://github.com/Hmbown/DS-Code/releases/tag/v0.0.1
+[0.1.9]: https://github.com/Hmbown/DS-Code/compare/v0.1.8...v0.1.9
+[0.1.8]: https://github.com/Hmbown/DS-Code/compare/v0.1.7...v0.1.8
+[0.1.7]: https://github.com/Hmbown/DS-Code/compare/v0.1.6...v0.1.7
+[0.1.6]: https://github.com/Hmbown/DS-Code/compare/v0.1.5...v0.1.6
+[0.1.5]: https://github.com/Hmbown/DS-Code/compare/v0.1.0...v0.1.5
+[0.1.0]: https://github.com/Hmbown/DS-Code/releases/tag/v0.1.0

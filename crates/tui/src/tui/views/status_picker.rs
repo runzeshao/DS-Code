@@ -3,7 +3,7 @@
 //! Mirrors codex-rs's `bottom_pane::status_line_setup` ergonomically: a
 //! checklist of footer items the user can toggle on/off with Space (or
 //! Enter), reordered by ↑/↓, applied immediately so the live footer
-//! reflects every change. Enter saves to `~/.deepseek/config.toml` under
+//! reflects every change. Enter saves to `~/.ds/config.toml` under
 //! `tui.status_items`; Esc reverts to the snapshot taken on open.
 //!
 //! The picker enumerates [`StatusItem::all`] so adding a new variant in
@@ -171,7 +171,7 @@ impl ModalView for StatusPickerView {
             .title(Line::from(Span::styled(
                 " Status line ",
                 Style::default()
-                    .fg(palette::DEEPSEEK_SKY)
+                    .fg(palette::DS_SKY)
                     .add_modifier(Modifier::BOLD),
             )))
             .title_bottom(Line::from(vec![
@@ -188,7 +188,7 @@ impl ModalView for StatusPickerView {
             ]))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(palette::BORDER_COLOR))
-            .style(Style::default().bg(palette::DEEPSEEK_INK))
+            .style(Style::default().bg(palette::DS_INK))
             .padding(Padding::uniform(1));
 
         let inner = block.inner(popup_area);

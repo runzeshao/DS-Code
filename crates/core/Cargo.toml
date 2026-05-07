@@ -1,5 +1,5 @@
 [package]
-name = "deepseek-core"
+name = "ds-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,13 +9,13 @@ description = "Core runtime boundaries for DeepSeek workspace architecture"
 [dependencies]
 anyhow.workspace = true
 chrono.workspace = true
-deepseek-agent = { path = "../agent", version = "0.8.17" }
-deepseek-config = { path = "../config", version = "0.8.17" }
-deepseek-execpolicy = { path = "../execpolicy", version = "0.8.17" }
-deepseek-hooks = { path = "../hooks", version = "0.8.17" }
-deepseek-mcp = { path = "../mcp", version = "0.8.17" }
-deepseek-protocol = { path = "../protocol", version = "0.8.17" }
-deepseek-state = { path = "../state", version = "0.8.17" }
-deepseek-tools = { path = "../tools", version = "0.8.17" }
+ds-agent = { path = "../agent", version = "0.8.17" }
+ds-config = { path = "../config", version = "0.8.17" }
+ds-execpolicy = { path = "../execpolicy", version = "0.8.17" }
+ds-hooks = { path = "../hooks", version = "0.8.17" }
+ds-mcp = { path = "../mcp", version = "0.8.17" }
+ds-protocol = { path = "../protocol", version = "0.8.17" }
+ds-state = { path = "../state", version = "0.8.17" }
+ds-tools = { path = "../tools", version = "0.8.17" }
 serde_json.workspace = true
 uuid.workspace = true

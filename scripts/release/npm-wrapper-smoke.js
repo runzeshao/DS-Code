@@ -8,7 +8,7 @@ const path = require("path");
 const { spawn } = require("child_process");
 
 const repoRoot = path.resolve(__dirname, "..", "..");
-const packageDir = path.join(repoRoot, "npm", "deepseek-tui");
+const packageDir = path.join(repoRoot, "npm", "DS-Code");
 const prepareAssetsScript = path.join(
   repoRoot,
   "scripts",
@@ -133,11 +133,11 @@ function parsePackJson(stdout) {
 }
 
 async function main() {
-  const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "deepseek-npm-smoke-"));
+  const tempRoot = await fsp.mkdtemp(path.join(os.tmpdir(), "ds-npm-smoke-"));
   const releaseAssetsDir = path.join(tempRoot, "release-assets");
   const packDir = path.join(tempRoot, "pack");
   const installDir = path.join(tempRoot, "install");
-  let keepTemp = process.env.DEEPSEEK_TUI_KEEP_SMOKE_DIR === "1";
+  let keepTemp = process.env.DS_TUI_KEEP_SMOKE_DIR === "1";
   let server;
 
   try {
@@ -149,8 +149,8 @@ async function main() {
     server = served.server;
 
     const env = {
-      DEEPSEEK_TUI_FORCE_DOWNLOAD: "1",
-      DEEPSEEK_TUI_RELEASE_BASE_URL: served.baseUrl,
+      DS_TUI_FORCE_DOWNLOAD: "1",
+      DS_TUI_RELEASE_BASE_URL: served.baseUrl,
     };
     const pack = await runCommand(
       "npm",
@@ -165,11 +165,11 @@ async function main() {
 
     await runCommand("npm", ["init", "-y"], { cwd: installDir });
     await runCommand("npm", ["install", tarball], { cwd: installDir, env });
-    await runCommand("npx", ["--no-install", "deepseek", "doctor", "--help"], {
+    await runCommand("npx", ["--no-install", "ds", "doctor", "--help"], {
       cwd: installDir,
       env,
     });
-    await runCommand("npx", ["--no-install", "deepseek-tui", "--help"], {
+    await runCommand("npx", ["--no-install", "DS-Code", "--help"], {
       cwd: installDir,
       env,
     });

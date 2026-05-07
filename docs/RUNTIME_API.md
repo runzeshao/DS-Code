@@ -68,7 +68,7 @@ deepseek doctor --json
 | `mcp.present` | bool | Whether MCP config exists |
 | `mcp.servers` | array | Per-server health: `{name, enabled, status, detail}` |
 | `skills.selected` | string | Resolved skills directory |
-| `skills.global.path` / `.present` / `.count` | — | DeepSeek global skills dir (`~/.deepseek/skills`) |
+| `skills.global.path` / `.present` / `.count` | — | DeepSeek global skills dir (`~/.ds/skills`) |
 | `skills.agents.path` / `.present` / `.count` | — | Workspace `.agents/skills/` dir |
 | `skills.agents_global.path` / `.present` / `.count` | — | agentskills.io global skills dir (`~/.agents/skills`) |
 | `skills.local.path` / `.present` / `.count` | — | `skills/` dir |
@@ -86,9 +86,9 @@ deepseek doctor --json
 ```json
 {
   "version": "0.8.9",
-  "config_path": "/Users/you/.deepseek/config.toml",
+  "config_path": "/Users/you/.ds/config.toml",
   "config_present": true,
-  "workspace": "/Users/you/projects/deepseek-tui",
+  "workspace": "/Users/you/projects/DS-Code",
   "api_key": {
     "source": "env"
   },
@@ -96,11 +96,11 @@ deepseek doctor --json
   "default_text_model": "deepseek-v4-pro",
   "memory": {
     "enabled": false,
-    "path": "/Users/you/.deepseek/memory.md",
+    "path": "/Users/you/.ds/memory.md",
     "file_present": true
   },
   "mcp": {
-    "config_path": "/Users/you/.deepseek/mcp.json",
+    "config_path": "/Users/you/.ds/mcp.json",
     "present": true,
     "servers": [
       {"name": "filesystem", "enabled": true, "status": "ok", "detail": "ready"}
@@ -126,7 +126,7 @@ there is no `[app_server]` config section.
 
 By default, existing local behavior is unchanged and `/v1/*` routes are not
 authenticated. To require a bearer token for `/v1/*` routes, pass
-`--auth-token TOKEN` or set `DEEPSEEK_RUNTIME_TOKEN=TOKEN` before starting the
+`--auth-token TOKEN` or set `DS_RUNTIME_TOKEN=TOKEN` before starting the
 server. `/health` remains public for local process supervision and readiness
 checks.
 
@@ -307,7 +307,7 @@ Common event names: `thread.started`, `thread.forked`, `turn.started`,
 - **Localhost only**. The server binds to `127.0.0.1` by default. Set
   `--host 0.0.0.0` only when you have a reverse-proxy / VPN that
   authenticates. The runtime does not provide user isolation or TLS.
-- **Optional token guard**. `--auth-token` or `DEEPSEEK_RUNTIME_TOKEN`
+- **Optional token guard**. `--auth-token` or `DS_RUNTIME_TOKEN`
   requires a matching bearer token for `/v1/*` routes. This is a local
   convenience guard, not a replacement for TLS, VPN, or a trusted reverse
   proxy on public networks.
@@ -327,8 +327,8 @@ The runtime API ships with a built-in dev-origin allow-list:
 when developing a UI on Vite's default `:5173`), use any of:
 
 - CLI flag (repeatable): `deepseek serve --http --cors-origin http://localhost:5173`
-- Env var (comma-separated): `DEEPSEEK_CORS_ORIGINS="http://localhost:5173,http://localhost:8080"`
-- Config (`~/.deepseek/config.toml`):
+- Env var (comma-separated): `DS_CORS_ORIGINS="http://localhost:5173,http://localhost:8080"`
+- Config (`~/.ds/config.toml`):
   ```toml
   [runtime_api]
   cors_origins = ["http://localhost:5173"]

@@ -3,10 +3,10 @@
 ## Crate Dependencies (from Cargo.toml)
 
 ```
-deepseek-tui (binary: `deepseek-tui`)
+DS-Code (binary: `DS-Code`)
   (no workspace deps — monolith source under crates/tui/src/)
 
-deepseek-tui-cli (binary: `deepseek`)
+DS-Code-cli (binary: `deepseek`)
   <- deepseek-agent
   <- deepseek-app-server
   <- deepseek-config
@@ -44,10 +44,10 @@ deepseek-agent      <- deepseek-config
 deepseek-config     (leaf — no internal deps)
 deepseek-protocol   (leaf — no internal deps)
 deepseek-state      (leaf — no internal deps)
-deepseek-tui-core   (leaf — no internal deps)
+DS-Code-core   (leaf — no internal deps)
 ```
 
-Note: `deepseek-tui` has zero workspace deps because it still compiles the
+Note: `DS-Code` has zero workspace deps because it still compiles the
 monolith source tree (`crates/tui/src/main.rs`). The crate split is
 structural — source migration into individual workspace crates is
 incremental.
@@ -55,11 +55,11 @@ incremental.
 ## Build Order (bottom-up)
 
 ```
-Layer 0 (leaves):  deepseek-protocol, deepseek-config, deepseek-state, deepseek-tui-core
+Layer 0 (leaves):  deepseek-protocol, deepseek-config, deepseek-state, DS-Code-core
 Layer 1:           deepseek-tools, deepseek-mcp, deepseek-hooks, deepseek-execpolicy
 Layer 2:           deepseek-agent
 Layer 3:           deepseek-core
-Layer 4:           deepseek-app-server, deepseek-tui
-Layer 5:           deepseek-tui-cli
+Layer 4:           deepseek-app-server, DS-Code
+Layer 5:           DS-Code-cli
 ```
 

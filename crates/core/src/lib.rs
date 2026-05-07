@@ -3,27 +3,27 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use anyhow::Result;
-use deepseek_agent::ModelRegistry;
-use deepseek_config::{CliRuntimeOverrides, ConfigToml, ProviderKind};
-use deepseek_execpolicy::{
+use ds_agent::ModelRegistry;
+use ds_config::{CliRuntimeOverrides, ConfigToml, ProviderKind};
+use ds_execpolicy::{
     AskForApproval, ExecApprovalRequirement, ExecPolicyContext, ExecPolicyDecision,
     ExecPolicyEngine,
 };
-use deepseek_hooks::{HookDispatcher, HookEvent};
-use deepseek_mcp::{
+use ds_hooks::{HookDispatcher, HookEvent};
+use ds_mcp::{
     McpManager, McpStartupCompleteEvent, McpStartupStatus as McpManagerStartupStatus,
 };
-use deepseek_protocol::{
+use ds_protocol::{
     AppResponse, EventFrame, ExecApprovalRequestEvent, PromptRequest, PromptResponse,
     ResponseChannel, ReviewDecision, Thread, ThreadForkParams, ThreadListParams, ThreadReadParams,
     ThreadRequest, ThreadResponse, ThreadResumeParams, ThreadSetNameParams, ThreadStatus,
     ToolPayload,
 };
-use deepseek_state::{
+use ds_state::{
     JobStateRecord, JobStateStatus, SessionSource, StateStore, ThreadListFilters, ThreadMetadata,
     ThreadStatus as PersistedThreadStatus,
 };
-use deepseek_tools::{ToolCall, ToolRegistry};
+use ds_tools::{ToolCall, ToolRegistry};
 use serde_json::{Value, json};
 use uuid::Uuid;
 
@@ -425,11 +425,11 @@ impl ThreadManager {
             cwd: cwd.clone(),
             cli_version: self.cli_version.clone(),
             source: match source {
-                SessionSource::Interactive => deepseek_protocol::SessionSource::Interactive,
-                SessionSource::Resume => deepseek_protocol::SessionSource::Resume,
-                SessionSource::Fork => deepseek_protocol::SessionSource::Fork,
-                SessionSource::Api => deepseek_protocol::SessionSource::Api,
-                SessionSource::Unknown => deepseek_protocol::SessionSource::Unknown,
+                SessionSource::Interactive => ds_protocol::SessionSource::Interactive,
+                SessionSource::Resume => ds_protocol::SessionSource::Resume,
+                SessionSource::Fork => ds_protocol::SessionSource::Fork,
+                SessionSource::Api => ds_protocol::SessionSource::Api,
+                SessionSource::Unknown => ds_protocol::SessionSource::Unknown,
             },
             name: None,
         };
@@ -1196,19 +1196,19 @@ impl Runtime {
         });
         for update in updates {
             let status = match update.status {
-                McpManagerStartupStatus::Starting => deepseek_protocol::McpStartupStatus::Starting,
-                McpManagerStartupStatus::Ready => deepseek_protocol::McpStartupStatus::Ready,
+                McpManagerStartupStatus::Starting => ds_protocol::McpStartupStatus::Starting,
+                McpManagerStartupStatus::Ready => ds_protocol::McpStartupStatus::Ready,
                 McpManagerStartupStatus::Failed { error } => {
-                    deepseek_protocol::McpStartupStatus::Failed { error }
+                    ds_protocol::McpStartupStatus::Failed { error }
                 }
                 McpManagerStartupStatus::Cancelled => {
-                    deepseek_protocol::McpStartupStatus::Cancelled
+                    ds_protocol::McpStartupStatus::Cancelled
                 }
             };
             self.hooks
                 .emit(HookEvent::GenericEventFrame {
                     frame: EventFrame::McpStartupUpdate {
-                        update: deepseek_protocol::McpStartupUpdateEvent {
+                        update: ds_protocol::McpStartupUpdateEvent {
                             server_name: update.server_name,
                             status,
                         },
@@ -1219,12 +1219,12 @@ impl Runtime {
         self.hooks
             .emit(HookEvent::GenericEventFrame {
                 frame: EventFrame::McpStartupComplete {
-                    summary: deepseek_protocol::McpStartupCompleteEvent {
+                    summary: ds_protocol::McpStartupCompleteEvent {
                         ready: summary.ready.clone(),
                         failed: summary
                             .failed
                             .iter()
-                            .map(|f| deepseek_protocol::McpStartupFailure {
+                            .map(|f| ds_protocol::McpStartupFailure {
                                 server_name: f.server_name.clone(),
                                 error: f.error.clone(),
                             })
@@ -1422,11 +1422,11 @@ fn to_protocol_thread(thread: ThreadMetadata) -> Thread {
         cwd: thread.cwd,
         cli_version: thread.cli_version,
         source: match thread.source {
-            SessionSource::Interactive => deepseek_protocol::SessionSource::Interactive,
-            SessionSource::Resume => deepseek_protocol::SessionSource::Resume,
-            SessionSource::Fork => deepseek_protocol::SessionSource::Fork,
-            SessionSource::Api => deepseek_protocol::SessionSource::Api,
-            SessionSource::Unknown => deepseek_protocol::SessionSource::Unknown,
+            SessionSource::Interactive => ds_protocol::SessionSource::Interactive,
+            SessionSource::Resume => ds_protocol::SessionSource::Resume,
+            SessionSource::Fork => ds_protocol::SessionSource::Fork,
+            SessionSource::Api => ds_protocol::SessionSource::Api,
+            SessionSource::Unknown => ds_protocol::SessionSource::Unknown,
         },
         name: thread.name,
     }
@@ -1443,13 +1443,13 @@ fn to_persisted_status(status: &ThreadStatus) -> PersistedThreadStatus {
     }
 }
 
-fn to_persisted_source(source: &deepseek_protocol::SessionSource) -> SessionSource {
+fn to_persisted_source(source: &ds_protocol::SessionSource) -> SessionSource {
     match source {
-        deepseek_protocol::SessionSource::Interactive => SessionSource::Interactive,
-        deepseek_protocol::SessionSource::Resume => SessionSource::Resume,
-        deepseek_protocol::SessionSource::Fork => SessionSource::Fork,
-        deepseek_protocol::SessionSource::Api => SessionSource::Api,
-        deepseek_protocol::SessionSource::Unknown => SessionSource::Unknown,
+        ds_protocol::SessionSource::Interactive => SessionSource::Interactive,
+        ds_protocol::SessionSource::Resume => SessionSource::Resume,
+        ds_protocol::SessionSource::Fork => SessionSource::Fork,
+        ds_protocol::SessionSource::Api => SessionSource::Api,
+        ds_protocol::SessionSource::Unknown => SessionSource::Unknown,
     }
 }
 
@@ -1568,7 +1568,7 @@ fn tool_payload_value(payload: &ToolPayload) -> Value {
     )
 }
 
-fn tool_output_value(output: &deepseek_protocol::ToolOutput) -> Value {
+fn tool_output_value(output: &ds_protocol::ToolOutput) -> Value {
     serde_json::to_value(output).unwrap_or_else(
         |_| json!({"type":"serialization_error","message":"tool output unavailable"}),
     )

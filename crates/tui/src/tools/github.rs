@@ -300,7 +300,7 @@ impl ToolSpec for GithubCloseIssueTool {
 }
 
 fn gh_bin() -> String {
-    std::env::var("DEEPSEEK_GH_BIN").unwrap_or_else(|_| DEFAULT_GH.to_string())
+    std::env::var("DS_GH_BIN").unwrap_or_else(|_| DEFAULT_GH.to_string())
 }
 
 fn run_gh_text(context: &ToolContext, args: &[&str]) -> Result<String, ToolError> {

@@ -97,7 +97,7 @@ the next turn.
 ## Concurrency cap
 
 The dispatcher caps concurrent sub-agents at 10 by default
-(configurable via `[subagents].max_concurrent` in `~/.deepseek/config.toml`,
+(configurable via `[subagents].max_concurrent` in `~/.ds/config.toml`,
 hard ceiling 20). When the parent hits the cap, `agent_spawn` returns
 an error with the cap value; the parent should `agent_wait` for
 completion or `agent_cancel` to free a slot before retrying.
@@ -117,7 +117,7 @@ Pending → Running → (Completed | Failed(reason) | Cancelled | Interrupted(re
 
 `Interrupted` fires when the manager detects a `Running` agent
 whose task handle is gone — typically after a process restart that
-loaded the agent from `~/.deepseek/subagents.v1.json`. The parent
+loaded the agent from `~/.ds/subagents.v1.json`. The parent
 can `agent_resume` to attempt continuation or treat it as a
 terminal state.
 
@@ -157,7 +157,7 @@ explorers and reviewers should be precise here.
 ## Memory and the `remember` tool (#489)
 
 Sub-agents inherit the parent's memory file when memory is enabled
-(`[memory] enabled = true` or `DEEPSEEK_MEMORY=on`). They can
+(`[memory] enabled = true` or `DS_MEMORY=on`). They can
 append durable notes via the `remember` tool — handy for an
 explorer that discovers a project convention worth carrying across
 sessions, or a verifier that learns "this test is flaky".
@@ -168,7 +168,7 @@ don't go through the standard write-approval flow.
 ## Implementation notes
 
 - Source: `crates/tui/src/tools/subagent/mod.rs` (about 3500 LOC).
-- Persisted state: `~/.deepseek/subagents.v1.json`. Schema version
+- Persisted state: `~/.ds/subagents.v1.json`. Schema version
   `1` (forward-compatible — new optional fields use
   `#[serde(default)]`).
 - The `is_running` check ignores agents whose `task_handle` is

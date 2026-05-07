@@ -175,7 +175,7 @@ impl<'a> HeaderWidget<'a> {
         } else if percent >= CONTEXT_WARNING_THRESHOLD_PERCENT {
             palette::STATUS_WARNING
         } else {
-            palette::DEEPSEEK_SKY
+            palette::DS_SKY
         }
     }
 
@@ -228,7 +228,7 @@ impl<'a> HeaderWidget<'a> {
         vec![Span::styled(
             trimmed.to_string(),
             Style::default()
-                .fg(palette::DEEPSEEK_SKY)
+                .fg(palette::DS_SKY)
                 .add_modifier(Modifier::BOLD),
         )]
     }
@@ -245,7 +245,7 @@ impl<'a> HeaderWidget<'a> {
         let color = if is_off {
             palette::TEXT_HINT
         } else {
-            palette::DEEPSEEK_SKY
+            palette::DS_SKY
         };
         let body = if !include_prefix {
             trimmed.to_string()
@@ -287,7 +287,7 @@ impl<'a> HeaderWidget<'a> {
             spans.push(Span::styled(
                 "●",
                 Style::default()
-                    .fg(palette::DEEPSEEK_SKY)
+                    .fg(palette::DS_SKY)
                     .add_modifier(Modifier::BOLD),
             ));
             if show_stream_label {
@@ -492,15 +492,15 @@ mod tests {
             HeaderData::new(
                 AppMode::Agent,
                 "deepseek-v4-pro",
-                "deepseek-tui",
+                "DS-Code",
                 false,
-                palette::DEEPSEEK_INK,
+                palette::DS_INK,
             ),
             72,
         );
 
         assert!(rendered.contains("Agent"));
-        assert!(rendered.contains("deepseek-tui"));
+        assert!(rendered.contains("DS-Code"));
         assert!(rendered.contains("deepseek-v4-pro"));
         assert!(!rendered.contains("Plan"));
         assert!(!rendered.contains("Yolo"));
@@ -514,7 +514,7 @@ mod tests {
                 "deepseek-v4-pro",
                 "workspace",
                 true,
-                palette::DEEPSEEK_INK,
+                palette::DS_INK,
             )
             .with_usage(42_000, Some(128_000), 0.0, Some(48_000)),
             72,
@@ -528,7 +528,7 @@ mod tests {
     #[test]
     fn narrow_header_keeps_context_percent_visible() {
         let rendered = render_header(
-            HeaderData::new(AppMode::Agent, "", "", true, palette::DEEPSEEK_INK).with_usage(
+            HeaderData::new(AppMode::Agent, "", "", true, palette::DS_INK).with_usage(
                 0,
                 Some(128_000),
                 0.0,
@@ -548,7 +548,7 @@ mod tests {
                 "deepseek-v4-flash",
                 "repo",
                 true,
-                palette::DEEPSEEK_INK,
+                palette::DS_INK,
             )
             .with_usage(1_000, Some(10_000), 0.0, Some(4_000)),
             8,
@@ -567,7 +567,7 @@ mod tests {
                 "deepseek-v4-flash",
                 "repo",
                 false,
-                palette::DEEPSEEK_INK,
+                palette::DS_INK,
             ),
             48,
         );
@@ -584,7 +584,7 @@ mod tests {
                 "deepseek-v4-flash",
                 "repo",
                 false,
-                palette::DEEPSEEK_INK,
+                palette::DS_INK,
             )
             .with_usage(1_000, Some(128_000), 0.0, Some(320_000)),
             48,
@@ -600,9 +600,9 @@ mod tests {
             HeaderData::new(
                 AppMode::Agent,
                 "deepseek-ai/deepseek-v4-flash",
-                "deepseek-tui",
+                "DS-Code",
                 false,
-                palette::DEEPSEEK_INK,
+                palette::DS_INK,
             )
             .with_provider(Some("NIM")),
             72,
@@ -619,9 +619,9 @@ mod tests {
             HeaderData::new(
                 AppMode::Agent,
                 "deepseek-v4-pro",
-                "deepseek-tui",
+                "DS-Code",
                 false,
-                palette::DEEPSEEK_INK,
+                palette::DS_INK,
             ),
             72,
         );

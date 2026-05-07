@@ -22,10 +22,10 @@ pub struct CapacityControllerConfig {
 impl Default for CapacityControllerConfig {
     fn default() -> Self {
         let mut model_priors = HashMap::new();
-        model_priors.insert("deepseek_v3_2_chat".to_string(), 3.9);
-        model_priors.insert("deepseek_v3_2_reasoner".to_string(), 4.1);
-        model_priors.insert("deepseek_v4_pro".to_string(), 3.5);
-        model_priors.insert("deepseek_v4_flash".to_string(), 4.2);
+        model_priors.insert("DS_v3_2_chat".to_string(), 3.9);
+        model_priors.insert("DS_v3_2_reasoner".to_string(), 4.1);
+        model_priors.insert("DS_v4_pro".to_string(), 3.5);
+        model_priors.insert("DS_v4_flash".to_string(), 4.2);
 
         Self {
             // OFF BY DEFAULT since v0.8.11. The capacity controller's
@@ -37,7 +37,7 @@ impl Default for CapacityControllerConfig {
             // Auto-managing the prefix on the user's behalf works against
             // that posture. Power users who want the controller can opt
             // in via `capacity.enabled = true` in
-            // `~/.deepseek/config.toml`.
+            // `~/.ds/config.toml`.
             enabled: false,
             // Thresholds retained for the opt-in path; tuning notes live
             // in git history (#63 follow-up).
@@ -96,18 +96,18 @@ impl CapacityControllerConfig {
             out.profile_window = v.max(2);
         }
 
-        if let Some(v) = capacity.deepseek_v3_2_chat_prior {
-            out.model_priors.insert("deepseek_v3_2_chat".to_string(), v);
+        if let Some(v) = capacity.ds_v3_2_chat_prior {
+            out.model_priors.insert("DS_v3_2_chat".to_string(), v);
         }
-        if let Some(v) = capacity.deepseek_v3_2_reasoner_prior {
+        if let Some(v) = capacity.ds_v3_2_reasoner_prior {
             out.model_priors
-                .insert("deepseek_v3_2_reasoner".to_string(), v);
+                .insert("DS_v3_2_reasoner".to_string(), v);
         }
-        if let Some(v) = capacity.deepseek_v4_pro_prior {
-            out.model_priors.insert("deepseek_v4_pro".to_string(), v);
+        if let Some(v) = capacity.ds_v4_pro_prior {
+            out.model_priors.insert("DS_v4_pro".to_string(), v);
         }
-        if let Some(v) = capacity.deepseek_v4_flash_prior {
-            out.model_priors.insert("deepseek_v4_flash".to_string(), v);
+        if let Some(v) = capacity.ds_v4_flash_prior {
+            out.model_priors.insert("DS_v4_flash".to_string(), v);
         }
         if let Some(v) = capacity.fallback_default_prior {
             out.fallback_default = v;
@@ -487,13 +487,13 @@ fn normalize_model_prior_key(model: &str) -> &str {
     // because those branches do not contain "v4" tokens and the ordering prevents
     // accidental cross-matches.
     if lower.contains("v4-pro") || lower.contains("v4_pro") {
-        "deepseek_v4_pro"
+        "DS_v4_pro"
     } else if lower.contains("v4-flash") || lower.contains("v4_flash") {
-        "deepseek_v4_flash"
+        "DS_v4_flash"
     } else if lower.contains("reasoner") || lower.contains("r1") {
-        "deepseek_v3_2_reasoner"
+        "DS_v3_2_reasoner"
     } else if lower.contains("chat") || lower.contains("v3") {
-        "deepseek_v3_2_chat"
+        "DS_v3_2_chat"
     } else {
         "fallback_default"
     }
@@ -674,27 +674,27 @@ mod tests {
         assert_eq!(cfg.low_risk_max, 0.50);
         assert_eq!(cfg.refresh_cooldown_turns, 6);
         assert_eq!(cfg.min_turns_before_guardrail, 4);
-        assert_eq!(cfg.model_priors.get("deepseek_v4_pro"), Some(&3.5));
-        assert_eq!(cfg.model_priors.get("deepseek_v4_flash"), Some(&4.2));
+        assert_eq!(cfg.model_priors.get("DS_v4_pro"), Some(&3.5));
+        assert_eq!(cfg.model_priors.get("DS_v4_flash"), Some(&4.2));
     }
 
     #[test]
     fn normalize_v4_pro_variants() {
         assert_eq!(
             normalize_model_prior_key("deepseek-v4-pro"),
-            "deepseek_v4_pro"
+            "DS_v4_pro"
         );
         assert_eq!(
             normalize_model_prior_key("deepseek-v4_pro"),
-            "deepseek_v4_pro"
+            "DS_v4_pro"
         );
         assert_eq!(
             normalize_model_prior_key("deepseek-ai/deepseek-v4-pro"),
-            "deepseek_v4_pro"
+            "DS_v4_pro"
         );
         assert_eq!(
             normalize_model_prior_key("deepseek-ai/deepseek-v4_pro"),
-            "deepseek_v4_pro"
+            "DS_v4_pro"
         );
     }
 
@@ -702,19 +702,19 @@ mod tests {
     fn normalize_v4_flash_variants() {
         assert_eq!(
             normalize_model_prior_key("deepseek-v4-flash"),
-            "deepseek_v4_flash"
+            "DS_v4_flash"
         );
         assert_eq!(
             normalize_model_prior_key("deepseek-v4_flash"),
-            "deepseek_v4_flash"
+            "DS_v4_flash"
         );
         assert_eq!(
             normalize_model_prior_key("deepseek-ai/deepseek-v4-flash"),
-            "deepseek_v4_flash"
+            "DS_v4_flash"
         );
         assert_eq!(
             normalize_model_prior_key("deepseek-ai/deepseek-v4_flash"),
-            "deepseek_v4_flash"
+            "DS_v4_flash"
         );
     }
 
@@ -722,11 +722,11 @@ mod tests {
     fn normalize_v4_and_fallback_prior_keys() {
         assert_eq!(
             normalize_model_prior_key("deepseek-v4-pro"),
-            "deepseek_v4_pro"
+            "DS_v4_pro"
         );
         assert_eq!(
             normalize_model_prior_key("deepseek-v4-flash"),
-            "deepseek_v4_flash"
+            "DS_v4_flash"
         );
         assert_eq!(
             normalize_model_prior_key("unknown-model"),
@@ -737,9 +737,9 @@ mod tests {
     #[test]
     fn v4_priors_loaded_into_default_config() {
         let cfg = CapacityControllerConfig::default();
-        assert_eq!(cfg.model_priors.get("deepseek_v4_pro").copied(), Some(3.5));
+        assert_eq!(cfg.model_priors.get("DS_v4_pro").copied(), Some(3.5));
         assert_eq!(
-            cfg.model_priors.get("deepseek_v4_flash").copied(),
+            cfg.model_priors.get("DS_v4_flash").copied(),
             Some(4.2)
         );
     }
@@ -766,7 +766,7 @@ mod tests {
     /// Hot-path microbench for `compute_profile`. Run with:
     ///
     /// ```text
-    /// cargo test -p deepseek-tui --release capacity::tests::bench_compute_profile -- --ignored --nocapture
+    /// cargo test -p DS-Code --release capacity::tests::bench_compute_profile -- --ignored --nocapture
     /// ```
     ///
     /// Establishes a baseline cost so we can detect regressions when the

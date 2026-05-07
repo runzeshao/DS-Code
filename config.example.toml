@@ -15,9 +15,9 @@
 # `/provider nvidia-nim` (or `--provider openai`, `--provider fireworks`,
 # `/provider sglang`, `/provider vllm`, `/provider ollama`) toggle without having to
 # re-enter keys. Top-level `api_key` / `base_url` are still read as DeepSeek
-# defaults when `[providers.deepseek]` is absent (backward compatibility).
+# defaults when `[providers.ds]` is absent (backward compatibility).
 provider = "deepseek" # deepseek | deepseek-cn | nvidia-nim | openai | openrouter | novita | fireworks | sglang | vllm | ollama
-api_key = "YOUR_DEEPSEEK_API_KEY" # must be non-empty
+api_key = "YOUR_DS_API_KEY" # must be non-empty
 base_url = "https://api.deepseek.com/beta"
 # provider = "deepseek-cn"                       # mainland China preset (official https://api.deepseek.com)
 # base_url = "https://api.deepseek.com"         # opt out of DeepSeek beta features
@@ -61,13 +61,13 @@ cost_currency = "usd" # usd | cny
 # ─────────────────────────────────────────────────────────────────────────────────
 # Paths
 # ─────────────────────────────────────────────────────────────────────────────────
-skills_dir = "~/.deepseek/skills"
-mcp_config_path = "~/.deepseek/mcp.json"
-notes_path = "~/.deepseek/notes.txt"
+skills_dir = "~/.ds/skills"
+mcp_config_path = "~/.ds/mcp.json"
+notes_path = "~/.ds/notes.txt"
 
-memory_path = "~/.deepseek/memory.md"
+memory_path = "~/.ds/memory.md"
 
-# instructions = ["./AGENTS.md", "~/.deepseek/global.md"]
+# instructions = ["./AGENTS.md", "~/.ds/global.md"]
 #
 # Optional list of additional instruction files concatenated into the
 # system prompt in declared order (#454). Useful for layering
@@ -75,7 +75,7 @@ memory_path = "~/.deepseek/memory.md"
 # is expanded so `~` and env vars work; missing files are skipped with
 # a tracing warning. Files are capped at 100 KiB per entry.
 #
-# Project-level config (.deepseek/config.toml in the workspace) replaces
+# Project-level config (.ds/config.toml in the workspace) replaces
 # the user-level array wholesale rather than merging — list `~/global.md`
 # inside the project array if you want both. An explicit empty array
 # (`instructions = []`) clears the user list for the current repo.
@@ -89,7 +89,7 @@ memory_path = "~/.deepseek/memory.md"
 # ─────────────────────────────────────────────────────────────────────────────────
 [memory]
 # enabled = true            # turn the feature on (default: false)
-# Override the env-var equivalent: `DEEPSEEK_MEMORY=on`
+# Override the env-var equivalent: `DS_MEMORY=on`
 
 # Parsed but currently unused (reserved for future versions):
 # tools_file = "./tools.json"
@@ -115,9 +115,9 @@ sandbox_mode = "workspace-write" # read-only | workspace-write | danger-full-acc
 # sandbox_api_key = "YOUR_API_KEY"  # Optional Bearer token sent with requests
 #
 # Env-var overrides:
-#   DEEPSEEK_SANDBOX_BACKEND   → sandbox_backend
-#   DEEPSEEK_SANDBOX_URL       → sandbox_url
-#   DEEPSEEK_SANDBOX_API_KEY   → sandbox_api_key
+#   DS_SANDBOX_BACKEND   → sandbox_backend
+#   DS_SANDBOX_URL       → sandbox_url
+#   DS_SANDBOX_API_KEY   → sandbox_api_key
 #
 # Example OpenSandbox setup:
 #
@@ -155,7 +155,7 @@ max_subagents = 10 # optional (1-20)
 # `/provider deepseek` / `/provider nvidia-nim` / `--provider openai` /
 # `/provider fireworks` switches between them without
 # having to re-enter keys. Env vars override anything set here:
-#   DeepSeek: DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL
+#   DeepSeek: DS_API_KEY, DS_BASE_URL, DS_MODEL
 #   NIM:      NVIDIA_API_KEY (or NVIDIA_NIM_API_KEY), NIM_BASE_URL
 #             (or NVIDIA_NIM_BASE_URL / NVIDIA_BASE_URL), NVIDIA_NIM_MODEL
 #   OpenAI-compatible: OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL
@@ -164,9 +164,9 @@ max_subagents = 10 # optional (1-20)
 #   vLLM:      VLLM_BASE_URL, VLLM_MODEL, optional VLLM_API_KEY
 #   Ollama:    OLLAMA_BASE_URL, OLLAMA_MODEL, optional OLLAMA_API_KEY
 
-# DeepSeek Platform (https://platform.deepseek.com)
-[providers.deepseek]
-# api_key = "YOUR_DEEPSEEK_API_KEY"
+# DeepSeek Platform (https://platform.ds.com)
+[providers.ds]
+# api_key = "YOUR_DS_API_KEY"
 # base_url = "https://api.deepseek.com/beta"
 # model = "deepseek-v4-pro"
 # http_headers = { "X-Model-Provider-Id" = "your-model-provider" } # optional custom request headers
@@ -229,7 +229,7 @@ max_subagents = 10 # optional (1-20)
 # default = "prompt"     # allow | deny | prompt
 # allow = ["api.deepseek.com", "github.com", ".githubusercontent.com"]
 # deny = []
-# audit = true            # one line per call to ~/.deepseek/audit.log
+# audit = true            # one line per call to ~/.ds/audit.log
 
 # ─────────────────────────────────────────────────────────────────────────────────
 # Skills (#140)
@@ -345,22 +345,22 @@ replan_cooldown_turns = 5
 max_replay_per_turn = 1
 min_turns_before_guardrail = 4
 profile_window = 8
-deepseek_v3_2_chat_prior = 3.9
-deepseek_v3_2_reasoner_prior = 4.1
-deepseek_v4_pro_prior = 3.5
-deepseek_v4_flash_prior = 4.2
+DS_v3_2_chat_prior = 3.9
+DS_v3_2_reasoner_prior = 4.1
+DS_v4_pro_prior = 3.5
+DS_v4_flash_prior = 4.2
 fallback_default_prior = 3.8
 
 # ─────────────────────────────────────────────────────────────────────────────────
 # Profile Example (for multiple environments)
 # ─────────────────────────────────────────────────────────────────────────────────
-# Select a profile with `deepseek --profile <name>` or `DEEPSEEK_PROFILE=<name>`.
+# Select a profile with `deepseek --profile <name>` or `DS_PROFILE=<name>`.
 [profiles.work]
-api_key = "WORK_DEEPSEEK_API_KEY"
+api_key = "WORK_DS_API_KEY"
 base_url = "https://api.deepseek.com/beta"
 
 [profiles.dev]
-api_key = "DEV_DEEPSEEK_API_KEY"
+api_key = "DEV_DS_API_KEY"
 allow_shell = true
 
 [profiles.nvidia-nim]
@@ -400,7 +400,7 @@ default_text_model = "deepseek-ai/deepseek-v4-pro"
 # Each turn the TUI takes a `pre-turn:<seq>` and `post-turn:<seq>` snapshot of
 # your workspace into a side-git repo at:
 #
-#     ~/.deepseek/snapshots/<project_hash>/<worktree_hash>/.git
+#     ~/.ds/snapshots/<project_hash>/<worktree_hash>/.git
 #
 # Your own `.git` is never touched — `--git-dir` and `--work-tree` are always
 # set together when shelling out to git. Use `/restore N` (slash command) or
@@ -458,7 +458,7 @@ default_text_model = "deepseek-ai/deepseek-v4-pro"
 # Those vars are merged into the spawned process environment (later hooks
 # override earlier ones). Use this for ephemeral credentials, per-skill
 # PATH adjustments, or short-lived tokens. The resolved KEY names (NEVER
-# values) are written to `~/.deepseek/audit.log` so each session can be
+# values) are written to `~/.ds/audit.log` so each session can be
 # reconciled later. Hook failure / timeout simply contributes no vars —
 # it does not abort the shell call.
 #
@@ -495,7 +495,7 @@ default_text_model = "deepseek-ai/deepseek-v4-pro"
 # Use `cors_origins` to add extra dev origins (e.g. Vite's default `:5173`).
 # User entries STACK on top of the defaults — they do not replace them. The
 # CLI flag `--cors-origin URL` (repeatable) and env var
-# `DEEPSEEK_CORS_ORIGINS=url1,url2` resolve to the same merged list.
+# `DS_CORS_ORIGINS=url1,url2` resolve to the same merged list.
 #
 # [runtime_api]
 # cors_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]

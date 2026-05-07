@@ -21,11 +21,11 @@ struct ScopedCapacityMemoryDir {
 
 impl ScopedCapacityMemoryDir {
     fn set(path: &Path) -> Self {
-        let previous = std::env::var_os("DEEPSEEK_CAPACITY_MEMORY_DIR");
+        let previous = std::env::var_os("DS_CAPACITY_MEMORY_DIR");
         // Safety: capacity-memory tests serialize access with CAPACITY_MEMORY_ENV_LOCK
         // and restore the original value in Drop.
         unsafe {
-            std::env::set_var("DEEPSEEK_CAPACITY_MEMORY_DIR", path);
+            std::env::set_var("DS_CAPACITY_MEMORY_DIR", path);
         }
         Self { previous }
     }
@@ -36,9 +36,9 @@ impl Drop for ScopedCapacityMemoryDir {
         // Safety: capacity-memory tests serialize access with CAPACITY_MEMORY_ENV_LOCK.
         unsafe {
             if let Some(previous) = self.previous.take() {
-                std::env::set_var("DEEPSEEK_CAPACITY_MEMORY_DIR", previous);
+                std::env::set_var("DS_CAPACITY_MEMORY_DIR", previous);
             } else {
-                std::env::remove_var("DEEPSEEK_CAPACITY_MEMORY_DIR");
+                std::env::remove_var("DS_CAPACITY_MEMORY_DIR");
             }
         }
     }
@@ -50,11 +50,11 @@ struct ScopedDeepSeekApiKey {
 
 impl ScopedDeepSeekApiKey {
     fn set(value: &str) -> Self {
-        let previous = std::env::var_os("DEEPSEEK_API_KEY");
+        let previous = std::env::var_os("DS_API_KEY");
         // Safety: tests using this helper serialize with lock_test_env() and
         // restore the original value in Drop.
         unsafe {
-            std::env::set_var("DEEPSEEK_API_KEY", value);
+            std::env::set_var("DS_API_KEY", value);
         }
         Self { previous }
     }
@@ -65,9 +65,9 @@ impl Drop for ScopedDeepSeekApiKey {
         // Safety: tests using this helper serialize with lock_test_env().
         unsafe {
             if let Some(previous) = self.previous.take() {
-                std::env::set_var("DEEPSEEK_API_KEY", previous);
+                std::env::set_var("DS_API_KEY", previous);
             } else {
-                std::env::remove_var("DEEPSEEK_API_KEY");
+                std::env::remove_var("DS_API_KEY");
             }
         }
     }
@@ -91,7 +91,7 @@ fn env_only_auth_error_gets_recovery_hint() {
     let message =
         engine.decorate_auth_error_message("Authentication failed: invalid API key".to_string());
 
-    assert!(message.contains("DEEPSEEK_API_KEY"));
+    assert!(message.contains("DS_API_KEY"));
     assert!(message.contains("no saved config key is present"));
     assert!(message.contains("deepseek auth status"));
     assert!(message.contains("deepseek auth set --provider deepseek"));
@@ -1468,7 +1468,7 @@ fn filter_tool_call_delta_strips_bracket_marker() {
 }
 
 #[test]
-fn filter_tool_call_delta_strips_deepseek_xml_marker() {
+fn filter_tool_call_delta_strips_DS_xml_marker() {
     let mut in_block = false;
     let visible = filter_tool_call_delta(
         "before <deepseek:tool_call name=\"x\">payload</deepseek:tool_call> after",

@@ -86,7 +86,7 @@ impl ProviderPickerView {
 
     fn env_var_for(provider: ApiProvider) -> &'static str {
         match provider {
-            ApiProvider::Deepseek | ApiProvider::DeepseekCN => "DEEPSEEK_API_KEY",
+            ApiProvider::Deepseek | ApiProvider::DeepseekCN => "DS_API_KEY",
             ApiProvider::NvidiaNim => "NVIDIA_API_KEY",
             ApiProvider::Openai => "OPENAI_API_KEY",
             ApiProvider::Openrouter => "OPENROUTER_API_KEY",
@@ -115,7 +115,7 @@ impl ProviderPickerView {
             .title(Line::from(Span::styled(
                 " Provider ",
                 Style::default()
-                    .fg(palette::DEEPSEEK_SKY)
+                    .fg(palette::DS_SKY)
                     .add_modifier(Modifier::BOLD),
             )))
             .title_bottom(Line::from(vec![
@@ -175,7 +175,7 @@ impl ProviderPickerView {
             .title(Line::from(Span::styled(
                 format!(" API key — {} ", provider.display_name()),
                 Style::default()
-                    .fg(palette::DEEPSEEK_SKY)
+                    .fg(palette::DS_SKY)
                     .add_modifier(Modifier::BOLD),
             )))
             .title_bottom(Line::from(vec![

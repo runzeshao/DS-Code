@@ -19,7 +19,7 @@ use crate::palette;
 use crate::tui::app::{App, OnboardingState};
 
 pub fn render(f: &mut Frame, area: Rect, app: &App) {
-    let block = Block::default().style(Style::default().bg(palette::DEEPSEEK_INK));
+    let block = Block::default().style(Style::default().bg(palette::DS_INK));
     f.render_widget(block, area);
 
     let content_width = 76.min(area.width.saturating_sub(4));
@@ -45,12 +45,12 @@ pub fn render(f: &mut Frame, area: Rect, app: &App) {
             .title(Line::from(Span::styled(
                 " DeepSeek TUI ",
                 Style::default()
-                    .fg(palette::DEEPSEEK_BLUE)
+                    .fg(palette::DS_BLUE)
                     .add_modifier(Modifier::BOLD),
             )))
             .borders(Borders::ALL)
             .border_style(Style::default().fg(palette::BORDER_COLOR))
-            .style(Style::default().bg(palette::DEEPSEEK_SLATE))
+            .style(Style::default().bg(palette::DS_SLATE))
             .padding(Padding::new(2, 2, 1, 1));
         if !app.onboarding_workspace_trust_gate {
             let (step, total) = onboarding_step(app);
@@ -102,7 +102,7 @@ pub fn tips_lines() -> Vec<ratatui::text::Line<'static>> {
         Line::from(Span::styled(
             "Start Simple",
             Style::default()
-                .fg(palette::DEEPSEEK_SKY)
+                .fg(palette::DS_SKY)
                 .add_modifier(Modifier::BOLD),
         )),
         Line::from(""),
@@ -135,7 +135,7 @@ pub fn tips_lines() -> Vec<ratatui::text::Line<'static>> {
 }
 
 pub fn default_marker_path() -> Option<PathBuf> {
-    dirs::home_dir().map(|home| home.join(".deepseek").join(".onboarded"))
+    dirs::home_dir().map(|home| home.join(".ds").join(".onboarded"))
 }
 
 pub fn is_onboarded() -> bool {
@@ -159,8 +159,8 @@ pub fn needs_trust(workspace: &Path) -> bool {
     }
 
     let markers = [
-        workspace.join(".deepseek").join("trusted"),
-        workspace.join(".deepseek").join("trust.json"),
+        workspace.join(".ds").join("trusted"),
+        workspace.join(".ds").join("trust.json"),
     ];
     !markers.iter().any(|path| path.exists())
 }

@@ -2,7 +2,7 @@
 
 This is a structured brief for another AI (Claude Opus, DeepSeek V4, or similar) to 
 understand the full v0.8.6 scope and begin implementation. The repo is 
-`github.com/Hmbown/DeepSeek-TUI` — Rust workspace, TUI coding agent for DeepSeek V4.
+`github.com/Hmbown/DS-Code` — Rust workspace, TUI coding agent for DeepSeek V4.
 
 **Branch**: create `feat/v0.8.6` from `main` (current HEAD at v0.8.5 tag).  
 **All 23 issues are tagged `v0.8.6`** and live in the repo's GitHub Issues.  
@@ -11,12 +11,12 @@ understand the full v0.8.6 scope and begin implementation. The repo is
 ## Project Context
 
 DeepSeek TUI is a terminal-native coding agent. Key architectural points:
-- **Dispatcher binary** (`deepseek`) delegates to the TUI binary (`deepseek-tui`) 
+- **Dispatcher binary** (`deepseek`) delegates to the TUI binary (`DS-Code`) 
 - **Crate map**: `crates/tui` is the main crate; `crates/cli` handles CLI entry; 
   `crates/config`, `crates/core`, `crates/tools` etc. are sub-crates
 - **Engine pattern**: `core/engine.rs` runs the agent loop, processes tool calls
 - **TUI**: ratatui-based, alt-screen, composer at bottom, sidebar at right
-- **Config**: `~/.deepseek/config.toml`, profiles, providers, settings
+- **Config**: `~/.ds/config.toml`, profiles, providers, settings
 - **Key files to read first**: `docs/ARCHITECTURE.md`, `crates/tui/src/main.rs`, 
   `crates/tui/src/tui/app.rs`, `crates/tui/src/core/engine.rs`
 
@@ -59,7 +59,7 @@ Read `AGENTS.md` and `CLAUDE.md` in the repo root for build/test commands.
 |---|-------|-------|
 | 389 | Inline LSP diagnostics | Show rust-analyzer errors after each patch |
 | 386 | /init — bootstrap AGENTS.md | Auto-detect project type, write starter AGENTS.md |
-| 391 | User-defined slash commands | ~/.deepseek/commands/<name>.md templates |
+| 391 | User-defined slash commands | ~/.ds/commands/<name>.md templates |
 | 392 | /model auto | Heuristic Pro-vs-Flash routing per turn |
 
 ### Group E: Infrastructure & Sharing (4 issues)
@@ -135,7 +135,7 @@ Read `AGENTS.md` and `CLAUDE.md` in the repo root for build/test commands.
 
 ## Key Resources
 
-- Repo: `https://github.com/Hmbown/DeepSeek-TUI`
+- Repo: `https://github.com/Hmbown/DS-Code`
 - Architecture: `docs/ARCHITECTURE.md`
 - Config reference: `docs/CONFIGURATION.md`
 - CLI: `gh issue list --label v0.8.6 --json number,title,body` for full issue text

@@ -24,13 +24,13 @@ const DEFAULT_STREAM_IDLE_TIMEOUT: Duration = Duration::from_secs(300);
 /// hang before any stream chunk exists, leaving the UI stuck at "Working...".
 const DEFAULT_STREAM_OPEN_TIMEOUT: Duration = Duration::from_secs(45);
 
-/// Reads `DEEPSEEK_STREAM_OPEN_TIMEOUT_SECS` as a bounded override for the
+/// Reads `DS_STREAM_OPEN_TIMEOUT_SECS` as a bounded override for the
 /// response-header wait. This is intentionally shorter than the per-chunk idle
 /// timeout because it only covers connection setup and upstream header return,
 /// not model thinking time after streaming has started.
 fn stream_open_timeout() -> Duration {
     stream_open_timeout_from_env(
-        std::env::var("DEEPSEEK_STREAM_OPEN_TIMEOUT_SECS")
+        std::env::var("DS_STREAM_OPEN_TIMEOUT_SECS")
             .ok()
             .as_deref(),
     )
@@ -44,10 +44,10 @@ fn stream_open_timeout_from_env(value: Option<&str>) -> Duration {
     Duration::from_secs(secs)
 }
 
-/// Reads the `DEEPSEEK_STREAM_IDLE_TIMEOUT_SECS` env var, falling back to
+/// Reads the `DS_STREAM_IDLE_TIMEOUT_SECS` env var, falling back to
 /// the default 300s. The parsed value is clamped to [1, 3600] seconds.
 fn stream_idle_timeout() -> Duration {
-    let secs = std::env::var("DEEPSEEK_STREAM_IDLE_TIMEOUT_SECS")
+    let secs = std::env::var("DS_STREAM_IDLE_TIMEOUT_SECS")
         .ok()
         .and_then(|v| v.parse::<u64>().ok())
         .unwrap_or(DEFAULT_STREAM_IDLE_TIMEOUT.as_secs())
@@ -118,8 +118,8 @@ impl DeepSeekClient {
             Err(_elapsed) => {
                 anyhow::bail!(
                     "SSE stream request did not receive response headers after {}s. \
-                     `deepseek doctor` can still pass when non-streaming requests work; \
-                     on Windows or proxy networks, try `DEEPSEEK_FORCE_HTTP1=1` and rerun `deepseek`.",
+                     `ds doctor` can still pass when non-streaming requests work; \
+                     on Windows or proxy networks, try `DS_FORCE_HTTP1=1` and rerun `ds`.",
                     open_timeout.as_secs()
                 );
             }
@@ -730,7 +730,7 @@ pub(super) fn tool_to_chat(tool: &Tool) -> Value {
 
 pub(super) fn tool_to_chat_for_base_url(tool: &Tool, base_url: &str) -> Value {
     let mut value = tool_to_chat(tool);
-    if !deepseek_base_url_supports_strict_tools(base_url)
+    if !ds_base_url_supports_strict_tools(base_url)
         && let Some(function) = value.get_mut("function")
         && let Some(obj) = function.as_object_mut()
     {
@@ -739,14 +739,14 @@ pub(super) fn tool_to_chat_for_base_url(tool: &Tool, base_url: &str) -> Value {
     value
 }
 
-fn deepseek_base_url_supports_strict_tools(base_url: &str) -> bool {
+fn ds_base_url_supports_strict_tools(base_url: &str) -> bool {
     let trimmed = base_url.trim_end_matches('/').to_ascii_lowercase();
     let is_deepseek = trimmed == "https://api.deepseek.com"
         || trimmed == "https://api.deepseek.com/v1"
         || trimmed == "https://api.deepseek.com/beta"
-        || trimmed == "https://api.deepseeki.com"
-        || trimmed == "https://api.deepseeki.com/v1"
-        || trimmed == "https://api.deepseeki.com/beta";
+        || trimmed == "https://api.dsi.com"
+        || trimmed == "https://api.dsi.com/v1"
+        || trimmed == "https://api.dsi.com/beta";
     !is_deepseek || trimmed.ends_with("/beta")
 }
 
@@ -779,7 +779,7 @@ fn map_tool_choice_for_chat(choice: &Value) -> Option<Value> {
 /// reasoning can stay omitted once a later user text turn begins.
 ///
 /// Also tallies the size of all replayed `reasoning_content` and logs it, so
-/// users on `RUST_LOG=deepseek_tui=debug` can see how much of their input
+/// users on `RUST_LOG=DS_tui=debug` can see how much of their input
 /// budget is being spent re-sending prior thinking traces.
 pub(super) fn sanitize_thinking_mode_messages(
     body: &mut Value,
@@ -916,7 +916,7 @@ fn requires_reasoning_content(model: &str) -> bool {
         || lower.contains("reasoner")
         || lower.contains("-reasoning")
         || lower.contains("-thinking")
-        || has_deepseek_r_series_marker(&lower)
+        || has_ds_r_series_marker(&lower)
 }
 
 fn should_replay_reasoning_content(model: &str, effort: Option<&str>) -> bool {
@@ -935,7 +935,7 @@ fn should_replay_reasoning_content(model: &str, effort: Option<&str>) -> bool {
     requires_reasoning_content(model)
 }
 
-fn has_deepseek_r_series_marker(model_lower: &str) -> bool {
+fn has_ds_r_series_marker(model_lower: &str) -> bool {
     const PREFIX: &str = "deepseek-r";
     model_lower.match_indices(PREFIX).any(|(idx, _)| {
         model_lower[idx + PREFIX.len()..]

@@ -5,7 +5,7 @@ use std::fmt::Write;
 
 use crate::compaction::estimate_input_tokens_conservative;
 use crate::models::{
-    LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS, SystemPrompt, context_window_for_model,
+    LEGACY_DS_CONTEXT_WINDOW_TOKENS, SystemPrompt, context_window_for_model,
 };
 use crate::session_manager::SessionContextReference;
 use crate::tui::app::{App, ToolDetailRecord};
@@ -69,7 +69,7 @@ pub fn build_context_inspector_text(app: &App) -> String {
 }
 
 fn context_usage(app: &App) -> (usize, u32, f64) {
-    let max = context_window_for_model(&app.model).unwrap_or(LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS);
+    let max = context_window_for_model(&app.model).unwrap_or(LEGACY_DS_CONTEXT_WINDOW_TOKENS);
     let estimated =
         estimate_input_tokens_conservative(&app.api_messages, app.system_prompt.as_ref());
     let total_chars = estimate_message_chars(&app.api_messages);

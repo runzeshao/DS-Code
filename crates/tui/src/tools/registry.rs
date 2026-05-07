@@ -197,7 +197,7 @@ impl ToolRegistry {
     /// Output is sorted by tool name for **prefix-cache stability** (#263).
     /// Rust's `HashMap` uses a randomly-seeded hasher per process, so a raw
     /// `self.tools.values()` iteration emits tools in a different order on
-    /// every `deepseek` launch, invalidating DeepSeek's KV prefix cache for
+    /// every `ds` launch, invalidating DeepSeek's KV prefix cache for
     /// every cross-session resume. Sorting here matches the way Claude Code
     /// stabilises its tool array (`assembleToolPool` in their reference).
     ///

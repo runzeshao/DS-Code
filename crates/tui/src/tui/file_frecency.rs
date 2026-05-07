@@ -4,7 +4,7 @@
 //! decays the score over time so a file that was hot last week ranks below
 //! one mentioned 5 minutes ago, and re-orders mention-popup completions by
 //! the resulting score. Persisted as a single JSONL file at
-//! `~/.deepseek/file-frecency.jsonl` so frecency survives restarts.
+//! `~/.ds/file-frecency.jsonl` so frecency survives restarts.
 //!
 //! Append-only on the wire, compacted in memory: the loader replays every
 //! line into a `HashMap<String, FrecencyEntry>` keyed by repo-relative path,
@@ -55,7 +55,7 @@ fn store() -> &'static Mutex<Store> {
 }
 
 fn default_path() -> Option<PathBuf> {
-    dirs::home_dir().map(|h| h.join(".deepseek").join("file-frecency.jsonl"))
+    dirs::home_dir().map(|h| h.join(".ds").join("file-frecency.jsonl"))
 }
 
 fn now_secs() -> u64 {

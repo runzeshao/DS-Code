@@ -29,7 +29,7 @@ pub struct PromptSessionContext<'a> {
 /// A previous session writes it on exit / `/compact`; the next session reads
 /// it back on startup and prepends it to the system prompt so a fresh agent
 /// doesn't have to re-discover open blockers from scratch.
-pub const HANDOFF_RELATIVE_PATH: &str = ".deepseek/handoff.md";
+pub const HANDOFF_RELATIVE_PATH: &str = ".ds/handoff.md";
 
 /// Per-file size cap for `instructions = [...]` entries (#454). Mirrors
 /// the existing project-context cap in `project_context::load_context_file`
@@ -48,7 +48,7 @@ const INSTRUCTIONS_FILE_MAX_BYTES: usize = 100 * 1024;
 /// guess from the user's first message. `locale_tag` is resolved by
 /// the caller from `Settings` so this function stays I/O-free.
 fn render_environment_block(workspace: &Path, locale_tag: &str) -> String {
-    let deepseek_version = env!("CARGO_PKG_VERSION");
+    let ds_version = env!("CARGO_PKG_VERSION");
     let platform = std::env::consts::OS;
     let shell = std::env::var("SHELL").unwrap_or_else(|_| "unknown".to_string());
     let pwd = workspace.display();
@@ -57,7 +57,7 @@ fn render_environment_block(workspace: &Path, locale_tag: &str) -> String {
         "## Environment\n\
          \n\
          - lang: {locale_tag}\n\
-         - deepseek_version: {deepseek_version}\n\
+         - ds_version: {ds_version}\n\
          - platform: {platform}\n\
          - shell: {shell}\n\
          - pwd: {pwd}"
@@ -67,7 +67,7 @@ fn render_environment_block(workspace: &Path, locale_tag: &str) -> String {
 /// Render the `instructions = [...]` config array as a single
 /// system-prompt block (#454). Each path is loaded in declared order;
 /// missing files are skipped with a tracing warning so a stale entry
-/// in `~/.deepseek/config.toml` doesn't fail the launch. Empty input
+/// in `~/.ds/config.toml` doesn't fail the launch. Empty input
 /// (or all paths missing) returns `None` so callers append nothing.
 fn render_instructions_block(paths: &[PathBuf]) -> Option<String> {
     let mut sections: Vec<String> = Vec::new();
@@ -148,7 +148,7 @@ pub const SUGGEST_APPROVAL: &str = include_str!("prompts/approvals/suggest.md");
 pub const NEVER_APPROVAL: &str = include_str!("prompts/approvals/never.md");
 
 /// Compaction handoff template — written into the system prompt so the
-/// model knows the format to use when writing `.deepseek/handoff.md`.
+/// model knows the format to use when writing `.ds/handoff.md`.
 pub const COMPACT_TEMPLATE: &str = include_str!("prompts/compact.md");
 
 // ── Legacy prompt constants (kept for backwards compatibility) ────────
@@ -372,7 +372,7 @@ pub fn system_prompt_for_mode_with_context_skills_session_and_approval(
     let project_context = load_project_context_with_parents(workspace);
 
     // 1–2. Mode prompt + project context.
-    // `load_project_context_with_parents` auto-generates .deepseek/instructions.md
+    // `load_project_context_with_parents` auto-generates .ds/instructions.md
     // when no context file exists, so the fallback should always be available.
     let mut full_prompt = if let Some(project_block) = project_context.as_system_block() {
         format!("{}\n\n{}", mode_prompt, project_block)
@@ -426,7 +426,7 @@ pub fn system_prompt_for_mode_with_context_skills_session_and_approval(
     // 3. Skills block. #432: walks every candidate workspace
     // skills directory (`.agents/skills`, `skills`,
     // `.opencode/skills`, `.claude/skills`, `.cursor/skills`) plus global
-    // `~/.agents/skills` / `~/.deepseek/skills` so skills installed for any
+    // `~/.agents/skills` / `~/.ds/skills` so skills installed for any
     // AI-tool convention show up in the catalogue. The legacy
     // single-`skills_dir` path is
     // honoured as a fallback for callers that don't supply a
@@ -459,7 +459,7 @@ pub fn system_prompt_for_mode_with_context_skills_session_and_approval(
     }
 
     // 5. Compaction handoff template — so the model knows the format to use
-    //    when writing `.deepseek/handoff.md` on exit / `/compact`.
+    //    when writing `.ds/handoff.md` on exit / `/compact`.
     full_prompt.push_str("\n\n");
     full_prompt.push_str(COMPACT_TEMPLATE);
 
@@ -516,7 +516,7 @@ mod tests {
 
     /// Discriminator unique to the injected handoff block (not present in the
     /// agent prompt's own discussion of the convention).
-    const HANDOFF_BLOCK_MARKER: &str = "left a handoff at `.deepseek/handoff.md`";
+    const HANDOFF_BLOCK_MARKER: &str = "left a handoff at `.ds/handoff.md`";
 
     #[test]
     fn render_environment_block_lists_supplied_locale_and_workspace() {
@@ -525,7 +525,7 @@ mod tests {
         assert!(block.starts_with("## Environment"));
         assert!(block.contains("- lang: zh-Hans"));
         assert!(block.contains(&format!(
-            "- deepseek_version: {}",
+            "- ds_version: {}",
             env!("CARGO_PKG_VERSION")
         )));
         assert!(block.contains(&format!("- pwd: {}", tmp.path().display())));
@@ -553,14 +553,14 @@ mod tests {
         };
         assert!(prompt.contains("## Environment"));
         assert!(prompt.contains("- lang: ja"));
-        assert!(prompt.contains("- deepseek_version:"));
+        assert!(prompt.contains("- ds_version:"));
     }
 
     #[test]
     fn handoff_artifact_is_prepended_to_system_prompt_when_present() {
         let tmp = tempdir().expect("tempdir");
         let workspace = tmp.path();
-        let handoff_dir = workspace.join(".deepseek");
+        let handoff_dir = workspace.join(".ds");
         std::fs::create_dir_all(&handoff_dir).unwrap();
         std::fs::write(
             handoff_dir.join("handoff.md"),
@@ -591,7 +591,7 @@ mod tests {
     #[test]
     fn empty_handoff_file_does_not_inject_block() {
         let tmp = tempdir().expect("tempdir");
-        let dir = tmp.path().join(".deepseek");
+        let dir = tmp.path().join(".ds");
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join("handoff.md"), "   \n\n  ").unwrap();
         let prompt = match system_prompt_for_mode_with_context(AppMode::Agent, tmp.path(), None) {
@@ -910,13 +910,13 @@ mod tests {
 
     #[test]
     fn system_prompt_with_handoff_file_is_byte_stable_when_file_is_unchanged() {
-        // If `.deepseek/handoff.md` hasn't moved between two builds, the
+        // If `.ds/handoff.md` hasn't moved between two builds, the
         // rendered prompt must produce identical bytes. The handoff block
         // lands below the static boundary in
         // `system_prompt_for_mode_with_context_and_skills`.
         let tmp = tempdir().expect("tempdir");
         let workspace = tmp.path();
-        let handoff_dir = workspace.join(".deepseek");
+        let handoff_dir = workspace.join(".ds");
         std::fs::create_dir_all(&handoff_dir).unwrap();
         std::fs::write(
             handoff_dir.join("handoff.md"),
@@ -949,7 +949,7 @@ mod tests {
         // metadata now, not a system-prompt tail block.
         let tmp = tempdir().expect("tempdir");
         let workspace = tmp.path();
-        let handoff_dir = workspace.join(".deepseek");
+        let handoff_dir = workspace.join(".ds");
         std::fs::create_dir_all(&handoff_dir).unwrap();
         std::fs::write(handoff_dir.join("handoff.md"), "# handoff body\n").unwrap();
 

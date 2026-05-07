@@ -1,6 +1,6 @@
 //! Palette audit tests to prevent color drift.
 //!
-//! These tests ensure that deprecated colors (like DEEPSEEK_AQUA) are not used
+//! These tests ensure that deprecated colors (like DS_AQUA) are not used
 //! directly in user-visible code. The palette should only use DeepSeek brand
 //! colors: blue, sky, red (plus neutral shades).
 
@@ -13,8 +13,8 @@ use ratatui::style::Color;
 #[allow(dead_code)]
 mod palette;
 
-const DEPRECATED_DIRECT_COLORS: &[&str] = &["DEEPSEEK_AQUA"];
-const ALLOWED_PATTERNS: &[&str] = &["pub const DEEPSEEK_AQUA", "DEEPSEEK_AQUA_RGB"];
+const DEPRECATED_DIRECT_COLORS: &[&str] = &["DS_AQUA"];
+const ALLOWED_PATTERNS: &[&str] = &["pub const DS_AQUA", "DS_AQUA_RGB"];
 
 fn color_to_rgb(color: Color) -> (u8, u8, u8) {
     match color {
@@ -139,8 +139,8 @@ fn verify_status_success_uses_sky() {
     let content = fs::read_to_string(&palette_path).expect("Failed to read palette.rs");
 
     assert!(
-        content.contains("pub const STATUS_SUCCESS: Color = DEEPSEEK_SKY;"),
-        "STATUS_SUCCESS should use DEEPSEEK_SKY, not DEEPSEEK_AQUA"
+        content.contains("pub const STATUS_SUCCESS: Color = DS_SKY;"),
+        "STATUS_SUCCESS should use ds_SKY, not DS_AQUA"
     );
 }
 
@@ -151,16 +151,16 @@ fn verify_brand_colors_defined() {
     let content = fs::read_to_string(&palette_path).expect("Failed to read palette.rs");
 
     assert!(
-        content.contains("DEEPSEEK_BLUE_RGB: (u8, u8, u8) = (53, 120, 229);"),
-        "DEEPSEEK_BLUE should be #3578E5"
+        content.contains("DS_BLUE_RGB: (u8, u8, u8) = (53, 120, 229);"),
+        "DS_BLUE should be #3578E5"
     );
     assert!(
-        content.contains("DEEPSEEK_SKY_RGB: (u8, u8, u8) = (106, 174, 242);"),
-        "DEEPSEEK_SKY should be #6AAEF2"
+        content.contains("DS_SKY_RGB: (u8, u8, u8) = (106, 174, 242);"),
+        "DS_SKY should be #6AAEF2"
     );
     assert!(
-        content.contains("DEEPSEEK_RED_RGB: (u8, u8, u8) = (226, 80, 96);"),
-        "DEEPSEEK_RED should be #E25060"
+        content.contains("DS_RED_RGB: (u8, u8, u8) = (226, 80, 96);"),
+        "DS_RED should be #E25060"
     );
 }
 
@@ -169,33 +169,33 @@ fn contrast_guardrails_for_key_ui_pairs() {
     let min_readable = 4.5;
 
     assert_min_contrast(
-        "TEXT_BODY on DEEPSEEK_INK",
+        "TEXT_BODY on DS_INK",
         palette::TEXT_BODY,
-        palette::DEEPSEEK_INK,
+        palette::DS_INK,
         min_readable,
     );
     assert_min_contrast(
-        "TEXT_SECONDARY on DEEPSEEK_INK",
+        "TEXT_SECONDARY on DS_INK",
         palette::TEXT_SECONDARY,
-        palette::DEEPSEEK_INK,
+        palette::DS_INK,
         min_readable,
     );
     assert_min_contrast(
-        "TEXT_HINT on DEEPSEEK_INK",
+        "TEXT_HINT on DS_INK",
         palette::TEXT_HINT,
-        palette::DEEPSEEK_INK,
+        palette::DS_INK,
         min_readable,
     );
     assert_min_contrast(
-        "STATUS_WARNING on DEEPSEEK_INK",
+        "STATUS_WARNING on DS_INK",
         palette::STATUS_WARNING,
-        palette::DEEPSEEK_INK,
+        palette::DS_INK,
         min_readable,
     );
     assert_min_contrast(
-        "STATUS_ERROR on DEEPSEEK_INK",
+        "STATUS_ERROR on DS_INK",
         palette::STATUS_ERROR,
-        palette::DEEPSEEK_INK,
+        palette::DS_INK,
         min_readable,
     );
 }

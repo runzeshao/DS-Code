@@ -839,7 +839,7 @@ impl StateStore {
 fn default_state_db_path() -> PathBuf {
     dirs::home_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join(".deepseek")
+        .join(".ds")
         .join("state.db")
 }
 

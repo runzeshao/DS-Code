@@ -307,7 +307,7 @@ impl McpServer {
                 .get("arguments")
                 .cloned()
                 .unwrap_or_else(|| json!({}));
-            return self.handle_deepseek_call(runtime, &internal, &arguments, request_id);
+            return self.handle_ds_call(runtime, &internal, &arguments, request_id);
         }
 
         let arguments = params
@@ -318,13 +318,13 @@ impl McpServer {
         Ok(tool_result_to_mcp(result))
     }
 
-    /// Handle a `deepseek` or `deepseek-reply` tool call.
+    /// Handle a `ds` or `deepseek-reply` tool call.
     ///
     /// Uses `DeepSeekClient` directly (not the full engine) to send a prompt
-    /// and return the response. For `deepseek` a new thread is created; for
+    /// and return the response. For `ds` a new thread is created; for
     /// `deepseek-reply` the caller supplies a `thread_id` to continue an
     /// existing conversation.
-    fn handle_deepseek_call(
+    fn handle_ds_call(
         &mut self,
         runtime: &Runtime,
         internal_name: &str,
@@ -498,7 +498,7 @@ impl McpServer {
 }
 
 fn default_config_path() -> Option<PathBuf> {
-    dirs::home_dir().map(|home| home.join(".deepseek").join("mcp_server.toml"))
+    dirs::home_dir().map(|home| home.join(".ds").join("mcp_server.toml"))
 }
 
 fn default_expose_tools() -> Vec<String> {

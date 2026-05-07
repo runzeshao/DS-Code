@@ -1,4 +1,4 @@
-//! Core engine for `DeepSeek` CLI.
+//! Core engine for `ds` CLI.
 //!
 //! The engine handles all AI interactions in a background task,
 //! communicating with the UI via channels. This enables:
@@ -37,7 +37,7 @@ use crate::mcp::McpPool;
 #[cfg(test)]
 use crate::models::ToolCaller;
 use crate::models::{
-    ContentBlock, ContentBlockStart, Delta, LEGACY_DEEPSEEK_CONTEXT_WINDOW_TOKENS, Message,
+    ContentBlock, ContentBlockStart, Delta, LEGACY_DS_CONTEXT_WINDOW_TOKENS, Message,
     MessageRequest, StreamEvent, SystemPrompt, Tool, Usage,
 };
 use crate::prompts;
@@ -120,7 +120,7 @@ pub struct EngineConfig {
     pub plan_state: SharedPlanState,
     /// Maximum sub-agent recursion depth (default 3). See
     /// `SubAgentRuntime::max_spawn_depth`. Override via
-    /// `[runtime] max_spawn_depth = N` in `~/.deepseek/config.toml`.
+    /// `[runtime] max_spawn_depth = N` in `~/.ds/config.toml`.
     pub max_spawn_depth: u32,
     /// Per-domain network policy decider (#135). Shared across the session so
     /// session-scoped approvals (`/network allow <host>`) persist for the
@@ -298,8 +298,8 @@ impl EngineHandle {
 /// The core engine that processes operations and emits events
 pub struct Engine {
     config: EngineConfig,
-    deepseek_client: Option<DeepSeekClient>,
-    deepseek_client_error: Option<String>,
+    ds_client: Option<DeepSeekClient>,
+    ds_client_error: Option<String>,
     api_key_env_only_recovery: Option<String>,
     session: Session,
     subagent_manager: SharedSubAgentManager,
@@ -368,7 +368,7 @@ impl Engine {
 
         let provider = api_config.api_provider();
         let env_var = match provider {
-            ApiProvider::Deepseek | ApiProvider::DeepseekCN => "DEEPSEEK_API_KEY",
+            ApiProvider::Deepseek | ApiProvider::DeepseekCN => "DS_API_KEY",
             ApiProvider::NvidiaNim => "NVIDIA_API_KEY/NVIDIA_NIM_API_KEY",
             ApiProvider::Openai => "OPENAI_API_KEY",
             ApiProvider::Openrouter => "OPENROUTER_API_KEY",
@@ -381,8 +381,8 @@ impl Engine {
 
         Some(format!(
             "The rejected key came from {env_var}; no saved config key is present.\n\
-             Run `deepseek auth status` to inspect credential sources, then \
-             `deepseek auth set --provider {provider}` to save a valid key in ~/.deepseek/config.toml, \
+             Run `ds auth status` to inspect credential sources, then \
+             `deepseek auth set --provider {provider}` to save a valid key in ~/.ds/config.toml, \
              or remove the stale export and open a fresh shell.",
             provider = provider.as_str()
         ))
@@ -413,7 +413,7 @@ impl Engine {
         let tool_exec_lock = Arc::new(RwLock::new(()));
 
         // Create clients for both providers
-        let (deepseek_client, deepseek_client_error) = match DeepSeekClient::new(api_config) {
+        let (ds_client, ds_client_error) = match DeepSeekClient::new(api_config) {
             Ok(client) => (Some(client), None),
             Err(err) => (None, Some(err.to_string())),
         };
@@ -462,7 +462,7 @@ impl Engine {
         // Create Flash seam manager for layered context (#159). v0.7.5 keeps
         // this opt-in until the prefix-cache audit proves when seam production
         // is worth the extra request and transcript mutation.
-        let seam_manager = deepseek_client.as_ref().map(|main_client| {
+        let seam_manager = ds_client.as_ref().map(|main_client| {
             let seam_config = SeamConfig {
                 enabled: api_config.context.enabled.unwrap_or(false),
                 verbatim_window_turns: api_config
@@ -526,8 +526,8 @@ impl Engine {
 
         let mut engine = Engine {
             config,
-            deepseek_client,
-            deepseek_client_error,
+            ds_client,
+            ds_client_error,
             api_key_env_only_recovery,
             session,
             subagent_manager,
@@ -617,9 +617,9 @@ impl Engine {
                         .await;
                 }
                 Op::SpawnSubAgent { prompt } => {
-                    let Some(client) = self.deepseek_client.clone() else {
+                    let Some(client) = self.ds_client.clone() else {
                         let message = self
-                            .deepseek_client_error
+                            .ds_client_error
                             .as_deref()
                             .map(|err| format!("Failed to spawn sub-agent: {err}"))
                             .unwrap_or_else(|| {
@@ -917,9 +917,9 @@ impl Engine {
         crate::retry_status::clear();
 
         // Check if we have the appropriate client
-        if self.deepseek_client.is_none() {
+        if self.ds_client.is_none() {
             let message = self
-                .deepseek_client_error
+                .ds_client_error
                 .as_deref()
                 .map(|err| format!("Failed to send message: {err}"))
                 .unwrap_or_else(|| "Failed to send message: API client not configured".to_string());
@@ -1030,7 +1030,7 @@ impl Engine {
         let tool_registry = match mode {
             AppMode::Agent | AppMode::Yolo => {
                 if self.config.features.enabled(Feature::Subagents) {
-                    let runtime = if let Some(client) = self.deepseek_client.clone() {
+                    let runtime = if let Some(client) = self.ds_client.clone() {
                         let mut rt = SubAgentRuntime::new(
                             client,
                             self.session.model.clone(),
@@ -1085,7 +1085,7 @@ impl Engine {
 
         // Main turn loop
         let (status, error) = self
-            .handle_deepseek_turn(
+            .handle_ds_turn(
                 &mut turn,
                 tool_registry.as_ref(),
                 tools,
@@ -1138,7 +1138,7 @@ impl Engine {
             output_tokens: 0,
             ..Usage::default()
         };
-        let Some(client) = self.deepseek_client.clone() else {
+        let Some(client) = self.ds_client.clone() else {
             let message = "Manual compaction unavailable: API client not configured".to_string();
             self.emit_compaction_failed(id, false, message.clone())
                 .await;
@@ -1249,9 +1249,9 @@ impl Engine {
     ) {
         use crate::rlm::turn::run_rlm_turn;
 
-        let Some(ref client) = self.deepseek_client else {
+        let Some(ref client) = self.ds_client else {
             let err = self
-                .deepseek_client_error
+                .ds_client_error
                 .as_deref()
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| "API client not configured".to_string());
@@ -1552,7 +1552,7 @@ impl Engine {
     /// Run the pre-request layered-context checkpoint (#159). Checks whether
     /// the active input estimate has crossed a soft-seam threshold and, if so,
     /// produces an `<archived_context>` block via Flash and appends it as an
-    /// assistant message. Called from `handle_deepseek_turn` before each API
+    /// assistant message. Called from `handle_ds_turn` before each API
     /// request so the model always has the latest navigation aids.
     async fn layered_context_checkpoint(&mut self) {
         let Some(ref seam_mgr) = self.seam_manager else {
@@ -1672,7 +1672,7 @@ impl Engine {
             return;
         }
 
-        let Some(client) = self.deepseek_client.clone() else {
+        let Some(client) = self.ds_client.clone() else {
             crate::logging::warn(
                 "Cycle boundary skipped: API client not configured for briefing turn",
             );

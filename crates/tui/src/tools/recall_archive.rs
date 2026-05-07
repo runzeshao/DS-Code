@@ -2,7 +2,7 @@
 //!
 //! Companion to the checkpoint-restart cycle architecture (#124). When the
 //! agent's `<carry_forward>` briefing missed something, this tool scans the
-//! on-disk JSONL archives at `~/.deepseek/sessions/<id>/cycles/*.jsonl` and
+//! on-disk JSONL archives at `~/.ds/sessions/<id>/cycles/*.jsonl` and
 //! returns the top-N matching messages.
 //!
 //! ## Scoring
@@ -11,7 +11,7 @@
 //! model, no cache — every call walks the archives. Acceptable because the
 //! per-cycle archive is bounded by the 110K cycle threshold and most sessions
 //! cross at most a handful of cycles. v2 (later) can add an
-//! `~/.deepseek/embeddings/` cache built on archive write.
+//! `~/.ds/embeddings/` cache built on archive write.
 
 use std::collections::HashMap;
 use std::fs::read_dir;
@@ -163,7 +163,7 @@ fn archive_root(session_id: &str) -> Result<PathBuf, std::io::Error> {
         )
     })?;
     Ok(home
-        .join(".deepseek")
+        .join(".ds")
         .join("sessions")
         .join(session_id)
         .join("cycles"))

@@ -1,7 +1,7 @@
 //! `retrieve_tool_result` - selective retrieval for spilled tool outputs.
 //!
 //! Large successful tool results are spilled to
-//! `~/.deepseek/tool_outputs/<tool-call-id>.txt` by `tools::truncate`. This
+//! `~/.ds/tool_outputs/<tool-call-id>.txt` by `tools::truncate`. This
 //! tool gives the model a read-only, directory-scoped way to fetch summaries or
 //! slices of those historical outputs without replaying the entire file into
 //! every subsequent request.
@@ -36,7 +36,7 @@ impl ToolSpec for RetrieveToolResultTool {
     }
 
     fn description(&self) -> &'static str {
-        "Retrieve a previously spilled large tool result from ~/.deepseek/tool_outputs by tool call id, filename, or spillover path. Supports summary, head, tail, lines, and query modes so you can fetch only the needed historical output."
+        "Retrieve a previously spilled large tool result from ~/.ds/tool_outputs by tool call id, filename, or spillover path. Supports summary, head, tail, lines, and query modes so you can fetch only the needed historical output."
     }
 
     fn input_schema(&self) -> Value {
@@ -141,7 +141,7 @@ impl ToolSpec for RetrieveToolResultTool {
 
 fn resolve_spillover_reference(reference: &str) -> Result<PathBuf, ToolError> {
     let root = crate::tools::truncate::spillover_root()
-        .ok_or_else(|| ToolError::execution_failed("could not resolve ~/.deepseek/tool_outputs"))?;
+        .ok_or_else(|| ToolError::execution_failed("could not resolve ~/.ds/tool_outputs"))?;
     let root_canonical = root.canonicalize().map_err(|err| {
         ToolError::execution_failed(format!(
             "spillover directory {} is not readable: {err}",

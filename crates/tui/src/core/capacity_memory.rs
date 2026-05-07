@@ -47,7 +47,7 @@ pub struct CapacityMemoryRecord {
 }
 
 fn capacity_memory_dirs() -> Vec<PathBuf> {
-    if let Ok(raw) = std::env::var("DEEPSEEK_CAPACITY_MEMORY_DIR") {
+    if let Ok(raw) = std::env::var("DS_CAPACITY_MEMORY_DIR") {
         let trimmed = raw.trim();
         if !trimmed.is_empty() {
             return vec![PathBuf::from(shellexpand::tilde(trimmed).as_ref())];
@@ -56,12 +56,12 @@ fn capacity_memory_dirs() -> Vec<PathBuf> {
 
     let mut dirs = Vec::new();
     if let Some(home) = dirs::home_dir() {
-        dirs.push(home.join(".deepseek").join("memory"));
+        dirs.push(home.join(".ds").join("memory"));
     }
 
     let cwd = std::env::current_dir()
         .unwrap_or_else(|_| PathBuf::from("."))
-        .join(".deepseek")
+        .join(".ds")
         .join("memory");
     dirs.push(cwd);
 
