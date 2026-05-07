@@ -1447,7 +1447,7 @@ fn build_tui_command(
 fn exit_with_tui_status(status: std::process::ExitStatus) -> Result<()> {
     match status.code() {
         Some(code) => std::process::exit(code),
-        None => bail!("DS-Code terminated by signal"),
+        None => bail!("ds-tui terminated by signal"),
     }
 }
 
@@ -1459,7 +1459,7 @@ fn delegate_simple_tui(args: Vec<String>) -> Result<()> {
         .map_err(|err| anyhow!("{}", tui_spawn_error(&tui, &err)))?;
     match status.code() {
         Some(code) => std::process::exit(code),
-        None => bail!("DS-Code terminated by signal"),
+        None => bail!("ds-tui terminated by signal"),
     }
 }
 
@@ -1467,23 +1467,23 @@ fn tui_spawn_error(tui: &Path, err: &io::Error) -> String {
     format!(
         "failed to spawn companion TUI binary at {}: {err}\n\
 \n\
-The `ds` dispatcher found a `DS-Code` file, but the OS refused \
+The `ds` dispatcher found a `ds-tui` file, but the OS refused \
 to execute it. Common fixes:\n\
   - Reinstall with `npm install -g ds-code`, or run `ds update`.\n\
-  - On Windows, run `where ds` and `where DS-Code`; both should \
+  - On Windows, run `where ds` and `where ds-tui`; both should \
 come from the same install directory.\n\
   - If you downloaded release assets manually, keep both `ds` and \
-`DS-Code` binaries together and make sure the TUI binary is executable.\n\
-  - Set DS_TUI_BIN to the absolute path of a working `DS-Code` \
+`ds-tui` binaries together and make sure the TUI binary is executable.\n\
+  - Set DS_TUI_BIN to the absolute path of a working `ds-tui` \
 binary.",
         tui.display()
     )
 }
 
-/// Resolve the sibling `DS-Code` executable next to the running
+/// Resolve the sibling `ds-tui` executable next to the running
 /// dispatcher. Honours platform executable suffix (`.exe` on Windows) so
 /// the npm-distributed Windows package — which ships
-/// `bin/downloads/DS-Code.exe` — is found by `Path::exists` (#247).
+/// `bin/downloads/ds-tui.exe` — is found by `Path::exists` (#247).
 ///
 /// `DS_TUI_BIN` is consulted first as an explicit override for
 /// custom installs and CI test layouts. On Windows we additionally try
@@ -1507,39 +1507,39 @@ fn locate_sibling_tui_binary() -> Result<PathBuf> {
     }
 
     // Build a stable error path so the user sees the platform-correct
-    // expected name, not "DS-Code" on Windows.
-    let expected = current.with_file_name(format!("DS-Code{}", std::env::consts::EXE_SUFFIX));
+    // expected name, not "ds-tui" on Windows.
+    let expected = current.with_file_name(format!("ds-tui{}", std::env::consts::EXE_SUFFIX));
     bail!(
-        "Companion `DS-Code` binary not found at {}.\n\
+        "Companion `ds-tui` binary not found at {}.\n\
 \n\
 The `ds` dispatcher delegates interactive sessions to a sibling \
-`DS-Code` binary. To fix this, install one of:\n\
-  • npm:    npm install -g DS-Code            (downloads both binaries)\n\
-  • cargo:  cargo install DS-Code-cli DS-Code --locked\n\
+`ds-tui` binary. To fix this, install one of:\n\
+  • npm:    npm install -g ds-code            (downloads both binaries)\n\
+  • cargo:  cargo install ds-cli ds-tui --locked\n\
   • GitHub Releases: download BOTH `ds-<platform>` AND \
-`DS-Code-<platform>` from https://github.com/Hmbown/DS-Code/releases/latest \
+`ds-tui-<platform>` from https://github.com/runzeshao/DS-Code/releases/latest \
 and place them in the same directory.\n\
 \n\
-Or set DS_TUI_BIN to the absolute path of an existing `DS-Code` binary.",
+Or set DS_TUI_BIN to the absolute path of an existing `ds-tui` binary.",
         expected.display()
     );
 }
 
 /// Return the first existing sibling-binary path under any of the names
-/// `DS-Code` might use on this platform. Pure function to keep
+/// `ds-tui` might use on this platform. Pure function to keep
 /// `locate_sibling_tui_binary` testable.
 fn sibling_tui_candidate(dispatcher: &Path) -> Option<PathBuf> {
     // Primary: platform-correct name. EXE_SUFFIX is "" on Unix and ".exe"
     // on Windows.
     let primary =
-        dispatcher.with_file_name(format!("DS-Code{}", std::env::consts::EXE_SUFFIX));
+        dispatcher.with_file_name(format!("ds-tui{}", std::env::consts::EXE_SUFFIX));
     if primary.is_file() {
         return Some(primary);
     }
     // Windows fallback: a user who manually renamed `.exe` away (per the
     // workaround in #247) still launches successfully under the new code.
     if cfg!(windows) {
-        let suffixless = dispatcher.with_file_name("DS-Code");
+        let suffixless = dispatcher.with_file_name("ds-tui");
         if suffixless.is_file() {
             return Some(suffixless);
         }
@@ -2632,8 +2632,8 @@ mod tests {
     }
 
     /// Regression for issue #247: on Windows the dispatcher must find the
-    /// sibling `DS-Code.exe`, not bail out looking for an
-    /// extension-less `DS-Code`. The candidate resolver also accepts
+    /// sibling `ds-tui.exe`, not bail out looking for an
+    /// extension-less `ds-tui`. The candidate resolver also accepts
     /// the suffix-less name on Windows so users who manually renamed the
     /// file as a workaround keep working after the upgrade.
     #[test]
@@ -2650,7 +2650,7 @@ mod tests {
         assert!(sibling_tui_candidate(&dispatcher).is_none());
 
         let target =
-            dispatcher.with_file_name(format!("DS-Code{}", std::env::consts::EXE_SUFFIX));
+            dispatcher.with_file_name(format!("ds-tui{}", std::env::consts::EXE_SUFFIX));
         std::fs::write(&target, b"").unwrap();
 
         let found = sibling_tui_candidate(&dispatcher).expect("must locate sibling");
@@ -2660,9 +2660,9 @@ mod tests {
     #[test]
     fn dispatcher_spawn_error_names_path_and_recovery_checks() {
         let err = io::Error::new(io::ErrorKind::PermissionDenied, "access is denied");
-        let message = tui_spawn_error(Path::new("C:/tools/DS-Code.exe"), &err);
+        let message = tui_spawn_error(Path::new("C:/tools/ds-tui.exe"), &err);
 
-        assert!(message.contains("C:/tools/DS-Code.exe"));
+        assert!(message.contains("C:/tools/ds-tui.exe"));
         assert!(message.contains("access is denied"));
         assert!(message.contains("where ds"));
         assert!(message.contains("DS_TUI_BIN"));
@@ -2680,11 +2680,11 @@ mod tests {
         std::fs::write(&dispatcher, b"").unwrap();
 
         // Only the suffixless name exists — emulates the manual rename.
-        let suffixless = dispatcher.with_file_name("DS-Code");
+        let suffixless = dispatcher.with_file_name("ds-tui");
         std::fs::write(&suffixless, b"").unwrap();
 
         let found = sibling_tui_candidate(&dispatcher)
-            .expect("Windows fallback must locate suffixless DS-Code");
+            .expect("Windows fallback must locate suffixless ds-tui");
         assert_eq!(found, suffixless);
     }
 

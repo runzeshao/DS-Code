@@ -51,7 +51,7 @@ pub struct SnapshotRepo {
 const STALE_TMP_PACK_AGE: Duration = Duration::from_secs(60 * 60);
 
 const BUILTIN_EXCLUDES: &str = "\
-# DeepSeek TUI built-in snapshot exclusions
+# DS Code built-in snapshot exclusions
 node_modules/
 target/
 dist/

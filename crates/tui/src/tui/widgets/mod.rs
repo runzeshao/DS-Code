@@ -1703,7 +1703,7 @@ fn build_empty_state_lines(app: &App, area: Rect) -> Vec<Line<'static>> {
 
     let body = vec![
         Line::from(Span::styled(
-            format!("{inset}DeepSeek TUI"),
+            format!("{inset}DS Code"),
             Style::default().fg(palette::DS_BLUE).bold(),
         )),
         Line::from(Span::styled(

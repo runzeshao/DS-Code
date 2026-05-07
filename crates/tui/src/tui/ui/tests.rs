@@ -994,7 +994,7 @@ fn init_git_repo() -> TempDir {
     let commit = Command::new("git")
         .args([
             "-c",
-            "user.name=DeepSeek TUI Tests",
+            "user.name=DS Code Tests",
             "-c",
             "user.email=tests@example.com",
             "commit",
