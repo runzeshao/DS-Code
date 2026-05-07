@@ -194,6 +194,7 @@ fn main() {
         .setup(|app| {
             let state = app.state::<AppState>();
 
+            // Start ds-tui backend
             match find_ds_tui() {
                 Some(path) => {
                     match Command::new(&path).args(["serve", "--http"]).spawn() {
@@ -214,6 +215,29 @@ fn main() {
                     *state.backend_error.lock().unwrap() = Some(msg);
                 }
             }
+
+            // Wait briefly for the frontend server to be ready
+            for _ in 0..20 {
+                if std::net::TcpStream::connect("127.0.0.1:5173").is_ok() {
+                    break;
+                }
+                thread::sleep(std::time::Duration::from_millis(200));
+            }
+
+            // Create window pointing directly at the frontend server
+            let url = format!("http://127.0.0.1:{}/", FRONTEND_PORT);
+            let _ = tauri::WebviewWindowBuilder::new(
+                app,
+                "main",
+                tauri::WebviewUrl::External(url.parse().unwrap()),
+            )
+            .title("DS Code - AI 编程助手")
+            .inner_size(1100.0, 750.0)
+            .min_inner_size(800.0, 500.0)
+            .resizable(true)
+            .center()
+            .build();
+
             Ok(())
         })
         .on_window_event(|window, event| {
